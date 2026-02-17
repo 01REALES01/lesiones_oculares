@@ -1,0 +1,90 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #f5f5f5;
+  color: #1a1a1a;
+}
+#root { min-height: 100vh; padding: 1rem; max-width: 900px; margin: 0 auto; }
+
+.app-header {
+  border-bottom: 2px solid #2c5282;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+.app-header h1 { margin: 0; font-size: 1.5rem; color: #2c5282; }
+.app-header p { margin: 0.25rem 0 0; font-size: 0.875rem; color: #555; }
+
+.disclaimer-banner {
+  background: #fef3c7;
+  border: 1px solid #d97706;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 1.25rem;
+}
+
+.section { margin-bottom: 1.5rem; }
+.section h2 { font-size: 1.1rem; margin: 0 0 0.5rem; color: #333; }
+
+.upload-zone {
+  border: 2px dashed #94a3b8;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  background: #fff;
+  cursor: pointer;
+}
+.upload-zone:hover { border-color: #2c5282; background: #f8fafc; }
+.upload-zone.has-file { border-color: #059669; background: #ecfdf5; }
+input[type="file"] { display: none; }
+
+.model-selection { display: flex; gap: 1rem; flex-wrap: wrap; margin: 0.5rem 0; }
+.model-selection label { display: flex; align-items: center; gap: 0.35rem; cursor: pointer; }
+
+.btn {
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  border: none;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.btn-primary { background: #2c5282; color: #fff; }
+.btn-primary:hover { background: #1e3a5f; }
+.btn-primary:disabled { background: #94a3b8; cursor: not-allowed; }
+
+.results-panel {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+.results-panel .metrics { display: flex; flex-wrap: wrap; gap: 1rem; margin: 0.75rem 0; }
+.results-panel .metric { background: #f1f5f9; padding: 0.5rem 0.75rem; border-radius: 6px; min-width: 120px; }
+.results-panel .metric strong { display: block; font-size: 0.75rem; color: #64748b; }
+.results-panel .metric span { font-size: 1.1rem; }
+
+.results-panel .traceability { font-size: 0.8rem; color: #64748b; margin-top: 0.75rem; }
+.results-panel img { max-width: 100%; height: auto; border-radius: 6px; margin-top: 0.5rem; }
+.results-panel .recommendation { margin: 0.75rem 0; padding: 0.5rem; background: #f8fafc; border-radius: 6px; }
+
+.history-list { list-style: none; padding: 0; margin: 0; }
+.history-list li {
+  background: #fff;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  display: flex; justify-content: space-between; align-items: center;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+}
+.history-list button { background: none; border: none; color: #2c5282; cursor: pointer; text-decoration: underline; font-size: 0.9rem; }
+.history-list button:hover { color: #1e3a5f; }
+
+.error-msg { color: #b91c1c; font-size: 0.9rem; margin-top: 0.5rem; }
+.loading { color: #64748b; }
+
+.graph-bars { margin: 0.5rem 0; }
+.graph-bars .bar-row { display: flex; align-items: center; gap: 0.5rem; margin: 0.25rem 0; font-size: 0.85rem; }
+.graph-bars .bar-label { width: 80px; }
+.graph-bars .bar-fill { height: 16px; background: #2c5282; border-radius: 4px; min-width: 4px; }

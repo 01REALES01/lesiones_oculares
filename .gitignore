@@ -1,0 +1,55 @@
+# Entorno y dependencias
+.env
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+pip-log.txt
+pip-delete-this-directory.txt
+.eggs/
+*.egg-info/
+*.egg
+dist/
+build/
+
+# IDE y editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Sistema
+.DS_Store
+Thumbs.db
+
+# Modelos y datos (no subir pesos ni datasets grandes)
+*.onnx
+*.pt
+*.pth
+*.h5
+*.pkl
+models/*.onnx
+data/
+datasets/
+*.npy
+
+# Logs y tests
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Documentos temporales (la ficha oficial va en FICHA_PROYECTO.md)
+*.docx
+*.doc
+*.pdf
