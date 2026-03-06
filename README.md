@@ -1,5 +1,5 @@
 # Informe 1
-[LINK DEL INFORME 1](https://uninorte-my.sharepoint.com/:w:/g/personal/asilverad_uninorte_edu_co/IQACBqu_HGi0TKPcYib8wW2NAZYAJI6AAq0_Bxq_mTNLI_k?e=vkoP4q
+[LINK DEL INFORME 1](https://uninorte-my.sharepoint.com/:w:/g/personal/asilverad_uninorte_edu_co/IQACBqu_HGi0TKPcYib8wW2NAZYAJI6AAq0_Bxq_mTNLI_k?e=vkoP4q)
 
 # Plataforma de análisis de retinografías
 
