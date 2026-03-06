@@ -1,3 +1,6 @@
+# Informe 1
+[LINK DEL INFORME 1](https://uninorte-my.sharepoint.com/:w:/g/personal/asilverad_uninorte_edu_co/IQACBqu_HGi0TKPcYib8wW2NAZYAJI6AAq0_Bxq_mTNLI_k?e=vkoP4q
+
 # Plataforma de análisis de retinografías
 
 **Objetivo del proyecto:** En este proyecto diseñamos e implementamos una plataforma de software que permite **cargar retinografías**, **seleccionar entre tres modelos de IA** y obtener resultados de **detección/segmentación y/o clasificación de lesiones**, con **métricas de desempeño**, **trazabilidad de inferencias** y una **interfaz usable** orientada a **apoyo clínico/educativo** (no diagnóstico).
