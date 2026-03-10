@@ -1,0 +1,1450 @@
+/* ============================================
+   SCROLLYTELLING LANDING — TechEye Edition
+   ============================================ */
+
+.landing-container {
+    position: relative;
+    min-height: 400vh;
+    /* Long scroll for animation */
+    background: transparent;
+    color: var(--text-main);
+    overflow-x: hidden;
+}
+
+/* ── Fixed 3D Background ── */
+.fixed-3d-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    z-index: -1;
+    pointer-events: none;
+    /* Let clicks pass through to content */
+}
+
+.scene-fixed-fallback {
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle at 70% 50%, #dbeafe 0%, transparent 60%);
+}
+
+/* ── Navigation (Glass) ── */
+.landing-nav.glass-nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 1rem 2rem;
+}
+
+.nav-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-brand-text {
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+    color: var(--text-main);
+}
+
+.btn-nav {
+    background: var(--text-main);
+    color: #fff;
+    border: none;
+    padding: 0.6rem 1.25rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.btn-nav:hover {
+    transform: scale(1.05);
+}
+
+/* ── Sections ── */
+.landing-section {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    z-index: 1;
+    /* Above background */
+}
+
+.section-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+/* ── Logo Cloud ── */
+.logo-cloud-section {
+    min-height: auto !important;
+    padding: 0 2rem;
+    z-index: 2;
+    position: relative;
+}
+
+.logo-cloud-inner {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.logo-cloud-label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.03em;
+}
+
+.logo-cloud-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.08), transparent);
+    margin: 0 auto;
+    max-width: 400px;
+}
+
+.logo-cloud {
+    overflow: hidden;
+    padding: 1.25rem 0;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+}
+
+.logo-cloud-img {
+    height: 18px;
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.5;
+    filter: grayscale(100%);
+    transition: opacity 0.3s, filter 0.3s;
+}
+
+.logo-cloud:hover .logo-cloud-img {
+    opacity: 0.7;
+    filter: grayscale(50%);
+}
+
+/* InfiniteSlider internals */
+.infinite-slider-wrap {
+    overflow: hidden;
+}
+
+.infinite-slider-track {
+    display: flex;
+    width: max-content;
+}
+
+/* 1. HERO (Text Left) */
+.hero-section {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hero-inner {
+    justify-content: space-between;
+}
+
+.hero-logos {
+    width: 100%;
+    max-width: 700px;
+    margin: 0 auto;
+    padding-top: 2rem;
+}
+
+.hero-content {
+    max-width: 550px;
+}
+
+.hero-title {
+    font-size: clamp(3rem, 6vw, 5rem);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #60a5fa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-desc {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    margin-bottom: 2.5rem;
+    line-height: 1.6;
+    max-width: 480px;
+}
+
+.btn-hero {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 1rem 2.5rem;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px -5px rgba(59, 130, 246, 0.4);
+    transition: all 0.3s;
+}
+
+.btn-hero:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 40px -5px rgba(59, 130, 246, 0.5);
+}
+
+.hero-spacer {
+    flex: 1;
+    /* Takes up space on the right for the eye */
+}
+
+/* 2. FEATURES (Center Glass Cards) */
+.section-header-center {
+    text-align: center;
+    margin-bottom: 4rem;
+    width: 100%;
+}
+
+.section-header-center h2 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+}
+
+.feature-grid-glass {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.glass-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    padding: 2rem;
+    border-radius: 16px;
+    width: 300px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+    transition: transform 0.3s;
+}
+
+.glass-card:hover {
+    transform: translateY(-10px);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.glass-card h3 {
+    color: var(--primary-dark);
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+/* 3. PROCESS (Content Right) */
+.process-inner {
+    justify-content: flex-end;
+    /* Push content to right */
+}
+
+.process-spacer {
+    flex: 1;
+    /* Space on left for eye */
+}
+
+.process-content {
+    flex: 1;
+    max-width: 500px;
+    background: rgba(255, 255, 255, 0.5);
+    /* Semi-transparent backing for readability */
+    backdrop-filter: blur(8px);
+    padding: 3rem;
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.process-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 2rem;
+}
+
+.process-list li {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.step-num {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    opacity: 0.4;
+    line-height: 1;
+}
+
+/* 4. CTA (Center) */
+.cta-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    position: relative;
+}
+
+.cta-content-center {
+    position: relative;
+    z-index: 2;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    padding: 4rem;
+    border-radius: 30px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.2);
+    overflow: hidden;
+}
+
+/* Glowing background effect */
+.cta-content-center::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(96, 165, 250, 0.15) 0%, transparent 60%);
+    animation: rotateBg 15s linear infinite;
+    z-index: -1;
+}
+
+@keyframes rotateBg {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.cta-content-center h2 {
+    font-size: clamp(3rem, 6vw, 5rem);
+    margin-bottom: 2rem;
+    background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 2px 10px rgba(59, 130, 246, 0.2));
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.btn-cta-large {
+    background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+    border: none;
+    color: white;
+    padding: 1.25rem 3.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-cta-large:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 20px 35px -5px rgba(37, 99, 235, 0.6);
+}
+
+.btn-cta-large::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: 0.5s;
+}
+
+.btn-cta-large:hover::after {
+    left: 100%;
+}
+
+/* Footer */
+.landing-footer-minimal {
+    text-align: center;
+    padding: 2rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.5);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem;
+    }
+
+    .section-inner {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .process-inner {
+        flex-direction: column;
+    }
+
+    .hero-content,
+    .process-content {
+        max-width: 100%;
+    }
+
+    .hero-spacer,
+    .process-spacer {
+        display: none;
+    }
+
+    /* On mobile, stack content, eye stays in bg */
+    .landing-container {
+        min-height: auto;
+    }
+
+    /* Let content drive height */
+    .fixed-3d-background {
+        opacity: 0.3;
+    }
+
+    /* Fade eye on mobile to focus on text */
+}
+/* ── Dark Mode Refinements ── */
+
+/* Nav Button Contrast Fix */
+body.dark-mode .btn-nav {
+    background: #fff;
+    color: #0f172a; /* Dark text on white button */
+}
+
+body.dark-mode .btn-nav:hover {
+    background: #e2e8f0;
+}
+
+/* Logos Inversion for Dark Mode */
+body.dark-mode .logo-cloud-img {
+    filter: invert(1) grayscale(100%);
+    opacity: 0.7;
+}
+
+body.dark-mode .logo-cloud:hover .logo-cloud-img {
+    filter: invert(1) grayscale(0%);
+    opacity: 1;
+}
+
+/* Glass Card Background for Dark Mode */
+body.dark-mode .glass-card {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure secondary buttons have contrast */
+body.dark-mode .btn-secondary {
+    background: transparent;
+    border-color: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+body.dark-mode .btn-secondary:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+/* ── Interactive Hover Button ── */
+.interactive-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 160px; /* Slightly wider */
+  height: 3.25rem;
+  padding: 0 1.5rem;
+  border-radius: 9999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-main);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Initial Text */
+.btn-text-initial {
+  display: inline-block;
+  transition: all 0.3s ease;
+  transform: translateX(0);
+  opacity: 1;
+  z-index: 2;
+  position: relative;
+}
+
+.interactive-btn:hover .btn-text-initial {
+  transform: translateX(3rem);
+  opacity: 0;
+}
+
+/* Hover Content (Text + Icon) */
+.btn-content-hover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transform: translateX(-3rem);
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 3;
+  color: white; /* Text becomes white on hover */
+}
+
+.interactive-btn:hover .btn-content-hover {
+  transform: translateX(0);
+  opacity: 1;
+}
+
+.btn-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+/* Moving Dot Background */
+.btn-dot {
+  position: absolute;
+  left: 20%;
+  top: 50%;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--primary);
+  transform: translate(-50%, -50%) scale(1);
+  transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  z-index: 1;
+  opacity: 0; /* Hidden initially, or just small */
+}
+
+.interactive-btn:hover .btn-dot {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) scale(40); /* Expand huge */
+  opacity: 1;
+}
+
+/* Dark Mode Adjustments for Interactive Button */
+body.dark-mode .interactive-btn {
+  background: rgba(30, 41, 59, 0.5); /* Darker glass */
+  color: white;
+}
+
+/* Interactive Button Modifiers */
+
+/* Navbar Variant */
+.btn-nav-interactive {
+  height: 2.5rem;
+  font-size: 0.9rem;
+  min-width: 140px;
+  background: transparent;
+  border-color: var(--text-main);
+}
+body.dark-mode .btn-nav-interactive {
+  border-color: rgba(255,255,255,0.3);
+  color: white;
+}
+
+/* Hero Variant */
+.btn-hero-interactive {
+  background: var(--primary);
+  color: white;
+  border: none;
+  height: 3.5rem;
+  font-size: 1.1rem;
+  box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
+}
+.btn-hero-interactive .btn-text-initial { color: white; }
+
+/* CTA Variant */
+.btn-cta-interactive {
+  height: 4rem;
+  font-size: 1.25rem;
+  min-width: 220px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--primary);
+}
+body.dark-mode .btn-cta-interactive {
+  color: white;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Refine CTA Button Interactive */
+.btn-cta-interactive {
+  font-weight: 700;
+  box-shadow: 0 0 40px rgba(59, 130, 246, 0.2);
+}
+
+.btn-cta-interactive:hover {
+  box-shadow: 0 0 60px rgba(59, 130, 246, 0.4);
+  border-color: var(--primary);
+}
+
+/* ── Bento Grid ── */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    width: 100%;
+    auto-rows: minmax(200px, auto);
+    padding-bottom: 4rem;
+}
+
+.bento-card {
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 24px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    min-height: 220px;
+}
+
+body.dark-mode .bento-card {
+    background: rgba(30, 41, 59, 0.4);
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.bento-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px -5px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary);
+}
+
+.bento-content {
+    z-index: 10;
+    transition: transform 0.3s ease;
+}
+
+.bento-card:hover .bento-content {
+    transform: translateY(-0.5rem);
+}
+
+.bento-icon-container {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: rgba(255,255,255,0.5);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+    transition: all 0.3s;
+}
+
+body.dark-mode .bento-icon-container {
+    background: rgba(255,255,255,0.1);
+}
+
+.bento-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+    color: var(--text-muted);
+    transition: all 0.3s;
+}
+
+.bento-card:hover .bento-icon {
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.bento-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-main);
+}
+
+.bento-desc {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.bento-cta {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    margin-top: auto;
+    padding-top: 1.5rem;
+}
+
+.bento-card:hover .bento-cta {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.bento-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.bento-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    opacity: 0.1;
+    pointer-events: none;
+    /* Optional: Add a gradient or pattern here */
+    background: radial-gradient(circle at top right, var(--primary), transparent 70%);
+}
+
+.bento-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: rgba(0,0,0,0);
+    transition: background 0.3s;
+}
+
+.bento-card:hover .bento-overlay {
+    background: rgba(255,255,255,0.05); /* Slight highlight */
+}
+
+/* Grid Spans */
+.col-span-1 { grid-column: span 1; }
+.col-span-2 { grid-column: span 2; }
+.col-span-3 { grid-column: span 3; }
+.row-span-1 { grid-row: span 1; }
+.row-span-2 { grid-row: span 2; }
+
+@media (max-width: 768px) {
+    .bento-grid {
+        grid-template-columns: 1fr;
+    }
+    .col-span-2, .col-span-3 {
+        grid-column: auto;
+    }
+}
+
+/* ── Expandable Flex Gallery ── */
+.expandable-flex-gallery {
+  display: flex;
+  width: 100%;
+  max-width: 1100px;
+  height: 450px;
+  gap: 1rem;
+  margin: 0 auto;
+}
+
+.expandable-card {
+  position: relative;
+  height: 100%;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.3);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  min-width: 0; /* Prevent flex overflow */
+}
+
+body.dark-mode .expandable-card {
+  background: rgba(30, 41, 59, 0.4);
+  border-color: rgba(255,255,255,0.1);
+}
+
+.expandable-card.active {
+  background: rgba(255, 255, 255, 0.65);
+  border-color: var(--primary);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .expandable-card.active {
+  background: rgba(30, 41, 59, 0.85);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.expandable-card.inactive:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.card-icon-container {
+  width: 3rem;
+  height: 3rem;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.card-icon-container.active {
+  background: var(--primary);
+  color: white;
+}
+
+body.dark-mode .card-icon-container {
+  background: rgba(255,255,255,0.05);
+  color: var(--text-muted);
+}
+
+body.dark-mode .card-icon-container.active {
+  background: var(--primary);
+  color: white;
+}
+
+.card-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-main);
+  white-space: nowrap;
+  transform-origin: top left;
+}
+
+.vertical-text {
+  writing-mode: vertical-lr; /* Or vertical-rl */
+  transform: rotate(180deg);
+  margin-top: 1rem;
+  align-self: center; /* Center horizontally in the narrow strip */
+}
+
+.card-content {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.card-desc {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.card-cta {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(255,255,255,0.5), transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.expandable-card:hover .card-overlay {
+  opacity: 1;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .expandable-flex-gallery {
+    flex-direction: column;
+    height: auto;
+    min-height: 600px; /* Enough space for vertical stack */
+  }
+  
+  .expandable-card {
+    height: auto;
+    min-height: 80px;
+    width: 100%;
+  }
+  
+  .vertical-text {
+    writing-mode: horizontal-tb;
+    transform: none;
+    margin-top: 0;
+    align-self: flex-start;
+  }
+  
+  .card-header {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+/* ── Tubelight Navbar ── */
+.tubelight-container {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 0.35rem 0.5rem; /* Compact padding */
+  border-radius: 9999px;
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.1);
+  gap: 0.25rem;
+}
+
+body.dark-mode .tubelight-container {
+  background: rgba(15, 23, 42, 0.7);
+  border-color: rgba(255,255,255,0.1);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.3);
+}
+
+.tubelight-item {
+  position: relative;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tubelight-item:hover {
+  color: var(--primary);
+}
+
+.tubelight-item.active {
+  color: var(--primary);
+  background: rgba(59, 130, 246, 0.08);
+}
+
+body.dark-mode .tubelight-item.active {
+  color: #93c5fd;
+  background: rgba(59, 130, 246, 0.15);
+}
+
+.tubelight-separator {
+  width: 1px;
+  height: 20px;
+  background: rgba(0,0,0,0.1);
+  margin: 0 0.5rem;
+}
+
+body.dark-mode .tubelight-separator {
+  background: rgba(255,255,255,0.15);
+}
+
+/* Lamp Effect */
+.lamp-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  z-index: -1;
+  overflow: hidden; /* Contain blurs */
+}
+
+.lamp-top {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40%;
+  height: 1px;
+  background: var(--primary);
+  box-shadow: 0 0 15px 2px var(--primary);
+}
+
+.lamp-blur-lg {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80%;
+  height: 20px;
+  background: var(--primary);
+  opacity: 0.2;
+  filter: blur(10px);
+}
+
+/* Navbar Buttons adjustments */
+.tubelight-container .theme-toggle {
+  transform: scale(0.9);
+}
+.tubelight-container .btn-nav {
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  border-radius: 9999px;
+  white-space: nowrap;
+}
+
+/* ── Refactor: Vertical Accordion (Gallery) ── */
+.expandable-flex-gallery {
+  flex-direction: column !important; /* Force vertical */
+  height: 600px !important; /* Taller for vertical stack */
+  max-width: 800px;
+}
+
+.expandable-card {
+  width: 100%;
+  min-height: 80px; /* Collapsed height */
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: auto 1fr; /* Icon title | Content */
+  align-items: center;
+  gap: 2rem;
+}
+
+/* When active, it grows vertically. The flex-grow is handled by JS inline style, 
+   but we need to reset the horizontal logic */
+
+.card-header {
+  flex-direction: row;
+  align-items: center;
+  gap: 1.5rem;
+  min-width: 250px; /* Layout stability */
+}
+
+.vertical-text {
+  writing-mode: horizontal-tb !important; /* No vertical text in vertical accordion */
+  transform: none !important;
+  margin: 0 !important;
+}
+
+.card-title {
+  font-size: 1.1rem;
+}
+
+.expandable-card.active .card-title {
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.card-content {
+  opacity: 0;
+  transform: translateX(-20px);
+  transition: all 0.4s;
+}
+
+.expandable-card.active .card-content {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Hide content when inactive to save space */
+.expandable-card:not(.active) .card-content {
+  display: none;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+  .expandable-flex-gallery {
+    height: auto;
+    min-height: 500px;
+  }
+  .expandable-card {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  .card-header {
+    width: 100%;
+  }
+}
+
+/* ── FIX: Tubelight Navbar ── */
+.tubelight-container {
+  /* Reset previous styles if needed */
+  display: inline-flex !important; /* Keep it tight to content */
+  align-items: center;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: 0.5rem;
+  border-radius: 9999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  gap: 0.5rem;
+  max-width: 90vw;
+  margin: 0 auto;
+}
+
+body.dark-mode .tubelight-container {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure container is centered by parent flex/position */
+/* Fix fixed positioning container if needed */
+.fixed.top-0.left-1\/2 {
+  /* Use explicit CSS class if tailwind not working */
+  position: fixed;
+  top: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  z-index: 1000;
+}
+
+
+/* ── FIX: Vertical Bento Grid (Accordion) ── */
+.expandable-flex-gallery {
+  /* Ensure container constraints */
+  display: flex !important;
+  flex-direction: column !important;
+  height: auto !important;
+  min-height: 500px; /* Base height */
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  gap: 1rem;
+}
+
+.expandable-card {
+  /* Start collapsed */
+  height: 80px; /* Fixed collapsed height */
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth expansion */
+  padding: 0 1.5rem;
+  display: flex; /* Use flex for layout control */
+  flex-direction: column;
+  justify-content: flex-start; /* Start content from top */
+  /* Remove conflicting properties */
+  align-items: stretch;
+}
+
+.expandable-card.active {
+  height: auto; /* Allow growth based on content */
+  min-height: 250px; /* Minimum expanded height */
+  background: rgba(255, 255, 255, 0.8);
+  border-color: var(--primary);
+  box-shadow: 0 20px 40px -10px rgba(59, 130, 246, 0.2);
+}
+
+body.dark-mode .expandable-card.active {
+  background: rgba(30, 41, 59, 0.9);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.4);
+}
+
+/* Internal Layout: Header (Icon + Title) */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  height: 80px; /* Match collapsed height for vertical alignment */
+  flex-shrink: 0; /* Header always stays same size */
+  width: 100%;
+}
+
+.card-icon-container {
+  width: 3rem;
+  height: 3rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  border-radius: 12px;
+  /* Shadow for depth */
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+body.dark-mode .card-icon-container {
+  background: rgba(255,255,255,0.1);
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-main);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-grow: 1;
+}
+
+.expandable-card.active .card-title {
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+/* Internal Layout: Content (Description + CTA) */
+.card-content {
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.4s ease-out 0.1s; /* Slight delay */
+  padding-bottom: 1.5rem; /* Add bottom padding */
+  padding-left: 4.5rem; /* Indent to align with title (icon width + gap) */
+  margin-top: -10px; /* Pull up slightly */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.expandable-card.active .card-content {
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: 0;
+}
+
+.card-desc {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  max-width: 90%;
+}
+
+.expandable-card:not(.active) .card-content {
+  display: none; /* Hide via display to prevent layout shift initially */
+  height: 0;
+}
+
+/* Ensure no override from horizontal styles */
+.vertical-text { display: none !important; }
+
+
+/* ── FIX: Tubelight Navbar Layout ── */
+.tubelight-container {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  max-width: 95vw;
+  margin: 0 auto;
+  gap: 0.25rem;
+  /* Ensure height is contained */
+  height: 3.5rem;
+}
+
+/* Ensure inner wrapper for nav items is also flex row */
+.tubelight-container > div:first-child {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Ensure items don't wrap or stack */
+.tubelight-item {
+  white-space: nowrap;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: center;
+  height: 2.5rem; /* Consistent height */
+}
+
+/* Extras container (Toggle + Button) */
+.tubelight-container > div:last-child {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0.5rem;
+}
+
+/* Explicit Button styling in navbar */
+.btn-nav {
+  white-space: nowrap;
+}
+
+
+/* ── 4. PROCESS SECTION REDESIGN (Interactive Timeline) ── */
+
+/* Smooth Scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Scroll Offset for Fixed Navbar */
+section.landing-section, 
+.animated-section {
+    scroll-margin-top: 6rem; /* Adjust based on navbar height */
+}
+
+/* Timeline Container */
+.process-timeline {
+    position: relative;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem 0;
+}
+
+/* The vertical connecting line */
+.timeline-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 2rem; /* Align perfectly with icon centers */
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, var(--primary) 20%, var(--primary) 80%, transparent);
+    z-index: 0;
+    opacity: 0.3;
+}
+
+/* Step Card Wrapper */
+.timeline-step {
+    position: relative;
+    padding-left: 5rem; /* Space for icon and line */
+    margin-bottom: 3rem;
+    z-index: 1;
+}
+
+.timeline-step:last-child {
+    margin-bottom: 0;
+}
+
+/* Step Icon (Glowing circle on the line) */
+.step-marker {
+    position: absolute;
+    left: 0.5rem; /* Center marker on the line (2rem - 1.5rem/2 = 1.25rem? No. 3rem icon container... wait) */
+    /* Let's align it simpler: Line is at left: 2rem. Icon center needs to be at 2rem. */
+    left: 0.5rem; /* Assuming icon container is 3rem width, center is 1.5rem + 0.5rem = 2rem */
+    top: 0;
+    width: 3rem;
+    height: 3rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary);
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.2);
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.timeline-step:hover .step-marker {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.6);
+    transform: scale(1.1);
+}
+
+/* Step Content Card */
+.step-card {
+    background: rgba(255, 255, 255, 0.5); /* Glass Light */
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    cursor: default;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .step-card {
+    background: rgba(30, 41, 59, 0.5); /* Glass Dark */
+    border-color: rgba(255, 255, 255, 0.05);
+}
+
+.timeline-step:hover .step-card {
+    transform: translateX(10px);
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+}
+
+.step-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    color: var(--text-main);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.step-number {
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    letter-spacing: 1px;
+}
+
+.step-desc {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    line-height: 1.6;
+}
+
+/* Specific Step Animations can be done with Framer Motion in component */
+
+/* Responsive */
+@media (max-width: 768px) {
+    .timeline-line { display: none; } /* Hide line on very small screens? Or adjust */
+    .timeline-step { padding-left: 0; margin-bottom: 2rem; }
+    .step-marker { position: relative; left: 0; margin-bottom: 1rem; }
+}
+

@@ -22,3 +22,7 @@ pydantic-settings>=2.0.0
 
 # Evaluación (métricas)
 scikit-learn>=1.3.0
+
+# Autenticacion (JWT)
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4

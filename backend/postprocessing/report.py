@@ -39,12 +39,21 @@ def build_report(
         labels.append(f"Probabilidad glaucoma: {prob * 100:.1f}%")
 
     if "C" in models_used and model_c_result:
-        detection_summary = [
-            {"label": b.get("label", "lesion"), "confidence": b.get("confidence", 0)}
-            for b in model_c_result
-        ]
-        if detection_summary:
-            labels.append(f"Lesiones detectadas: {len(detection_summary)}")
+        if isinstance(model_c_result, dict):
+            # Formato de ML Manager de clasificación (ResNet, DenseNet, etc)
+            label = f"Grado {model_c_result.get('predicted_class', 0)}: {model_c_result.get('diagnosis', 'Normal')}"
+            conf = model_c_result.get('confidence_percent', 0.0) / 100.0
+            detection_summary = [{"label": label, "confidence": conf}]
+            if model_c_result.get('predicted_class', 0) > 0:
+                labels.append(f"Retinopatía: {label}")
+        elif isinstance(model_c_result, list):
+            # Formato antiguo (Lista de bounding boxes)
+            detection_summary = [
+                {"label": b.get("label", "lesion"), "confidence": b.get("confidence", 0)}
+                for b in model_c_result if isinstance(b, dict)
+            ]
+            if detection_summary:
+                labels.append(f"Lesiones detectadas: {len(detection_summary)}")
 
     return {
         "labels": labels,
