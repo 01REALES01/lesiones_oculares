@@ -157,11 +157,21 @@ Proyecto_final/
 
 Mantenemos un repositorio público en **GitHub**. Todos los integrantes de nuestro grupo, el tutor y el profesor están agregados como colaboradores. El enlace al repositorio está consignado en el Excel de grupos de trabajo en la columna correspondiente.
 
-## Diagramas
-# Secuencia 
-Login
+# Diagramas
+## Diagrama de Arquitectura
+
+<img width="856" height="620" alt="arquitectura" src="https://github.com/user-attachments/assets/9bb0e69b-0625-4000-afdd-319f12781fc4" />
+
+## Diagrama de Interacción de Modulos
+
+<img width="1733" height="857" alt="interaccion" src="https://github.com/user-attachments/assets/6f127ab3-cb5f-4f55-9de0-5ab2b3ee3097" />
+
+## Secuencia Login
+
 <img width="694" height="424" alt="secuencia_login" src="https://github.com/user-attachments/assets/f5c90f79-7a33-46d5-beb3-81fb5cab137d" />
-Core
+
+## Secuencia Core
+
 <img width="1001" height="754" alt="secuencia_co" src="https://github.com/user-attachments/assets/84d8a49d-b949-43e4-adf8-ee45e2af90eb" />
 
 
