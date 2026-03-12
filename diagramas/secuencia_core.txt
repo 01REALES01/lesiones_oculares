@@ -1,0 +1,41 @@
+@startuml
+title Proceso de Análisis de Retinografías con IA
+
+autonumber
+actor "Usuario (Médico)" as User
+participant "App Web" as Web
+participant "Backend API" as Backend
+participant "Modelos IA" as Model
+
+User -> Web : Cargar foto o carpeta\nde retinografías\n+ seleccionar modelos
+
+Web -> Backend : enviarImagenes(images)
+
+
+Backend -> Backend : preprocesamiento(imágenes)
+
+Backend -> Model : predict(images)
+
+Model --> Backend : resultados\n(probabilidades, métricas)
+
+
+Backend --> Web : resultadosAnalisis
+
+Web --> User : Visualización de resultados\n(gráficas, métricas, hallazgos)
+
+alt Usuario desea exportar resultados
+User -> Web : Click "Exportar Excel"
+Web -> Backend : generarReporteExcel()
+Backend --> Web : archivo_resultados.xlsx
+Web --> User : Descargar archivo Excel
+else Usuario solo visualiza
+Web --> User : Mantener resultados en pantalla
+end
+
+note right of Model
+Tres modelos de IA realizan
+análisis en paralelo para
+validación cruzada de hallazgos
+end note
+
+@enduml

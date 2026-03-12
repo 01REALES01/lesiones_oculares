@@ -1,0 +1,24 @@
+@startuml
+title Proceso de Autenticación de Usuario
+
+autonumber
+actor "Usuario (Médico)" as User
+participant "App Web" as Web
+participant "Backend API" as Backend
+participant "Servicio Auth" as Auth
+
+User -> Web : Ingresar credenciales\n(usuario, contraseña)
+
+Web -> Backend : POST /login
+
+Backend -> Auth : verificarCredenciales()
+
+Auth --> Backend : tokenAutenticacion
+
+Backend --> Web : msg("Éxito al ingresar")\n+ token
+
+Web --> User : Acceso a la plataforma
+
+
+
+@enduml
