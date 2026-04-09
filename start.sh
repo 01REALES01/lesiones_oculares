@@ -40,7 +40,6 @@ source .venv/bin/activate
 echo "[3/6] Instalando dependencias backend..."
 pip install --upgrade pip -q
 pip install -r requirements.txt -q
-pip install tf_keras --no-deps -q
 
 # ---------- 4. Verificar modelos ----------
 echo "[4/6] Verificando archivos de modelos..."

@@ -11,9 +11,9 @@ opencv-python-headless>=4.10.0
 Pillow>=10.0.0
 scikit-image>=0.22.0
 
-# ML / inferencia (stubs; luego ONNX/Triton)
-# onnxruntime>=1.18.0
-# torch>=2.0.0
+# ML / Deep Learning
+tensorflow-cpu>=2.21.0
+tf_keras>=2.21.0
 
 # Utilidades
 python-multipart>=0.0.9

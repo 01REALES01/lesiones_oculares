@@ -39,7 +39,6 @@ if (-not (Test-Path ".venv")) {
 Write-Host "[3/6] Instalando dependencias backend..." -ForegroundColor Yellow
 python -m pip install --upgrade pip -q
 python -m pip install -r requirements.txt -q
-python -m pip install tf_keras --no-deps -q
 
 # ---------- 4. Verificar modelos ----------
 Write-Host "[4/6] Verificando archivos de modelos..." -ForegroundColor Yellow
