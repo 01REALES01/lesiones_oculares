@@ -1,177 +1,217 @@
-# Plataforma de análisis de retinografías
+# Informe 2  
+[LINK DEL INFORME 2](https://uninorte-my.sharepoint.com/:w:/g/personal/asilverad_uninorte_edu_co/IQACBqu_HGi0TKPcYib8wW2NAc2VBapSLh7U5ahr4t3zWSw?e=ngtLgD)
 
-**Objetivo del proyecto:** En este proyecto diseñamos e implementamos una plataforma de software que permite **cargar retinografías**, **seleccionar entre tres modelos de IA** y obtener resultados de **detección/segmentación y/o clasificación de lesiones**, con **métricas de desempeño**, **trazabilidad de inferencias** y una **interfaz usable** orientada a **apoyo clínico/educativo** (no diagnóstico).
+# Plataforma para la Identificación y Clasificación de Lesiones en Imágenes de Fondo de Ojo con IA
 
----
+## Descripción general
 
-## Alcance
+En este segundo informe se presenta el desarrollo técnico de la plataforma, pasando de la idea conceptual a una solución funcional. El sistema permite analizar retinografías utilizando múltiples modelos de inteligencia artificial en paralelo, con el objetivo de apoyar al personal médico en la detección de retinopatía diabética.
 
-### Incluido
-
-1. **Requerimientos** — Levantamiento de requerimientos funcionales y no funcionales (seguridad, usabilidad, rendimiento). Ver `docs/REQUERIMIENTOS.md`.
-2. **Front-end (web)** — Carga de imagen, selección de modelo (A / B / C), visualización de resultados, historial básico. Carpeta `frontend/`.
-3. **Back-end / API** — Orquestación de inferencias, trazabilidad (ID, timestamp, modelos usados, tiempos) y registros (historial). Gestión de usuarios opcional.
-4. **Tres modelos** — (i) Segmentación disco/copa + CDR (Modelo A), (ii) Clasificador de severidad/glaucoma (Modelo B), (iii) Detector de lesiones (Modelo C), empaquetados para inferencia (Docker/servicio).
-5. **Postprocesamiento** — Etiquetas, probabilidades y datos para gráficas (barras de probabilidad y tiempos de inferencia).
-6. **Evaluación** — Script con dataset público o provisto: métricas (accuracy, F1, AUC, sensibilidad, especificidad, tiempos de inferencia) y comparación entre modelos. Carpeta `evaluation/`.
-7. **Prototipo desplegable** — Local o nube (Docker/docker-compose) + documentación técnica y manual de usuario (`docs/MANUAL_USUARIO.md`).
-
-### No incluido (para acotar)
-
-- Certificación como dispositivo médico.
-- Integración con historia clínica real.
-- Diagnóstico automático definitivo.
-- Uso en entornos clínicos reales sin supervisión y aprobación ética.
+La plataforma está pensada como una herramienta de apoyo clínico y educativo, no como un sistema de diagnóstico automático.
 
 ---
 
-## Riesgos y mitigaciones
+## Objetivo del informe
 
-| Riesgo | Mitigación |
-|--------|------------|
-| **Datos/IA:** Calidad variable de imágenes (iluminación, desenfoque, artefactos) reduce desempeño. | Implementamos preprocesamiento (canal verde, CLAHE, Ben Graham); documentamos limitaciones. |
-| **Datos/IA:** Desbalance de clases y sesgos de dataset afectan generalización. | Realizamos evaluación con dataset público/provisto; reportamos métricas en script de evaluación. |
-| **Datos/IA:** Explicabilidad limitada. | Incluimos heatmap/mapa de relevancia en resultados; nuestro objetivo es Grad-CAM con modelo real. |
-| **Datos/IA:** Diferencias de resolución/cámaras (dominio) degradan precisión. | Documentamos tipo de imágenes soportadas; evaluamos en condiciones controladas. |
-| **Software:** Latencia y consumo en inferencia. | Medimos y exponemos tiempos; ofrecemos opción GPU (ONNX); acotamos historial. |
-| **Software:** Seguridad y privacidad de imágenes médicas. | Implementamos cifrado en tránsito (HTTPS en despliegue), control de acceso, retención mínima, anonimización (ver `docs/REQUERIMIENTOS.md`). |
-| **Legal/ético:** Uso indebido como diagnóstico. | Incluimos disclaimers en API e interfaz; enfocamos en “apoyo/tamizaje”; trazabilidad de cada inferencia. |
-| **Proyecto:** Alcance excesivo. | Definimos claramente salidas por modelo (A: CDR; B: probabilidad; C: bboxes) y lesiones consideradas. |
+El propósito de este informe es mostrar **cómo está construida la solución**, incluyendo:
+
+- Diseño de arquitectura
+- Pipeline de procesamiento
+- Integración de modelos de IA
+- Implementación del sistema
+- Plan de pruebas
 
 ---
 
-## Informe 1 — Introducción, problema, restricciones, alcance
+## Arquitectura del sistema
 
-### Introducción
+La solución se diseñó como una plataforma web modular con separación clara de responsabilidades.
 
-La fotografía de fondo de ojo (retinografía) permite capturar la retina, el nervio óptico y la vasculatura. Nuestra plataforma integra **tres modelos de IA**: (A) segmentación del disco y la copa óptica con **CDR**, (B) clasificación de probabilidad de **glaucoma**, (C) **detección de lesiones** (microaneurismas, hemorragias, exudados). El usuario puede **elegir qué modelos ejecutar**, obtener resultados con **métricas y trazabilidad** y consultar un **historial** de análisis. Nuestra interfaz y API están orientadas a **apoyo clínico y educativo**, no a diagnóstico definitivo.
+### Componentes principales
 
-### Planteamiento del problema
+- **Frontend (React + Vite)**
+  - Carga de imágenes
+  - Selección de modelos
+  - Visualización comparativa de resultados
 
-La interpretación de retinografías requiere tiempo y experiencia. Hemos desarrollado una plataforma que permite cargar imágenes, seleccionar modelos y obtener resultados de segmentación/clasificación/detección con trazabilidad y métricas de desempeño para apoyar la formación y el tamizaje, siempre bajo supervisión profesional.
+- **Backend (FastAPI)**
+  - Orquesta la ejecución de modelos
+  - Gestiona trazabilidad
+  - Expone API REST
 
-### Restricciones y supuestos
+- **Motor de IA**
+  - Tres modelos enfocados en retinopatía diabética
+  - Ejecución en paralelo
 
-- Trabajamos con imágenes de fondo de ojo (fundus), formatos estándar (jpg, png). Implementamos preprocesamiento para atenuar variaciones de iluminación.
-- Nuestros modelos están actualmente como stubs; el diseño está listo para sustituir por modelos reales (ONNX/Triton).
-- Nuestro sistema es de apoyo; no reemplaza el criterio clínico. Incluimos disclaimers en API e interfaz.
+- **Postprocesamiento**
+  - Normaliza resultados
+  - Genera métricas y datos interpretables
 
-### Alcance (resumen)
-
-Incluimos: requerimientos, front-end, back-end, tres modelos, postprocesamiento, evaluación con métricas, prototipo desplegable (Docker) y documentación (manual de usuario y técnica). No incluimos: certificación como dispositivo médico, integración con historia clínica real ni uso clínico real sin supervisión y aprobación ética.
-
----
-
-## Cómo ejecutar
-
-### Backend (API)
-
-```bash
-cd Proyecto_final
-pip install -r requirements.txt
-PYTHONPATH=. uvicorn backend.main:app --reload
-```
-
-Documentación interactiva: **http://127.0.0.1:8000/docs**
-
-### Frontend (interfaz web)
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Interfaz: **http://127.0.0.1:5173** (el proxy envía `/api` al backend en el puerto 8000).
-
-### Prototipo con Docker
-
-```bash
-docker-compose up --build
-```
-
-- Frontend: **http://localhost** (puerto 80)  
-- API: **http://localhost:8000** (o vía frontend en `/api`)
+- **Persistencia**
+  - Guarda historial de inferencias
+  - No almacena imágenes clínicas de forma permanente
 
 ---
 
-## API — Endpoints principales
+## Pipeline del sistema
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | /health | Estado del servicio |
-| POST | /analyze-retina/ | Analizar imagen. Parámetros: `file`, `models=A,B,C`, `include_heatmap`. Devuelve resultados, inference_id, traceability, postprocessing, disclaimer |
-| GET | /history | Historial de inferencias (limit, offset) |
-| GET | /inferences/{id} | Detalle de una inferencia (trazabilidad) |
+El flujo del sistema es el siguiente:
 
----
-
-## Evaluación de modelos
-
-```bash
-PYTHONPATH=. python evaluation/run_evaluation.py --images evaluation/data/images [--labels evaluation/data/labels.csv] [--output evaluation/reports] [--limit N]
-```
-
-Con `--labels` (CSV con columnas `image_name`, `glaucoma` 0/1) se calculan accuracy, F1, AUC, sensibilidad y especificidad del clasificador. Sin etiquetas se reportan solo tiempos de inferencia y comparación entre modelos. Ver `evaluation/README.md`.
+1. El usuario carga una retinografía
+2. Selecciona uno o varios modelos
+3. El backend recibe la solicitud
+4. Se realiza preprocesamiento de la imagen
+5. Se ejecutan los modelos de IA
+6. Se consolidan los resultados
+7. Se almacena la trazabilidad
+8. Se muestran los resultados en el frontend
 
 ---
 
-## Estructura del repositorio
+## Modelos de Inteligencia Artificial
 
-```
-Proyecto_final/
-├── diseno/                    # Temas de diseño (README por tema)
-│   ├── 01-fotografia-fondo-ojo/
-│   ├── 02-preprocesamiento-retina/
-│   ├── 03-segmentacion-disco-copa-cdr/
-│   ├── 04-glaucoma-y-retinopatia/
-│   ├── 05-modelos-ia-segmentacion-clasificacion/
-│   ├── 06-explicabilidad-xai/
-│   └── 07-stack-tecnologico-api/
-├── backend/                   # API FastAPI, modelos, preprocesamiento, store
-├── frontend/                  # Interfaz web (React + Vite)
-├── evaluation/                # Script de evaluación y métricas
-├── docs/
-│   ├── MANUAL_USUARIO.md      # Manual de usuario
-│   └── REQUERIMIENTOS.md      # Requerimientos funcionales y no funcionales
-├── data/                      # Persistencia de historial (inferences.json)
-├── Dockerfile                 # Imagen del backend
-├── docker-compose.yml         # Backend + frontend (nginx)
-├── FICHA_PROYECTO.md
-├── requirements.txt
-└── README.md
-```
+El sistema utiliza tres modelos que trabajan sobre la misma patología:
+
+- Clasificación de retinopatía diabética (presencia/ausencia)
+- Estimación de severidad
+- Comparación de resultados entre modelos
+
+Esto permite una **validación cruzada**, aumentando la confianza en los resultados.
 
 ---
 
-## Documentación
+## Tecnologías utilizadas
 
-- **Manual de usuario:** `docs/MANUAL_USUARIO.md`  
-- **Requerimientos (funcionales y no funcionales):** `docs/REQUERIMIENTOS.md`  
-- **Evaluación de modelos:** `evaluation/README.md`  
-- **Diseño por temas:** carpeta `diseno/` (cada subcarpeta tiene su README).
+### Backend
+- Python
+- FastAPI
+- Uvicorn
+- Pydantic
+- JWT (Python-JOSE, Passlib)
+
+### Procesamiento e IA
+- NumPy
+- OpenCV
+- Pillow
+- Scikit-image
+- TensorFlow
+- Scikit-learn
+
+### Frontend
+- React
+- Vite
+- Axios
+- Tailwind CSS
+- Framer Motion
+
+### Despliegue
+- Docker
+- Docker Compose
 
 ---
 
-## Repositorio y colaboradores
+## Componentes del sistema
 
-Mantenemos un repositorio público en **GitHub**. Todos los integrantes de nuestro grupo, el tutor y el profesor están agregados como colaboradores. El enlace al repositorio está consignado en el Excel de grupos de trabajo en la columna correspondiente.
+### 1. Autenticación
+- Login con JWT
+- Protección de endpoints
+- Manejo de sesión en frontend
 
-# Diagramas
-## Diagrama de Arquitectura
+### 2. Carga y análisis
+- Subida de imágenes
+- Selección de modelos
+- Orquestación de inferencia
 
-<img width="856" height="620" alt="arquitectura" src="https://github.com/user-attachments/assets/9bb0e69b-0625-4000-afdd-319f12781fc4" />
+### 3. Preprocesamiento e inferencia
+- Normalización de imágenes
+- Ejecución de modelos
+- Manejo de fallos
 
-## Diagrama de Interacción de Modulos
+### 4. Postprocesamiento
+- Generación de resultados comparativos
+- Métricas por modelo
 
-<img width="1733" height="857" alt="interaccion" src="https://github.com/user-attachments/assets/6f127ab3-cb5f-4f55-9de0-5ab2b3ee3097" />
+### 5. Visualización
+- Dashboard de análisis
+- Resultados detallados
+- Historial de inferencias
 
-## Secuencia Login
+### 6. Trazabilidad
+- ID único por inferencia
+- Timestamp
+- Modelos utilizados
+- Tiempos de ejecución
 
-<img width="694" height="424" alt="secuencia_login" src="https://github.com/user-attachments/assets/f5c90f79-7a33-46d5-beb3-81fb5cab137d" />
+---
 
-## Secuencia Core
+## Integraciones
 
-<img width="1001" height="754" alt="secuencia_co" src="https://github.com/user-attachments/assets/84d8a49d-b949-43e4-adf8-ee45e2af90eb" />
+- Frontend ↔ Backend mediante HTTP
+- Autenticación con JWT
+- Persistencia de resultados
+- Integración de modelos IA en entorno local
+- Despliegue reproducible con Docker
+
+---
+
+## Decisiones de diseño
+
+- Uso de un backend orquestador único
+- Comparación de modelos en una sola ejecución
+- Enfoque en una sola patología (retinopatía diabética)
+- Arquitectura modular para facilitar escalabilidad
+- No almacenamiento de imágenes clínicas
+
+---
+
+## Plan de pruebas
+
+### Pruebas por componentes
+
+- Carga de imágenes válidas e inválidas
+- Procesamiento en backend
+- Ejecución de modelos
+- Visualización de resultados
+- Registro en historial
+- Login de usuarios
+
+### Pruebas de integración
+
+- Comunicación frontend-backend
+- Manejo de errores
+- Flujo completo del sistema
+
+### Pruebas de usabilidad
+
+- Facilidad de uso
+- Claridad de resultados
+- Tiempo de respuesta
+- Comprensión por parte del usuario
+
+---
+
+## Limitaciones
+
+- Modelos pueden estar en fase inicial o simulación
+- No es un sistema certificado clínicamente
+- No reemplaza el diagnóstico médico
+- Uso limitado a entorno académico o de prueba
+
+---
+
+## Próximos pasos
+
+- Integración de modelos entrenados reales
+- Mejora en explicabilidad (heatmaps)
+- Optimización de tiempos de inferencia
+- Escalamiento de infraestructura
+- Integración con sistemas externos (futuro)
+
+---
+
+## Nota importante
+
+Este sistema está diseñado como una herramienta de apoyo para el personal médico.  
+No debe ser utilizado como reemplazo del diagnóstico clínico profesional.
 
 
