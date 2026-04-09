@@ -5,7 +5,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import HistoryPage from './pages/History';
 import AnalysisDetail from './pages/Details';
-import { LayoutDashboard, History, Settings, HelpCircle, Layout } from 'lucide-react';
+import Demo from './pages/Demo';
+import { LayoutDashboard, History, Settings, HelpCircle, Layout, Zap } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 function AppContent() {
@@ -46,6 +47,10 @@ function AppContent() {
       onClick: () => { setActiveTab('dashboard'); setView('main'); } 
     },
     { 
+      key: 'demo', label: 'Demo DenseNet', icon: Zap, 
+      onClick: () => { setActiveTab('demo'); setView('main'); } 
+    },
+    { 
       key: 'history', label: 'Historial Admin', icon: History, 
       onClick: () => { setActiveTab('history'); setView('main'); } 
     },
@@ -79,7 +84,9 @@ function AppContent() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
               >
-                {activeTab === 'history' ? (
+                {activeTab === 'demo' ? (
+                  <Demo onBack={() => setActiveTab('dashboard')} />
+                ) : activeTab === 'history' ? (
                   <HistoryPage onViewDetail={navigateToDetail} />
                 ) : (
                   <Dashboard onViewDetail={navigateToDetail} />

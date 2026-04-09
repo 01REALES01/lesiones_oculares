@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { cn } from '../../utils';
 
-export const GlassCard = ({ children, className, delay = 0 }) => (
+export const GlassCard = ({ children, className, delay = 0, ...props }) => (
   <motion.div
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -10,6 +10,7 @@ export const GlassCard = ({ children, className, delay = 0 }) => (
       "glass-panel p-6 border border-white/20 bg-white/70 backdrop-blur-xl shadow-xl rounded-3xl",
       className
     )}
+    {...props}
   >
     {children}
   </motion.div>

@@ -4,7 +4,7 @@ import { analysisService } from '../services/api';
 export const useAnalysis = () => {
   const [files, setFiles] = useState([]);
   const [models, setModels] = useState({ A: true, B: true, C: true });
-  const [drModelType, setDrModelType] = useState('resnet50v2');
+  const [drModelType, setDrModelType] = useState('densenet169');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);

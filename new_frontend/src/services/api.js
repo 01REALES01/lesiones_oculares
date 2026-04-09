@@ -41,6 +41,16 @@ export const analysisService = {
     return response.data;
   },
 
+  analyzeDenseNet: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const response = await api.post('/analyze-densenet/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+
   getHistory: async (limit = 20) => {
     const response = await api.get(`/history?limit=${limit}`);
     return response.data.inferences || [];

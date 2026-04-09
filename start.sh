@@ -18,7 +18,8 @@ BACKEND_PID=$!
 
 # 2. Iniciar el Frontend (Vite/React) en segundo plano
 echo "-> Iniciando Frontend (React - Puerto 5173)..."
-cd frontend || exit
+cd new_frontend || exit
+npm install
 npm run dev &
 FRONTEND_PID=$!
 

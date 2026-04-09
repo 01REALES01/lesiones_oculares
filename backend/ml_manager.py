@@ -1,6 +1,10 @@
 import os
 import io
 import numpy as np
+
+# Force legacy tf.keras loader for older serialized models.
+os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
+
 import tensorflow as tf
 from PIL import Image
 
@@ -29,6 +33,27 @@ class MLManager:
             4: "DR Proliferativa - Neovascularización, hemorragia vítrea o hemorragia prerretiniana presentes."
         }
 
+    def _resolve_target_size(self, model_key: str, target_size=None):
+        """
+        Devuelve el tamaño de entrada correcto para el modelo.
+        Si no se especifica target_size, se infiere desde model.input_shape.
+        """
+        if target_size is not None:
+            return target_size
+
+        model = self.models.get(model_key)
+        if model is None:
+            return (224, 224)
+
+        shape = getattr(model, "input_shape", None)
+        if isinstance(shape, list):
+            shape = shape[0]
+
+        if shape and len(shape) >= 3 and shape[1] and shape[2]:
+            return (int(shape[1]), int(shape[2]))
+
+        return (224, 224)
+
     def load_model(self, model_key: str, filename: str):
         """
         Carga un modelo de Keras (.keras o .h5) en la memoria gráfica de forma perezosa.
@@ -44,9 +69,9 @@ class MLManager:
         try:
             # We try to load without optimizer for inference efficiency
             self.models[model_key] = tf.keras.models.load_model(filepath, compile=False)
-            print(f"✅ Modelo '{model_key}' cargado exitosamente.")
+            print(f"Modelo '{model_key}' cargado exitosamente.")
         except Exception as e:
-            print(f"❌ Error al cargar '{model_key}': {str(e)}")
+            print(f"Error al cargar '{model_key}': {str(e)}")
             raise e
 
     def preprocess_image(self, image_bytes: bytes, target_size=(224, 224), model_type="resnet50"):
@@ -77,12 +102,14 @@ class MLManager:
 
         return img_array
 
-    def predict_batch(self, model_key: str, images_bytes_list: list, target_size=(224, 224), model_type="resnet50"):
+    def predict_batch(self, model_key: str, images_bytes_list: list, target_size=None, model_type="resnet50"):
         """
         Procesa un lote de imágenes en un solo pase hacia la tarjeta gráfica o CPU usando Tensor Stacking.
         """
         if model_key not in self.models:
             raise Exception(f"Modelo '{model_key}' no está pre-cargado. Llame a load_model primero.")
+
+        target_size = self._resolve_target_size(model_key, target_size)
 
         # 1. Preprocess every image individually 
         preprocessed_images = []
@@ -94,7 +121,7 @@ class MLManager:
         batch_tensor = np.stack(preprocessed_images)
 
         # 3. Model Inference (Batch processing is extremely fast here compared to 1 by 1)
-        predictions = self.models[model_key].predict(batch_tensor)
+        predictions = self.models[model_key].predict(batch_tensor, verbose=0)
 
         # 4. Post-processing to structured JSON output
         results = []
@@ -117,6 +144,42 @@ class MLManager:
             })
 
         return results
+    
+    def predict_single(self, model_key: str, image_bytes: bytes, target_size=None, model_type="densenet169"):
+        """
+        Procesa una sola imagen con el modelo especificado.
+        """
+        if model_key not in self.models:
+            raise Exception(f"Modelo '{model_key}' no está pre-cargado. Llame a load_model primero.")
+
+        target_size = self._resolve_target_size(model_key, target_size)
+
+        # Preprocess imagen
+        img_array = self.preprocess_image(image_bytes, target_size=target_size, model_type=model_type)
+        
+        # Agregar dimensión batch: (224, 224, 3) -> (1, 224, 224, 3)
+        batch_tensor = np.expand_dims(img_array, axis=0)
+
+        # Model Inference
+        predictions = self.models[model_key].predict(batch_tensor, verbose=0)
+        probs = predictions[0]
+
+        # Post-processing
+        predicted_class = int(np.argmax(probs))
+        confidence = float(np.max(probs)) * 100
+
+        diagnosis = "Normal" if predicted_class == 0 else "Anómalo"
+        if predicted_class > 0:
+            diagnosis = f"Retinopatía (Grado {predicted_class})"
+
+        return {
+            "model_used": model_key,
+            "predicted_class": predicted_class,
+            "confidence_percent": round(confidence, 2),
+            "diagnosis": diagnosis,
+            "clinical_description": self.class_descriptions.get(predicted_class, "Class desconocida"),
+            "raw_probabilities": [round(float(p)*100, 2) for p in probs]
+        }
 
 # Exponer la instancia singleton para la app entera
 ml_manager = MLManager()

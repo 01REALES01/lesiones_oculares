@@ -176,15 +176,9 @@ export default function Dashboard({ onViewDetail }) {
                     >
                        <span className="text-xs font-bold text-ocular-text-muted">Motor Seleccionado:</span>
                        <div className="flex gap-4">
-                         {['resnet50v2', 'mobilenetv3'].map(type => (
-                           <button 
-                            key={type}
-                            onClick={() => setDrModelType(type)}
-                            className={`text-xs font-bold px-3 py-1.5 rounded-full border transition-all ${drModelType === type ? 'bg-primary text-white border-primary shadow-md' : 'bg-white/50 text-ocular-text-muted border-white/60 hover:border-primary/40'}`}
-                           >
-                            {type.toUpperCase()}
-                           </button>
-                         ))}
+                         <span className="text-xs font-bold px-3 py-1.5 rounded-full border bg-primary text-white border-primary shadow-md">
+                           DENSENET169
+                         </span>
                        </div>
                     </motion.div>
                   )}

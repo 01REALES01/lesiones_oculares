@@ -10,7 +10,7 @@ API principal: plataforma de análisis de retinografías.
 import asyncio
 import time
 from typing import Any, List, Optional
-from datetime import timedelta
+from datetime import timedelta, datetime, timezone
 
 import numpy as np
 from fastapi import FastAPI, File, Query, UploadFile, Depends, HTTPException, status
@@ -45,16 +45,22 @@ DISCLAIMER = (
 async def lifespan(app: FastAPI):
     # Load the real trained models for lesions (DR classification)
     try:
-        ml_manager.load_model("lesiones_resnet", "resnet50_model_fine.h5")
-        print("Model 'lesiones_resnet' loaded successfully on startup.")
+        ml_manager.load_model("lesiones_densenet", "densenet_169_aptos_fine.h5")
+        print("Model 'lesiones_densenet' loaded successfully on startup.")
     except Exception as e:
-        print(f"Warning: Could not load model 'lesiones_resnet' on startup: {e}")
+        print(f"Warning: Could not load model 'lesiones_densenet' on startup: {e}")
 
     try:
-        ml_manager.load_model("lesiones_mobilenet", "mobilenetv3_model_fine.h5")
+        ml_manager.load_model("lesiones_mobilenet", "mobilenetv3_model_fino.keras")
         print("Model 'lesiones_mobilenet' loaded successfully on startup.")
     except Exception as e:
         print(f"Warning: Could not load model 'lesiones_mobilenet' on startup: {e}")
+
+    try:
+        ml_manager.load_model("lesiones_efficientnet", "efficientnet_model.keras")
+        print("Model 'lesiones_efficientnet' loaded successfully on startup.")
+    except Exception as e:
+        print(f"Warning: Could not load model 'lesiones_efficientnet' on startup: {e}")
     yield
 
 app = FastAPI(title=settings.app_name, version="0.3.0", lifespan=lifespan)
@@ -229,6 +235,163 @@ async def get_inference_by_id(inference_id: str):
     return record
 
 
+@app.post("/analyze-densenet/")
+async def analyze_densenet(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Análisis rápido DEMO usando solo el modelo DenseNet169 para Retinopatía Diabética.
+    
+    - **file**: imagen retinográfica.
+    - Devuelve resultados detallados del modelo DenseNet con grado, probabilidades y descripción clínica.
+    """
+    loop = asyncio.get_event_loop()
+    
+    try:
+        # 1. Leer imagen
+        img = _read_image_from_upload(file)
+        
+        # 2. Preprocesar
+        image = preprocess_fundus(img)
+        
+        # 3. Ejecutar modelo DenseNet
+        t0 = time.perf_counter()
+        
+        model_loaded = "lesiones_densenet" in ml_manager.models
+
+        if model_loaded:
+            # Leer bytes de imagen para pasar al modelo
+            file.file.seek(0)
+            image_bytes = file.file.read()
+
+            # Ejecutar predicción real
+            model_result = await loop.run_in_executor(
+                None,
+                lambda: ml_manager.predict_single(
+                    model_key="lesiones_densenet",
+                    image_bytes=image_bytes,
+                    target_size=None,
+                    model_type="densenet169"
+                )
+            )
+        else:
+            # Fallback para demo cuando el modelo no puede cargarse por incompatibilidad.
+            lesions = await loop.run_in_executor(None, lambda: detect_hemorrhages(image))
+            lesion_count = len(lesions)
+            mean_intensity = float(np.mean(image))
+            std_intensity = float(np.std(image))
+
+            # Heurística simple para producir salida variable según imagen (0..4).
+            score = (0.7 * lesion_count) + (std_intensity / 85.0) + ((255.0 - mean_intensity) / 255.0)
+            if score < 1.0:
+                predicted_class = 0
+            elif score < 1.5:
+                predicted_class = 1
+            elif score < 2.0:
+                predicted_class = 2
+            elif score < 2.5:
+                predicted_class = 3
+            else:
+                predicted_class = 4
+
+            confidence_percent = max(55.0, min(92.0, 58.0 + score * 12.0))
+            probs = [8.0, 8.0, 8.0, 8.0, 8.0]
+            probs[predicted_class] = confidence_percent
+            rest = (100.0 - confidence_percent) / 4.0
+            for i in range(5):
+                if i != predicted_class:
+                    probs[i] = round(rest, 2)
+
+            model_result = {
+                "model_used": "FallbackHeuristic",
+                "predicted_class": predicted_class,
+                "confidence_percent": round(confidence_percent, 2),
+                "diagnosis": "Normal" if predicted_class == 0 else f"Retinopatia (Grado {predicted_class})",
+                "clinical_description": "Resultado estimado por fallback de demo (modelo no cargado).",
+                "raw_probabilities": [round(float(p), 2) for p in probs],
+            }
+        
+        inference_time_ms = (time.perf_counter() - t0) * 1000
+        analysis_timestamp = datetime.now(timezone.utc).isoformat()
+        
+        # 4. Construir respuesta formateada
+        dr_class = model_result["predicted_class"]
+        confidence = model_result["confidence_percent"]
+        diagnosis = model_result["diagnosis"]
+        clinical_desc = model_result["clinical_description"]
+        probabilities = model_result["raw_probabilities"]
+        
+        # Determinar nivel de riesgo
+        risk_level = "high" if dr_class >= 3 else "medium" if dr_class > 0 else "low"
+        
+        # Recomendación
+        recommendation_short = "Evaluación oftalmológica urgente." if risk_level == "high" else "Evaluación recomendada." if risk_level != "low" else "Seguimiento habitual."
+        source_label = "DenseNet169" if model_loaded else "Fallback demo"
+        recommendation = f"{source_label} predice: {diagnosis} (Confianza: {confidence:.1f}%). {clinical_desc}"
+        
+        # 5. Guardar trazabilidad
+        inference_id = save_inference(
+            models_used=["C"],
+            inference_times_ms={"C": inference_time_ms},
+            result={
+                "predicted_class": dr_class,
+                "confidence_percent": confidence,
+                "diagnosis": diagnosis,
+                "clinical_description": clinical_desc,
+                "raw_probabilities": probabilities,
+                "recommendation": recommendation,
+                "timestamp": analysis_timestamp,
+                "explanation": {
+                    "dr_grade": dr_class,
+                    "dr_diagnosis": diagnosis,
+                    "recommendation_short": recommendation_short,
+                    "glaucoma_risk_level": risk_level,
+                }
+            },
+            image_size=(img.shape[1], img.shape[0]),
+        )
+        
+        return {
+            "success": True,
+            "filename": file.filename,
+            "inference_id": inference_id,
+            "model_used": "DenseNet169" if model_loaded else "FallbackHeuristic",
+            "predicted_class": dr_class,
+            "confidence_percent": confidence,
+            "diagnosis": diagnosis,
+            "clinical_description": clinical_desc,
+            "raw_probabilities": probabilities,
+            "recommendation": recommendation,
+            "recommendation_short": recommendation_short,
+            "risk_level": risk_level,
+            "timestamp": analysis_timestamp,
+            "inference_time_ms": round(inference_time_ms, 2),
+            "traceability": {
+                "inference_id": inference_id,
+                "models_used": ["C"],
+                "inference_times_ms": {"C": round(inference_time_ms, 2)},
+                "timestamp": analysis_timestamp,
+            },
+            "explanation": {
+                "dr_grade": dr_class,
+                "dr_diagnosis": diagnosis,
+                "recommendation_short": recommendation_short,
+                "glaucoma_risk_level": risk_level,
+                "glaucoma_probability_percent": 0.0,  # No usamos modelo B
+            },
+            "model_loaded": model_loaded,
+            "disclaimer": DISCLAIMER,
+            "heatmap_image_base64": None,  # TODO: agregar explicabilidad
+        }
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": f"Error procesando imagen: {str(e)}"}
+        )
+
+
 @app.post("/analyze-retina/")
 async def analyze_retina(
     files: List[UploadFile] = File(...),
@@ -270,7 +433,12 @@ async def analyze_retina(
     c_inference_time_total = 0
     t0_batch = time.perf_counter()
     
-    c_model_key = "lesiones_mobilenet" if model_c_type == "mobilenetv3" else "lesiones_resnet"
+    if model_c_type == "mobilenetv3":
+        c_model_key = "lesiones_mobilenet"
+    elif model_c_type == "densenet169":
+        c_model_key = "lesiones_densenet"
+    else:
+        c_model_key = "lesiones_densenet"
     
     if "C" in models_used and c_model_key in ml_manager.models:
         valid_bytes_list = []
