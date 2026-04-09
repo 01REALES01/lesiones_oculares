@@ -176,7 +176,7 @@ export default function DemoPage({ onBack }) {
                 />
               </div>
               <p className="text-sm text-ocular-text-main font-medium">
-                📄 {selectedFile?.name}
+                Archivo: {selectedFile?.name}
               </p>
               <button
                 onClick={() => {
@@ -185,7 +185,7 @@ export default function DemoPage({ onBack }) {
                 }}
                 className="text-xs text-ocular-text-muted hover:text-primary transition-colors"
               >
-                ✕ Cambiar imagen
+                Cambiar imagen
               </button>
             </div>
           </GlassCard>
@@ -233,7 +233,7 @@ export default function DemoPage({ onBack }) {
       >
         <GlassCard className="p-6 border-none bg-indigo-50/50">
           <div className="space-y-2">
-            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">ℹ️ Sobre este demo</p>
+            <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider">Sobre este demo</p>
             <p className="text-sm text-ocular-text-main leading-relaxed">
               Este es un análisis de <strong>demostración</strong> que utiliza el modelo <strong>DenseNet169</strong> entrenado con el dataset APTOS para detectar grados de Retinopatía Diabética (0-4). Los resultados son para <strong>apoyo clínico y educativo</strong>, no para diagnóstico definitivo.
             </p>

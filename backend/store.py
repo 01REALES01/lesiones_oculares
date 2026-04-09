@@ -103,11 +103,18 @@ def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
             continue
         # Resumen sin heatmap/base64
         res = r.get("result", {})
+        primary_result = res.get("primary_result") or {}
+        comparison_summary = res.get("comparison_summary") or {}
         summary = {
-            "glaucoma_probability": res.get("glaucoma_probability"),
-            "cup_to_disc_ratio": res.get("cup_to_disc_ratio"),
-            "lesions_count": len(res.get("lesions_found", [])),
-            "recommendation_short": res.get("explanation", {}).get("recommendation_short"),
+            "headline": comparison_summary.get("headline") or res.get("diagnosis"),
+            "risk_level": comparison_summary.get("risk_level") or res.get("risk_level"),
+            "positive_models": comparison_summary.get("positive_models"),
+            "total_models": comparison_summary.get("total_models") or len(r.get("models_used", [])),
+            "primary_grade": primary_result.get("predicted_class", res.get("predicted_class")),
+            "primary_confidence": primary_result.get("confidence_percent", res.get("confidence_percent")),
+            "primary_diagnosis": primary_result.get("diagnosis", res.get("diagnosis")),
+            "recommendation_short": comparison_summary.get("recommendation_short") or res.get("recommendation_short") or res.get("explanation", {}).get("recommendation_short"),
+            "filename": res.get("filename"),
         }
         out.append({
             "inference_id": r["inference_id"],

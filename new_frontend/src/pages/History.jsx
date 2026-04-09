@@ -31,14 +31,32 @@ export default function HistoryPage({ onViewDetail }) {
     const matchesSearch = item.inference_id.toLowerCase().includes(search.toLowerCase()) || 
                          (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase());
     
-    // El backend devuelve risk_score o lo calculamos del resumen
-    const risk = item.risk_score || (item.summary?.glaucoma_risk_level === 'high' ? 0.8 : item.summary?.glaucoma_risk_level === 'medium' ? 0.5 : 0.2);
-    
-    const itemLevel = risk > 0.6 ? 'high' : risk > 0.3 ? 'medium' : 'low';
+    const itemLevel = item.summary?.risk_level || 'low';
     const matchesRisk = riskFilter === 'all' || itemLevel === riskFilter;
 
     return matchesSearch && matchesRisk;
   });
+
+  const openHistoryDetail = async (item) => {
+    try {
+      const fullRecord = await analysisService.getInference(item.inference_id);
+      if (fullRecord?.result) {
+        onViewDetail({
+          ...fullRecord.result,
+          inference_id: fullRecord.inference_id,
+          timestamp: fullRecord.timestamp,
+          traceability: {
+            inference_id: fullRecord.inference_id,
+            models_used: fullRecord.models_used,
+            inference_times_ms: fullRecord.inference_times_ms,
+            timestamp: fullRecord.timestamp,
+          },
+        }, 0);
+      }
+    } catch (error) {
+      console.error('Error cargando detalle:', error);
+    }
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
@@ -92,7 +110,7 @@ export default function HistoryPage({ onViewDetail }) {
                 key={item.inference_id} 
                 item={item} 
                 index={index} 
-                onClick={() => onViewDetail(item, 0)} 
+                onClick={() => openHistoryDetail(item)} 
               />
             ))}
           </AnimatePresence>
@@ -110,8 +128,8 @@ export default function HistoryPage({ onViewDetail }) {
 }
 
 function HistoryCard({ item, onClick, index }) {
-  const risk = item.risk_score || (item.summary?.glaucoma_risk_level === 'high' ? 0.8 : 0.2);
-  const color = risk > 0.6 ? 'bg-ocular-error' : risk > 0.3 ? 'bg-amber-400' : 'bg-ocular-success';
+  const riskLevel = item.summary?.risk_level || 'low';
+  const color = riskLevel === 'high' ? 'bg-ocular-error' : riskLevel === 'medium' ? 'bg-amber-400' : 'bg-ocular-success';
 
   return (
     <motion.div
@@ -128,7 +146,7 @@ function HistoryCard({ item, onClick, index }) {
         <div className="p-5 flex-1 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className={cn("px-2 py-1 rounded-md text-[8px] font-bold text-white uppercase", color)}>
-                {risk > 0.6 ? 'Prioridad Alta' : risk > 0.3 ? 'Monitoreo' : 'Estable'}
+                {riskLevel === 'high' ? 'Prioridad Alta' : riskLevel === 'medium' ? 'Monitoreo' : 'Estable'}
             </div>
             <span className="text-[10px] text-ocular-text-muted font-bold flex items-center gap-1">
                 <Calendar size={12} /> {new Date(item.timestamp).toLocaleDateString()}
@@ -140,19 +158,20 @@ function HistoryCard({ item, onClick, index }) {
                 <FileText size={16} className="text-primary" /> Analisis #{item.inference_id.substring(0,8)}
              </h3>
              <p className="text-[10px] text-ocular-text-muted font-medium truncate uppercase tracking-tighter">Archivo: {item.summary?.filename || 'Desconocido'}</p>
+             <p className="text-xs text-ocular-text-main font-semibold">{item.summary?.headline || 'Comparación de modelos RD'}</p>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-2">
              <div className="bg-white/40 p-2 rounded-xl border border-white/60">
-                <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Glaucoma</p>
+               <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Modelos Positivos</p>
                 <p className="text-xs font-extrabold text-ocular-text-main">
-                    {(item.summary?.glaucoma_probability_percent || (risk * 100)).toFixed(1)}%
+                  {item.summary?.positive_models ?? 0}/{item.summary?.total_models ?? item.models_used?.length ?? 0}
                 </p>
              </div>
              <div className="bg-white/40 p-2 rounded-xl border border-white/60">
-                <p className="text-[8px] font-bold text-ocular-text-muted uppercase">CDR</p>
+               <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Grado Principal</p>
                 <p className="text-xs font-extrabold text-ocular-text-main">
-                    {item.summary?.cup_to_disc_ratio?.toFixed(2) || 'N/A'}
+                  {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null ? `G${item.summary.primary_grade}` : 'N/A'}
                 </p>
              </div>
           </div>

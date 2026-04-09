@@ -30,11 +30,11 @@ export const authService = {
 };
 
 export const analysisService = {
-  analyze: async (files, modelsStr, drModelType, includeHeatmap = true) => {
+  analyzeComparison: async (files, modelsStr) => {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
-    const response = await api.post(`/analyze-retina/?models=${modelsStr}&model_c_type=${drModelType}&include_heatmap=${includeHeatmap}`, 
+    const response = await api.post(`/analyze-rd-comparison/?models=${modelsStr}`,
       formData, 
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );

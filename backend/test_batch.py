@@ -40,6 +40,6 @@ def test_analyze_retina_multiple():
 if __name__ == "__main__":
     try:
         test_analyze_retina_multiple()
-        print("✅ Custom Test: Multiple upload success!")
+        print("Custom Test: Multiple upload success!")
     except Exception as e:
-        print(f"❌ Custom Test Failed: {e}")
+        print(f"Custom Test Failed: {e}")

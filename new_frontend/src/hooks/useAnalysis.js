@@ -3,8 +3,7 @@ import { analysisService } from '../services/api';
 
 export const useAnalysis = () => {
   const [files, setFiles] = useState([]);
-  const [models, setModels] = useState({ A: true, B: true, C: true });
-  const [drModelType, setDrModelType] = useState('densenet169');
+  const [models, setModels] = useState({ densenet169: false, mobilenetv3: false, efficientnet: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
@@ -34,20 +33,23 @@ export const useAnalysis = () => {
       setError("Por favor, selecciona al menos una imagen.");
       return;
     }
+
+    const selectedModels = Object.entries(models)
+      .filter(([, value]) => value)
+      .map(([key]) => key);
+
+    if (selectedModels.length === 0) {
+      setError("Selecciona al menos un modelo para comparar.");
+      return;
+    }
     
     setError(null);
-    setResults(null);
     setLoading(true);
 
-    const modelsStr = Object.entries(models)
-      .filter(([, v]) => v)
-      .map(([k]) => k)
-      .join(",");
+    const modelsStr = selectedModels.join(",");
 
     try {
-      const data = await analysisService.analyze(files, modelsStr, drModelType);
-      setResults(data);
-      setFiles([]); // Limpiamos el lote tras éxito
+      const data = await analysisService.analyzeComparison(files, modelsStr);
       return { success: true, data };
     } catch (e) {
       console.error("Análisis fallido:", e);
@@ -62,7 +64,6 @@ export const useAnalysis = () => {
   return {
     files, addFiles, removeFile, clearFiles,
     models, toggleModel,
-    drModelType, setDrModelType,
     loading, error, setError,
     results, setResults,
     handleAnalyze

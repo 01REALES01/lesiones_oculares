@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import HistoryPage from './pages/History';
 import AnalysisDetail from './pages/Details';
 import Demo from './pages/Demo';
+import { useAnalysis } from './hooks/useAnalysis';
 import { LayoutDashboard, History, Settings, HelpCircle, Layout, Zap } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -16,6 +17,7 @@ function AppContent() {
   const [view, setView] = useState('main'); // main | detail
   const [resultBatch, setResultBatch] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const analysisState = useAnalysis();
 
   if (!token) {
     return <Login />;
@@ -89,7 +91,11 @@ function AppContent() {
                 ) : activeTab === 'history' ? (
                   <HistoryPage onViewDetail={navigateToDetail} />
                 ) : (
-                  <Dashboard onViewDetail={navigateToDetail} />
+                  <Dashboard
+                    onViewDetail={navigateToDetail}
+                    onGoHistory={() => { setActiveTab('history'); setView('main'); }}
+                    analysis={analysisState}
+                  />
                 )}
               </motion.div>
             ) : (
