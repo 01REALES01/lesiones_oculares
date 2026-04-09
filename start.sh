@@ -30,11 +30,23 @@ fi
 # ---------- 2. Crear entorno virtual si no existe ----------
 echo "[2/6] Configurando entorno virtual Python..."
 if [ ! -d ".venv" ]; then
-  python3 -m venv .venv
+  # En Windows (Git Bash) el comando puede ser python en vez de python3
+  if command -v python3 &>/dev/null; then
+    python3 -m venv .venv
+  else
+    python -m venv .venv
+  fi
 fi
 
-# Activar venv
-source .venv/bin/activate
+# Activar venv: Windows usa Scripts/, Mac/Linux usa bin/
+if [ -f ".venv/Scripts/activate" ]; then
+  source .venv/Scripts/activate
+elif [ -f ".venv/bin/activate" ]; then
+  source .venv/bin/activate
+else
+  echo "ERROR: No se pudo encontrar el entorno virtual. Verifica que Python este instalado."
+  exit 1
+fi
 
 # ---------- 3. Instalar dependencias backend ----------
 echo "[3/6] Instalando dependencias backend..."
@@ -82,8 +94,13 @@ echo " Presiona Ctrl+C para apagar todo"
 echo "=========================================="
 echo ""
 
-source .venv/bin/activate
-python3 -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000 &
+if [ -f ".venv/Scripts/activate" ]; then
+  source .venv/Scripts/activate
+else
+  source .venv/bin/activate
+fi
+PYTHON_CMD=$(command -v python3 || command -v python)
+$PYTHON_CMD -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
 cd new_frontend
