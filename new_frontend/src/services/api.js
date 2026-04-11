@@ -51,13 +51,23 @@ export const analysisService = {
     return response.data;
   },
 
-  getHistory: async (limit = 20) => {
-    const response = await api.get(`/history?limit=${limit}`);
+  getHistory: async (limit = 20, offset = 0) => {
+    const response = await api.get(`/history?limit=${limit}&offset=${offset}`);
     return response.data.inferences || [];
+  },
+
+  getStats: async () => {
+    const response = await api.get('/stats');
+    return response.data;
   },
 
   getInference: async (id) => {
     const response = await api.get(`/inferences/${id}`);
+    return response.data;
+  },
+
+  getBatch: async (batchId) => {
+    const response = await api.get(`/batches/${batchId}`);
     return response.data;
   }
 };

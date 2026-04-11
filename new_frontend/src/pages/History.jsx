@@ -10,16 +10,20 @@ export default function HistoryPage({ onViewDetail }) {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [riskFilter, setRiskFilter] = useState("all"); // all | high | medium | low
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const limit = 12;
 
   useEffect(() => {
-    loadHistory();
-  }, []);
+    loadHistory(page);
+  }, [page]);
 
-  const loadHistory = async () => {
+  const loadHistory = async (currentPage) => {
     setLoading(true);
     try {
-      const data = await analysisService.getHistory(50);
+      const data = await analysisService.getHistory(limit, currentPage * limit);
       setHistory(data);
+      setHasMore(data.length === limit);
     } catch (e) {
       console.error("Error cargando historial:", e);
     } finally {
@@ -39,19 +43,35 @@ export default function HistoryPage({ onViewDetail }) {
 
   const openHistoryDetail = async (item) => {
     try {
-      const fullRecord = await analysisService.getInference(item.inference_id);
-      if (fullRecord?.result) {
-        onViewDetail({
-          ...fullRecord.result,
-          inference_id: fullRecord.inference_id,
-          timestamp: fullRecord.timestamp,
+      if (item.is_batch && item.batch_id) {
+        const fullBatch = await analysisService.getBatch(item.batch_id);
+        const mappedBatch = fullBatch.map(b => ({
+          ...b.result,
+          inference_id: b.inference_id,
+          timestamp: b.timestamp,
           traceability: {
+            inference_id: b.inference_id,
+            models_used: b.models_used,
+            inference_times_ms: b.inference_times_ms,
+            timestamp: b.timestamp,
+          }
+        }));
+        onViewDetail(mappedBatch, 0);
+      } else {
+        const fullRecord = await analysisService.getInference(item.inference_id);
+        if (fullRecord?.result) {
+          onViewDetail({
+            ...fullRecord.result,
             inference_id: fullRecord.inference_id,
-            models_used: fullRecord.models_used,
-            inference_times_ms: fullRecord.inference_times_ms,
             timestamp: fullRecord.timestamp,
-          },
-        }, 0);
+            traceability: {
+              inference_id: fullRecord.inference_id,
+              models_used: fullRecord.models_used,
+              inference_times_ms: fullRecord.inference_times_ms,
+              timestamp: fullRecord.timestamp,
+            },
+          });
+        }
       }
     } catch (error) {
       console.error('Error cargando detalle:', error);
@@ -103,17 +123,39 @@ export default function HistoryPage({ onViewDetail }) {
            <p className="text-sm font-bold text-ocular-text-muted uppercase tracking-widest">Sincronizando con la Base de Datos...</p>
         </div>
       ) : filteredHistory.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <AnimatePresence mode="popLayout">
-            {filteredHistory.map((item, index) => (
-              <HistoryCard 
-                key={item.inference_id} 
-                item={item} 
-                index={index} 
-                onClick={() => openHistoryDetail(item)} 
-              />
-            ))}
-          </AnimatePresence>
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {filteredHistory.map((item, index) => (
+                <HistoryCard 
+                  key={item.inference_id} 
+                  item={item} 
+                  index={index} 
+                  onClick={() => openHistoryDetail(item)} 
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+          
+          <div className="flex items-center justify-center gap-4 py-8">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="px-4 py-2 rounded-xl bg-white/40 text-ocular-text-main font-bold border border-white/60 hover:bg-white hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <span className="text-sm font-bold text-ocular-text-muted">
+              Página {page + 1}
+            </span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!hasMore}
+              className="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          </div>
         </div>
       ) : (
         <GlassCard className="py-20 text-center">
@@ -155,7 +197,7 @@ function HistoryCard({ item, onClick, index }) {
 
           <div className="space-y-1">
              <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
-                <FileText size={16} className="text-primary" /> Analisis #{item.inference_id.substring(0,8)}
+                <FileText size={16} className="text-primary" /> {item.is_batch ? `Lote de ${item.batch_size} Análisis` : `Analisis #${item.inference_id.substring(0,8)}`}
              </h3>
              <p className="text-[10px] text-ocular-text-muted font-medium truncate uppercase tracking-tighter">Archivo: {item.summary?.filename || 'Desconocido'}</p>
              <p className="text-xs text-ocular-text-main font-semibold">{item.summary?.headline || 'Comparación de modelos RD'}</p>

@@ -22,10 +22,26 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   const [recentHistory, setRecentHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [isDragging, setIsDragging] = useState(false);
+  const [globalStats, setGlobalStats] = useState({
+    total_analyses: 0,
+    rd_detected_rate: 0.0,
+    avg_confidence: 0.0,
+    avg_latency_ms: 0.0
+  });
 
   useEffect(() => {
     loadHistory();
+    loadStats();
   }, []);
+
+  const loadStats = async () => {
+    try {
+      const stats = await analysisService.getStats();
+      if (stats) setGlobalStats(stats);
+    } catch (e) {
+      console.error('Error loading stats:', e);
+    }
+  };
 
   const selectedModelCount = Object.values(models).filter(Boolean).length;
 
@@ -124,10 +140,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard title="Analisis Totales" value="1,284" icon={Activity} trend={{ positive: true, value: 12 }} />
-        <StatsCard title="Casos RD Detectados" value="24%" icon={AlertCircle} trend={{ positive: false, value: 3 }} delay={0.1} />
-        <StatsCard title="Precision Promedio" value="98.2%" icon={CheckCircle2} delay={0.2} />
-        <StatsCard title="Latencia Media" value="420ms" icon={Clock} delay={0.3} />
+        <StatsCard title="Analisis Totales" value={globalStats.total_analyses.toString()} icon={Activity} />
+        <StatsCard title="Casos RD Detectados" value={`${globalStats.rd_detected_rate}%`} icon={AlertCircle} delay={0.1} />
+        <StatsCard title="Confianza Promedio" value={`${globalStats.avg_confidence}%`} icon={CheckCircle2} delay={0.2} />
+        <StatsCard title="Latencia Media" value={`${globalStats.avg_latency_ms}ms`} icon={Clock} delay={0.3} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -210,7 +226,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 <div className="flex flex-wrap gap-4">
                   <ModelToggle icon={Cpu} label="DenseNet169" active={models.densenet169} onClick={() => toggleModel('densenet169', !models.densenet169)} />
                   <ModelToggle icon={Cpu} label="MobileNetV3" active={models.mobilenetv3} onClick={() => toggleModel('mobilenetv3', !models.mobilenetv3)} />
-                  <ModelToggle icon={Cpu} label="EfficientNet" active={models.efficientnet} onClick={() => toggleModel('efficientnet', !models.efficientnet)} />
+                  <ModelToggle icon={Cpu} label="Xception" active={models.xception} onClick={() => toggleModel('xception', !models.xception)} />
                 </div>
 
                 <div className="p-4 bg-white/40 rounded-2xl border border-white/20 flex items-center justify-between gap-6">

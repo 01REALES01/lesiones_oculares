@@ -19,10 +19,22 @@ _inference_store: Dict[str, Dict[str, Any]] = {}
 _inference_ids_order: List[str] = []
 _MAX_IN_MEMORY = 500  # límite de registros en memoria
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "inferences.json"
+_IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "images"
 
 
 def _ensure_data_dir() -> None:
     _DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def save_image_to_disk(img_bytes: bytes, filename: str) -> str:
+    """Guarda imagen físicamente y devuelve su ID determinístico."""
+    _ensure_data_dir()
+    file_id = f"{uuid.uuid4().hex}_{filename}"
+    file_path = _IMAGES_DIR / file_id
+    with open(file_path, "wb") as f:
+        f.write(img_bytes)
+    return file_id
 
 
 def _load_from_file() -> None:
@@ -60,6 +72,7 @@ def save_inference(
     inference_times_ms: Dict[str, float],
     result: Dict[str, Any],
     image_size: Optional[tuple] = None,
+    batch_id: Optional[str] = None,
 ) -> str:
     """
     Guarda un registro de inferencia y devuelve su ID.
@@ -73,6 +86,7 @@ def save_inference(
         "inference_times_ms": inference_times_ms,
         "result": result,
         "image_size": list(image_size) if image_size else None,
+        "batch_id": batch_id,
     }
     _inference_store[inference_id] = record
     _inference_ids_order.append(inference_id)
@@ -91,40 +105,125 @@ def get_inference(inference_id: str) -> Optional[Dict[str, Any]]:
 
 def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
     """
-    Lista las últimas inferencias (más recientes primero).
-    Cada elemento incluye: inference_id, timestamp, models_used, inference_times_ms,
-    y un resumen del result (sin imágenes base64 para no pesar).
+    Lista las últimas inferencias agrupadas por lote.
     """
-    ids = list(reversed(_inference_ids_order))[offset : offset + limit]
-    out = []
-    for iid in ids:
+    groups = []
+    seen_batches = set()
+    
+    for iid in reversed(_inference_ids_order):
         r = _inference_store.get(iid)
         if not r:
             continue
-        # Resumen sin heatmap/base64
-        res = r.get("result", {})
+            
+        batch_id = r.get("batch_id")
+        if batch_id:
+            if batch_id not in seen_batches:
+                seen_batches.add(batch_id)
+                groups.append({"batch_id": batch_id, "items": [r]})
+            else:
+                for g in groups:
+                    if g["batch_id"] == batch_id:
+                        g["items"].append(r)
+                        break
+        else:
+            groups.append({"batch_id": None, "items": [r]})
+            
+    selected_groups = groups[offset : offset + limit]
+    
+    out = []
+    for g in selected_groups:
+        items = g["items"]
+        rep = items[0]
+        res = rep.get("result", {})
+        
         primary_result = res.get("primary_result") or {}
         comparison_summary = res.get("comparison_summary") or {}
-        summary = {
-            "headline": comparison_summary.get("headline") or res.get("diagnosis"),
-            "risk_level": comparison_summary.get("risk_level") or res.get("risk_level"),
-            "positive_models": comparison_summary.get("positive_models"),
-            "total_models": comparison_summary.get("total_models") or len(r.get("models_used", [])),
-            "primary_grade": primary_result.get("predicted_class", res.get("predicted_class")),
-            "primary_confidence": primary_result.get("confidence_percent", res.get("confidence_percent")),
-            "primary_diagnosis": primary_result.get("diagnosis", res.get("diagnosis")),
-            "recommendation_short": comparison_summary.get("recommendation_short") or res.get("recommendation_short") or res.get("explanation", {}).get("recommendation_short"),
-            "filename": res.get("filename"),
-        }
+        
         out.append({
-            "inference_id": r["inference_id"],
-            "timestamp": r["timestamp"],
-            "models_used": r["models_used"],
-            "inference_times_ms": r["inference_times_ms"],
-            "summary": summary,
+            "inference_id": rep["inference_id"],
+            "batch_id": g["batch_id"],
+            "is_batch": len(items) > 1,
+            "batch_size": len(items),
+            "timestamp": rep["timestamp"],
+            "models_used": rep["models_used"],
+            "inference_times_ms": rep["inference_times_ms"],
+            "summary": {
+                "headline": comparison_summary.get("headline") or res.get("diagnosis"),
+                "risk_level": comparison_summary.get("risk_level") or res.get("risk_level") or rep.get("risk_level"),
+                "positive_models": comparison_summary.get("positive_models"),
+                "total_models": comparison_summary.get("total_models") or len(rep.get("models_used", [])),
+                "primary_grade": primary_result.get("predicted_class", res.get("predicted_class")),
+                "primary_confidence": primary_result.get("confidence_percent", res.get("confidence_percent")),
+                "primary_diagnosis": primary_result.get("diagnosis", res.get("diagnosis")),
+                "recommendation_short": comparison_summary.get("recommendation_short") or res.get("recommendation_short") or res.get("explanation", {}).get("recommendation_short"),
+                "filename": res.get("filename") if len(items) == 1 else f"Lote de {len(items)} imágenes",
+            },
         })
     return out
 
+
+def get_batch(batch_id: str) -> List[Dict[str, Any]]:
+    """Obtiene todos los registros pertenecientes a un mismo batch."""
+    return [
+        _inference_store[iid]
+        for iid in _inference_ids_order
+        if _inference_store.get(iid) and _inference_store[iid].get("batch_id") == batch_id
+    ]
+
+
+def get_global_stats() -> Dict[str, Any]:
+    """
+    Calcula métricas globales para el Dashboard:
+    - total_analyses: total de inferencias en la historia.
+    - rd_detected_rate: porcentaje de análisis con alguna detección de Retinopatía (riesgo medio o alto) / grados > 0.
+    - avg_confidence: confianza/probabilidad promedio entre todas las inferencias.
+    - avg_latency_ms: latencia promedio total reportada en inferencias.
+    """
+    total = len(_inference_ids_order)
+    if total == 0:
+        return {
+            "total_analyses": 0,
+            "rd_detected_rate": 0.0,
+            "avg_confidence": 0.0,
+            "avg_latency_ms": 0.0
+        }
+
+    detected_count = 0
+    sum_confidence = 0.0
+    sum_latency = 0.0
+    valid_latency_count = 0
+
+    for iid in _inference_ids_order:
+        r = _inference_store.get(iid)
+        if not r:
+            continue
+        
+        res = r.get("result", {})
+        primary_result = res.get("primary_result") or {}
+        # Determining if it was detected (grade > 0 or risk non-low)
+        grade = primary_result.get("predicted_class", res.get("predicted_class"))
+        risk = res.get("comparison_summary", {}).get("risk_level") or res.get("risk_level")
+
+        if grade and int(grade) > 0:
+            detected_count += 1
+        elif risk in ["medium", "high"]:
+            detected_count += 1
+
+        confidence = primary_result.get("confidence_percent", res.get("confidence_percent", 0.0))
+        sum_confidence += float(confidence)
+
+        times = r.get("inference_times_ms", {})
+        if times:
+            avg_time_for_infer = sum(times.values()) / len(times)
+            sum_latency += float(avg_time_for_infer)
+            valid_latency_count += 1
+
+    return {
+        "total_analyses": total,
+        "rd_detected_rate": round(detected_count / total * 100, 1),
+        "avg_confidence": round(sum_confidence / total, 1),
+        "avg_latency_ms": round(sum_latency / valid_latency_count, 1) if valid_latency_count > 0 else 0.0
+    }
 
 # Cargar al importar (si hay archivo previo)
 _load_from_file()

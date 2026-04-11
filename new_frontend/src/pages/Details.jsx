@@ -48,7 +48,6 @@ export default function AnalysisDetail({ result, batch = [], currentIndex = 0, o
   const hasComparison = comparisonModels.length > 0;
   const summary = result.comparison_summary || {};
   const primaryResult = result.primary_result || result;
-  const hasHeatmap = Boolean(result.heatmap_image_base64);
   const traceability = result.traceability || {};
   const timestamp = result.timestamp || traceability.timestamp || null;
   const averageLatency = hasComparison
@@ -56,12 +55,10 @@ export default function AnalysisDetail({ result, batch = [], currentIndex = 0, o
     : Number(result.inference_time_ms ?? traceability?.inference_times_ms?.C ?? 0);
   const activeRisk = summary.risk_level || primaryResult.risk_level || result.risk_level || 'low';
   const consensusGrade = summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
-  const rightPanelTitle = hasComparison ? 'Comparacion de Modelos RD' : hasHeatmap ? 'Analisis Espacial XAI' : 'Imagen Analizada';
+  const rightPanelTitle = hasComparison ? 'Comparacion de Modelos RD' : 'Imagen Analizada';
   const rightPanelSubtitle = hasComparison
     ? 'Comparativa de clasificacion y confianza entre modelos seleccionados'
-    : hasHeatmap
-      ? 'Mapeo de Activacion de Red Neuronal'
-      : 'Visualizacion de la retinografia procesada';
+    : 'Visualizacion de la retinografia procesada';
 
   const singleProbabilities = probabilityLabels.map((label, index) => ({
     label,
@@ -392,15 +389,7 @@ export default function AnalysisDetail({ result, batch = [], currentIndex = 0, o
                 </div>
               ) : (
                 <div className="flex-1 relative bg-black/60 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[500px]">
-                  {result.heatmap_image_base64 ? (
-                    <div className="relative group">
-                      <img
-                        src={`data:image/png;base64,${result.heatmap_image_base64}`}
-                        alt="Mapa de activacion neuronal"
-                        className="max-h-[70vh] object-contain transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
-                  ) : result.uploaded_image_preview ? (
+                  {result.uploaded_image_preview ? (
                     <div className="relative group">
                       <img
                         src={result.uploaded_image_preview}

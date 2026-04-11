@@ -9,6 +9,7 @@ API principal: plataforma de análisis de retinografías.
 
 import asyncio
 import time
+import uuid
 from typing import Any, List, Optional
 from datetime import timedelta, datetime, timezone
 
@@ -17,15 +18,15 @@ from fastapi import FastAPI, File, Query, UploadFile, Depends, HTTPException, st
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.staticfiles import StaticFiles
 
 from backend.config import settings
 from backend.preprocessing.fundus import preprocess_fundus
 from backend.models.segmentation_vnet import segment_optic_disc
 from backend.models.glaucoma_classifier import predict_glaucoma
 from backend.models.lesion_detector import detect_hemorrhages
-from backend.models.explainability import get_explanation_image_base64
 from backend.postprocessing.report import build_report, graph_data_for_frontend
-from backend.store import save_inference, get_inference, list_inferences
+from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch
 from backend.ml_manager import ml_manager
 from contextlib import asynccontextmanager
 # Auth imports
@@ -52,10 +53,10 @@ RD_MODEL_SPECS = {
         "model_type": "mobilenetv3",
         "label": "MobileNetV3",
     },
-    "efficientnet": {
-        "model_key": "lesiones_efficientnet",
-        "model_type": "efficientnet",
-        "label": "EfficientNet",
+    "xception": {
+        "model_key": "lesiones_xception",
+        "model_type": "xception",
+        "label": "Xception",
     },
 }
 
@@ -76,10 +77,15 @@ async def lifespan(app: FastAPI):
     # Load available DR models. Fallback per model is handled at inference time.
     _load_first_available_model("lesiones_densenet", ["densenet_169_aptos_fine.h5"])
     _load_first_available_model("lesiones_mobilenet", ["mobilenetv3_model_fino.keras", "mobilenetv3_model.keras"])
-    _load_first_available_model("lesiones_efficientnet", ["efficientnet_model.keras", "efficientenet_model.keras", "efficientnetB0.h5"])
+    _load_first_available_model("lesiones_xception", ["xception_aptos_fine2.h5", "xception_model.keras"])
     yield
 
 app = FastAPI(title=settings.app_name, version="0.3.0", lifespan=lifespan)
+
+from pathlib import Path
+_images_dir = Path(__file__).resolve().parent / "data" / "images"
+_images_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/images", StaticFiles(directory=str(_images_dir)), name="images")
 
 # CORS Configuration
 app.add_middleware(
@@ -250,7 +256,6 @@ def _build_rd_comparison_result(filename: str, selected_models: List[str], model
             "recommendation_short": _rd_recommendation_short(consensus_grade),
             "risk_level": risk_level,
         },
-        "heatmap_image_base64": None,
         "disclaimer": DISCLAIMER,
     }
 
@@ -267,7 +272,6 @@ def _build_full_result(
     results_by_model: dict,
     models_used: List[str],
     inference_times_ms: dict,
-    include_heatmap: bool,
     img: np.ndarray,
 ) -> dict:
     """Construye respuesta completa: recomendación, explicación, postprocesamiento, gráficas."""
@@ -314,17 +318,6 @@ def _build_full_result(
         probabilities["glaucoma"] = prob
     graph_data = graph_data_for_frontend(probabilities, inference_times_ms)
 
-    heatmap_base64 = None
-    if include_heatmap and (model_a or model_b is not None):
-        try:
-            heatmap_base64 = get_explanation_image_base64(
-                img,
-                prob,
-                model_a.get("disc_mask") if model_a else None,
-            )
-        except Exception:
-            pass
-
     lesions_found = []
     # If using the ML manager classification, we won't have bounding boxes, 
     # but we can return the overall classification result for the UI table
@@ -343,7 +336,6 @@ def _build_full_result(
         "lesions_found": lesions_found,
         "recommendation": recommendation,
         "explanation": explanation,
-        "heatmap_image_base64": heatmap_base64,
         "postprocessing": {
             "report": report,
             "graph_data": graph_data,
@@ -362,6 +354,11 @@ async def health():
     return {"status": "ok", "service": settings.app_name, "version": "0.3.0"}
 
 
+@app.get("/stats")
+async def stats():
+    return get_global_stats()
+
+
 @app.get("/history")
 async def history(
     limit: int = Query(50, ge=1, le=100),
@@ -372,6 +369,15 @@ async def history(
     Devuelve lista de análisis recientes con ID, timestamp, modelos usados y resumen.
     """
     return {"inferences": list_inferences(limit=limit, offset=offset)}
+
+
+@app.get("/batches/{batch_id}")
+async def get_batch_by_id(batch_id: str):
+    """Obtiene todas las inferencias correspondientes a un mismo lote."""
+    records = get_batch(batch_id)
+    if not records:
+        return JSONResponse(status_code=404, content={"detail": "Batch not found"})
+    return records
 
 
 @app.get("/inferences/{inference_id}")
@@ -412,6 +418,9 @@ async def analyze_densenet(
             # Leer bytes de imagen para pasar al modelo
             file.file.seek(0)
             image_bytes = file.file.read()
+            
+            # Guardamos a disco
+            image_id = save_image_to_disk(image_bytes, file.filename)
 
             # Ejecutar predicción real
             model_result = await loop.run_in_executor(
@@ -424,7 +433,11 @@ async def analyze_densenet(
                 )
             )
         else:
-            # Fallback para demo cuando el modelo no puede cargarse por incompatibilidad.
+            # Fallback para demo
+            file.file.seek(0)
+            image_bytes = file.file.read()
+            image_id = save_image_to_disk(image_bytes, file.filename)
+            
             lesions = await loop.run_in_executor(None, lambda: detect_hemorrhages(image))
             lesion_count = len(lesions)
             mean_intensity = float(np.mean(image))
@@ -490,6 +503,11 @@ async def analyze_densenet(
                 "raw_probabilities": probabilities,
                 "recommendation": recommendation,
                 "timestamp": analysis_timestamp,
+                "model_used": source_label,
+                "risk_level": risk_level,
+                "recommendation_short": recommendation_short,
+                "filename": file.filename,
+                "uploaded_image_preview": f"/images/{image_id}",
                 "explanation": {
                     "dr_grade": dr_class,
                     "dr_diagnosis": diagnosis,
@@ -503,6 +521,7 @@ async def analyze_densenet(
         return {
             "success": True,
             "filename": file.filename,
+            "uploaded_image_preview": f"/images/{image_id}",
             "inference_id": inference_id,
             "model_used": "DenseNet169" if model_loaded else "FallbackHeuristic",
             "predicted_class": dr_class,
@@ -530,7 +549,6 @@ async def analyze_densenet(
             },
             "model_loaded": model_loaded,
             "disclaimer": DISCLAIMER,
-            "heatmap_image_base64": None,  # TODO: agregar explicabilidad
         }
     
     except Exception as e:
@@ -544,8 +562,8 @@ async def analyze_densenet(
 async def analyze_rd_comparison(
     files: List[UploadFile] = File(...),
     models: str = Query(
-        "densenet169,mobilenetv3,efficientnet",
-        description="Modelos RD a ejecutar: densenet169, mobilenetv3, efficientnet.",
+        "densenet169,mobilenetv3,xception",
+        description="Modelos RD a ejecutar: densenet169, mobilenetv3, xception.",
     ),
     current_user: User = Depends(get_current_user),
 ):
@@ -560,11 +578,12 @@ async def analyze_rd_comparison(
         if model_id not in RD_MODEL_SPECS:
             return JSONResponse(
                 status_code=400,
-                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, mobilenetv3 y/o efficientnet."},
+                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, mobilenetv3 y/o xception."},
             )
 
     loop = asyncio.get_event_loop()
     final_results = []
+    batch_id = str(uuid.uuid4())
 
     for file in files:
         try:
@@ -572,6 +591,7 @@ async def analyze_rd_comparison(
             preprocessed_image = preprocess_fundus(img)
             file.file.seek(0)
             image_bytes = file.file.read()
+            image_id = save_image_to_disk(image_bytes, file.filename)
             file.file.seek(0)
 
             model_results = []
@@ -606,12 +626,14 @@ async def analyze_rd_comparison(
                 )
 
             result = _build_rd_comparison_result(file.filename, selected_models, model_results, analysis_timestamp)
+            result["uploaded_image_preview"] = f"/images/{image_id}"
 
             inference_id = save_inference(
                 models_used=selected_models,
                 inference_times_ms=inference_times_ms,
                 result=result,
                 image_size=(img.shape[1], img.shape[0]),
+                batch_id=batch_id,
             )
 
             result["inference_id"] = inference_id
@@ -644,7 +666,6 @@ async def analyze_retina(
         "resnet50v2",
         description="Tipo de modelo de IA a correr para las lesiones: 'resnet50v2' o 'mobilenetv3'"
     ),
-    include_heatmap: bool = True,
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -667,6 +688,7 @@ async def analyze_retina(
 
     loop = asyncio.get_event_loop()
     final_results = []
+    batch_id = str(uuid.uuid4())
     
     # 1. Pre-process and Batch Infer for Model C (Lesions/DR) if selected
     dr_batch_results = []
@@ -712,6 +734,10 @@ async def analyze_retina(
                 })
                 continue
 
+            file.file.seek(0)
+            image_bytes = file.file.read()
+            image_id = save_image_to_disk(image_bytes, file.filename)
+            
             # 2. Preprocesar
             image = preprocess_fundus(img)
 
@@ -761,9 +787,9 @@ async def analyze_retina(
                 results_by_model,
                 models_used,
                 inference_times_ms,
-                include_heatmap,
                 img,
             )
+            result["uploaded_image_preview"] = f"/images/{image_id}"
 
             # 5. Guardar trazabilidad
             inference_id = save_inference(
@@ -771,6 +797,7 @@ async def analyze_retina(
                 inference_times_ms=inference_times_ms,
                 result=result,
                 image_size=(img.shape[1], img.shape[0]),
+                batch_id=batch_id,
             )
 
             result["inference_id"] = inference_id
