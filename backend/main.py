@@ -14,7 +14,7 @@ from typing import Any, List, Optional
 from datetime import timedelta, datetime, timezone
 
 import numpy as np
-from fastapi import FastAPI, File, Query, UploadFile, Depends, HTTPException, status
+from fastapi import FastAPI, File, Query, UploadFile, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
@@ -560,6 +560,7 @@ async def analyze_densenet(
 
 @app.post("/analyze-rd-comparison/")
 async def analyze_rd_comparison(
+    request: Request,
     files: List[UploadFile] = File(...),
     models: str = Query(
         "densenet169,mobilenetv3,xception",
@@ -584,8 +585,13 @@ async def analyze_rd_comparison(
     loop = asyncio.get_event_loop()
     final_results = []
     batch_id = str(uuid.uuid4())
+    cancelled = False
 
     for file in files:
+        if await request.is_disconnected():
+            cancelled = True
+            break
+
         try:
             img = _read_image_from_upload(file)
             preprocessed_image = preprocess_fundus(img)
@@ -599,6 +605,10 @@ async def analyze_rd_comparison(
             analysis_timestamp = datetime.now(timezone.utc).isoformat()
 
             for model_id in selected_models:
+                if await request.is_disconnected():
+                    cancelled = True
+                    break
+
                 model_spec = RD_MODEL_SPECS[model_id]
                 model_loaded = model_spec["model_key"] in ml_manager.models
                 t0 = time.perf_counter()
@@ -625,8 +635,16 @@ async def analyze_rd_comparison(
                     _normalize_rd_prediction(model_id, model_spec, prediction, model_loaded, inference_time_ms)
                 )
 
+            if cancelled or await request.is_disconnected():
+                cancelled = True
+                break
+
             result = _build_rd_comparison_result(file.filename, selected_models, model_results, analysis_timestamp)
             result["uploaded_image_preview"] = f"/images/{image_id}"
+
+            if await request.is_disconnected():
+                cancelled = True
+                break
 
             inference_id = save_inference(
                 models_used=selected_models,
@@ -651,6 +669,12 @@ async def analyze_rd_comparison(
                 "error": f"Error interno procesando archivo: {str(e)}",
                 "success": False,
             })
+
+    if cancelled:
+        return JSONResponse(
+            status_code=499,
+            content={"detail": "Analisis cancelado por el cliente."},
+        )
 
     return final_results
 

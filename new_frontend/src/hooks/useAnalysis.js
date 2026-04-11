@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useRef } from 'react';
 import { analysisService } from '../services/api';
 
 export const useAnalysis = () => {
@@ -7,6 +7,8 @@ export const useAnalysis = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);
+
+  const abortControllerRef = useRef(null);
 
   const addFiles = (newFiles) => {
     setFiles(prev => {
@@ -26,6 +28,10 @@ export const useAnalysis = () => {
 
   const toggleModel = (modelKey, value) => {
     setModels(prev => ({ ...prev, [modelKey]: value }));
+  };
+
+  const cancelAnalyze = () => {
+    abortControllerRef.current?.abort();
   };
 
   const handleAnalyze = async () => {
@@ -49,15 +55,21 @@ export const useAnalysis = () => {
     const modelsStr = selectedModels.join(",");
 
     try {
-      const data = await analysisService.analyzeComparison(files, modelsStr);
+      abortControllerRef.current = new AbortController();
+      const data = await analysisService.analyzeComparison(files, modelsStr, abortControllerRef.current.signal);
       return { success: true, data };
     } catch (e) {
+            if (e.name === 'CanceledError' || e.code === 'ERR_CANCELED') {
+              setError(null);
+              return { success: false, cancelled: true };
+            }
       console.error("Análisis fallido:", e);
       const msg = e.response?.data?.detail || "Error de conexión con el servidor.";
       setError(msg);
       return { success: false, error: msg };
     } finally {
       setLoading(false);
+      abortControllerRef.current = null;
     }
   };
 
@@ -66,6 +78,7 @@ export const useAnalysis = () => {
     models, toggleModel,
     loading, error, setError,
     results, setResults,
-    handleAnalyze
+    handleAnalyze,
+    cancelAnalyze,
   };
 };

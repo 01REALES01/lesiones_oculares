@@ -11,19 +11,35 @@ export default function HistoryPage({ onViewDetail }) {
   const [search, setSearch] = useState("");
   const [riskFilter, setRiskFilter] = useState("all"); // all | high | medium | low
   const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const limit = 12;
 
   useEffect(() => {
-    loadHistory(page);
-  }, [page]);
+    loadAllHistory();
+  }, []);
 
-  const loadHistory = async (currentPage) => {
+  // Reset to page 0 whenever filter or search changes
+  useEffect(() => {
+    if (page !== 0) setPage(0);
+  }, [riskFilter, search]);
+
+
+  const loadAllHistory = async () => {
     setLoading(true);
     try {
-      const data = await analysisService.getHistory(limit, currentPage * limit);
-      setHistory(data);
-      setHasMore(data.length === limit);
+      // Backend /history está limitado a 100 por request.
+      const backendChunk = 100;
+      let offset = 0;
+      let aggregated = [];
+
+      while (true) {
+        const chunk = await analysisService.getHistory(backendChunk, offset);
+        aggregated = aggregated.concat(chunk);
+
+        if (chunk.length < backendChunk) break;
+        offset += backendChunk;
+      }
+
+      setHistory(aggregated);
     } catch (e) {
       console.error("Error cargando historial:", e);
     } finally {
@@ -40,6 +56,16 @@ export default function HistoryPage({ onViewDetail }) {
 
     return matchesSearch && matchesRisk;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredHistory.length / limit));
+  const hasMore = page < totalPages - 1;
+  const paginatedHistory = filteredHistory.slice(page * limit, (page + 1) * limit);
+
+  useEffect(() => {
+    if (page > totalPages - 1) {
+      setPage(Math.max(0, totalPages - 1));
+    }
+  }, [page, totalPages]);
 
   const openHistoryDetail = async (item) => {
     try {
@@ -122,48 +148,48 @@ export default function HistoryPage({ onViewDetail }) {
            <Loader2 className="w-10 h-10 text-primary animate-spin" />
            <p className="text-sm font-bold text-ocular-text-muted uppercase tracking-widest">Sincronizando con la Base de Datos...</p>
         </div>
-      ) : filteredHistory.length > 0 ? (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            <AnimatePresence mode="popLayout">
-              {filteredHistory.map((item, index) => (
-                <HistoryCard 
-                  key={item.inference_id} 
-                  item={item} 
-                  index={index} 
-                  onClick={() => openHistoryDetail(item)} 
-                />
-              ))}
-            </AnimatePresence>
-          </div>
-          
-          <div className="flex items-center justify-center gap-4 py-8">
-            <button
-              onClick={() => setPage(p => Math.max(0, p - 1))}
-              disabled={page === 0}
-              className="px-4 py-2 rounded-xl bg-white/40 text-ocular-text-main font-bold border border-white/60 hover:bg-white hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Anterior
-            </button>
-            <span className="text-sm font-bold text-ocular-text-muted">
-              Página {page + 1}
-            </span>
-            <button
-              onClick={() => setPage(p => p + 1)}
-              disabled={!hasMore}
-              className="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Siguiente
-            </button>
-          </div>
+      ) : paginatedHistory.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          <AnimatePresence mode="popLayout">
+            {paginatedHistory.map((item, index) => (
+              <HistoryCard
+                key={item.inference_id}
+                item={item}
+                index={index}
+                onClick={() => openHistoryDetail(item)}
+              />
+            ))}
+          </AnimatePresence>
         </div>
       ) : (
         <GlassCard className="py-20 text-center">
-            <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
-            <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
-            <button onClick={() => {setSearch(""); setRiskFilter("all")}} className="mt-4 text-primary font-bold hover:underline">Ver todo el historial</button>
+          <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
+          <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
+          <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
+          <button onClick={() => { setSearch(""); setRiskFilter("all"); }} className="mt-4 text-primary font-bold hover:underline">Ver todo el historial</button>
         </GlassCard>
+      )}
+
+      {filteredHistory.length > 0 && totalPages > 1 && !loading && (
+        <div className="flex items-center justify-center gap-4 py-8">
+          <button
+            onClick={() => setPage(p => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="px-4 py-2 rounded-xl bg-white/40 text-ocular-text-main font-bold border border-white/60 hover:bg-white hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Anterior
+          </button>
+          <span className="text-sm font-bold text-ocular-text-muted">
+            Página {page + 1} de {totalPages}
+          </span>
+          <button
+            onClick={() => setPage(p => p + 1)}
+            disabled={!hasMore}
+            className="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Siguiente
+          </button>
+        </div>
       )}
     </div>
   );

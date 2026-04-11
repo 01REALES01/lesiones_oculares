@@ -43,7 +43,7 @@ export default function Login() {
           >
             <Fingerprint size={36} />
           </motion.div>
-          <h1 className="text-3xl font-extrabold text-ocular-text-main tracking-tight">OcularAI Premium</h1>
+          <h1 className="text-3xl font-extrabold text-ocular-text-main tracking-tight">OcularAI</h1>
           <p className="text-ocular-text-muted mt-2">Plataforma de Análisis de Retinografías</p>
         </div>
 
@@ -116,7 +116,7 @@ export default function Login() {
 
         <div className="mt-8 text-center border-t border-white/20 pt-6">
           <p className="text-xs text-ocular-text-muted uppercase tracking-widest font-semibold opacity-50">
-            RetinaAI Research Group &copy; 2024
+            OcularAI Research Group &copy;
           </p>
         </div>
       </GlassCard>

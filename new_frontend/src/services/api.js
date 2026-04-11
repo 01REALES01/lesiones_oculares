@@ -30,13 +30,13 @@ export const authService = {
 };
 
 export const analysisService = {
-  analyzeComparison: async (files, modelsStr) => {
+  analyzeComparison: async (files, modelsStr, signal) => {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
     const response = await api.post(`/analyze-rd-comparison/?models=${modelsStr}`,
-      formData, 
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' }, signal }
     );
     return response.data;
   },

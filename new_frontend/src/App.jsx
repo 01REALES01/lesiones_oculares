@@ -53,7 +53,7 @@ function AppContent() {
       onClick: () => { setActiveTab('demo'); setView('main'); } 
     },
     { 
-      key: 'history', label: 'Historial Admin', icon: History, 
+      key: 'history', label: 'Historial', icon: History, 
       onClick: () => { setActiveTab('history'); setView('main'); } 
     },
     { 

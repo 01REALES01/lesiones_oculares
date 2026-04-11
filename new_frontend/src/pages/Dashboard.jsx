@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Clipboard, Upload, Cpu, Plus, CheckCircle2, AlertCircle, Loader2, Clock } from 'lucide-react';
+import { Activity, Clipboard, Upload, Cpu, Plus, CheckCircle2, AlertCircle, Loader2, Clock, X } from 'lucide-react';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
 import { analysisService } from '../services/api';
 
@@ -17,6 +17,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     results,
     setResults,
     handleAnalyze,
+    cancelAnalyze,
   } = analysis;
 
   const [recentHistory, setRecentHistory] = useState([]);
@@ -245,13 +246,13 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 </div>
               )}
 
-              <div className="pt-4">
+              <div className="pt-4 flex gap-3">
                 <button
                   type="button"
                   disabled={loading || files.length === 0 || selectedModelCount === 0}
                   onClick={handleStartComparison}
                   className={`
-                    w-full btn-premium py-4 text-lg
+                    flex-1 btn-premium py-4 text-lg
                     ${loading || files.length === 0 || selectedModelCount === 0 ? 'bg-ocular-text-muted/20 text-ocular-text-muted cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark shadow-primary/30'}
                   `}
                 >
@@ -267,6 +268,17 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     </>
                   )}
                 </button>
+                {loading && (
+                  <button
+                    type="button"
+                    onClick={cancelAnalyze}
+                    className="px-5 py-4 rounded-2xl border-2 border-ocular-error/40 text-ocular-error font-bold hover:bg-ocular-error/10 transition-all flex items-center gap-2"
+                    title="Cancelar ejecucion"
+                  >
+                    <X size={20} />
+                    Cancelar
+                  </button>
+                )}
               </div>
             </div>
 
