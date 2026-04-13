@@ -3,7 +3,7 @@ import { analysisService } from '../services/api';
 
 export const useAnalysis = () => {
   const [files, setFiles] = useState([]);
-  const [models, setModels] = useState({ densenet169: false, mobilenetv3: false, xception: false });
+  const [models, setModels] = useState({ densenet169: false, resnet50: false, xception: false });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [results, setResults] = useState(null);

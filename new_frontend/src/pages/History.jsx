@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Filter, Calendar, ChevronRight, FileText, AlertCircle, CheckCircle2, Loader2, Trash2 } from 'lucide-react';
+import { Search, Calendar, ChevronRight, FileText, Loader2, Trash2 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { analysisService } from '../services/api';
 import { cn } from '../utils';
@@ -8,10 +8,14 @@ import { cn } from '../utils';
 export default function HistoryPage({ onViewDetail }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const [clearModalOpen, setClearModalOpen] = useState(false);
+  const [historyNotice, setHistoryNotice] = useState(null);
   const [search, setSearch] = useState("");
-  const [riskFilter, setRiskFilter] = useState("all"); // all | high | medium | low
+  const [riskFilter, setRiskFilter] = useState("all"); // all | high | medium | low | mixed
   const [page, setPage] = useState(0);
   const limit = 12;
+  const hasHistoryToClear = history.length > 0;
 
   useEffect(() => {
     loadAllHistory();
@@ -50,9 +54,19 @@ export default function HistoryPage({ onViewDetail }) {
   const filteredHistory = history.filter(item => {
     const matchesSearch = item.inference_id.toLowerCase().includes(search.toLowerCase()) || 
                          (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase());
-    
+
     const itemLevel = item.summary?.risk_level || 'low';
-    const matchesRisk = riskFilter === 'all' || itemLevel === riskFilter;
+    const itemMaxLevel = item.summary?.risk_max_level || itemLevel;
+    const riskCounts = item.summary?.risk_counts || {};
+    const mixedHasRisk = (level) => Number(riskCounts[level] || 0) > 0;
+    const matchesRisk =
+      riskFilter === 'all' ||
+      itemLevel === riskFilter ||
+      (itemLevel === 'mixed' && (
+        (riskFilter === 'high' && (mixedHasRisk('high') || itemMaxLevel === 'high')) ||
+        (riskFilter === 'medium' && (mixedHasRisk('medium') || itemMaxLevel === 'medium')) ||
+        (riskFilter === 'low' && mixedHasRisk('low'))
+      ));
 
     return matchesSearch && matchesRisk;
   });
@@ -104,16 +118,65 @@ export default function HistoryPage({ onViewDetail }) {
     }
   };
 
+  const confirmClearHistory = async () => {
+    setClearingHistory(true);
+    setHistoryNotice(null);
+    try {
+      await analysisService.clearHistory();
+      setHistory([]);
+      setPage(0);
+      setHistoryNotice({ type: 'success', message: 'Historial limpiado correctamente.' });
+      setClearModalOpen(false);
+    } catch (e) {
+      console.error('Error clearing history:', e);
+      const status = e?.response?.status;
+      const backendMsg = e?.response?.data?.detail || e?.response?.data?.message;
+      const hint = status === 404 || status === 405
+        ? ' Reinicia el backend para cargar el endpoint /history.'
+        : '';
+      setHistoryNotice({
+        type: 'error',
+        message: `No se pudo limpiar el historial.${backendMsg ? ` ${backendMsg}` : ''}${hint}`,
+      });
+      setClearModalOpen(false);
+    } finally {
+      setClearingHistory(false);
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+      {historyNotice && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`fixed bottom-5 right-5 z-[95] max-w-md rounded-2xl border px-4 py-3 text-sm font-semibold shadow-xl ${
+            historyNotice.type === 'success'
+              ? 'border-ocular-success/30 bg-ocular-success/10 text-ocular-success'
+              : 'border-ocular-error/30 bg-ocular-error/10 text-ocular-error'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span>{historyNotice.message}</span>
+            <button
+              type="button"
+              onClick={() => setHistoryNotice(null)}
+              className="text-xs font-bold uppercase hover:opacity-80"
+            >
+              Cerrar
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {/* Header & Controls */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5">
         <div>
           <h1 className="text-3xl font-bold text-ocular-text-main">Historial de Evaluaciones</h1>
           <p className="text-ocular-text-muted">Gestión y consulta de todos los análisis realizados por la plataforma.</p>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 xl:justify-end">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ocular-text-muted w-4 h-4" />
             <input 
@@ -126,7 +189,7 @@ export default function HistoryPage({ onViewDetail }) {
           </div>
           
           <div className="flex bg-white/40 p-1 rounded-xl border border-white/60">
-            {['all', 'high', 'medium', 'low'].map((f) => (
+            {['all', 'high', 'medium', 'low', 'mixed'].map((f) => (
               <button
                 key={f}
                 onClick={() => setRiskFilter(f)}
@@ -135,10 +198,22 @@ export default function HistoryPage({ onViewDetail }) {
                   riskFilter === f ? "bg-primary text-white shadow-md" : "text-ocular-text-muted hover:text-primary"
                 )}
               >
-                {f === 'all' ? 'Todos' : f === 'high' ? 'Críticos' : f === 'medium' ? 'Medios' : 'Bajos'}
+                {f === 'all' ? 'Todos' : f === 'high' ? 'Críticos' : f === 'medium' ? 'Medios' : f === 'low' ? 'Bajos' : 'Mixtos'}
               </button>
             ))}
           </div>
+
+          {hasHistoryToClear && (
+            <button
+              type="button"
+              onClick={() => setClearModalOpen(true)}
+              disabled={clearingHistory}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-white/60 bg-white/75 text-slate-600 font-bold text-xs uppercase tracking-wider hover:border-ocular-error/40 hover:text-ocular-error transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Trash2 size={14} />
+              {clearingHistory ? 'Limpiando...' : 'Limpiar historial'}
+            </button>
+          )}
         </div>
       </div>
 
@@ -191,13 +266,70 @@ export default function HistoryPage({ onViewDetail }) {
           </button>
         </div>
       )}
+
+      <AnimatePresence>
+        {clearModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.98 }}
+              className="w-full max-w-md rounded-3xl border border-white/30 bg-white/90 backdrop-blur-xl shadow-2xl p-6 space-y-5"
+            >
+              <div className="space-y-2">
+                <h4 className="text-lg font-black text-ocular-text-main">Limpiar historial</h4>
+                <p className="text-sm text-ocular-text-muted">
+                  Esto eliminará todos los registros de historial.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setClearModalOpen(false)}
+                  disabled={clearingHistory}
+                  className="px-4 py-2 rounded-xl border border-white/60 bg-white/80 text-ocular-text-main font-bold text-sm hover:bg-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmClearHistory}
+                  disabled={clearingHistory}
+                  className="px-4 py-2 rounded-xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 disabled:opacity-60"
+                >
+                  {clearingHistory ? 'Limpiando...' : 'Sí, limpiar'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
 
 function HistoryCard({ item, onClick, index }) {
   const riskLevel = item.summary?.risk_level || 'low';
-  const color = riskLevel === 'high' ? 'bg-ocular-error' : riskLevel === 'medium' ? 'bg-amber-400' : 'bg-ocular-success';
+  const riskMaxLevel = item.summary?.risk_max_level || riskLevel;
+  const color = riskLevel === 'mixed'
+    ? 'bg-sky-500'
+    : riskLevel === 'high'
+      ? 'bg-ocular-error'
+      : riskLevel === 'medium'
+        ? 'bg-amber-400'
+        : 'bg-ocular-success';
+  const riskText = riskLevel === 'mixed'
+    ? `Mixto (${riskMaxLevel === 'high' ? 'incluye críticos' : riskMaxLevel === 'medium' ? 'incluye medios' : 'estable'})`
+    : riskLevel === 'high'
+      ? 'Prioridad Alta'
+      : riskLevel === 'medium'
+        ? 'Monitoreo'
+        : 'Estable';
 
   return (
     <motion.div
@@ -214,7 +346,7 @@ function HistoryCard({ item, onClick, index }) {
         <div className="p-5 flex-1 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className={cn("px-2 py-1 rounded-md text-[8px] font-bold text-white uppercase", color)}>
-                {riskLevel === 'high' ? 'Prioridad Alta' : riskLevel === 'medium' ? 'Monitoreo' : 'Estable'}
+                {riskText}
             </div>
             <span className="text-[10px] text-ocular-text-muted font-bold flex items-center gap-1">
                 <Calendar size={12} /> {new Date(item.timestamp).toLocaleDateString()}
@@ -227,6 +359,11 @@ function HistoryCard({ item, onClick, index }) {
              </h3>
              <p className="text-[10px] text-ocular-text-muted font-medium truncate uppercase tracking-tighter">Archivo: {item.summary?.filename || 'Desconocido'}</p>
              <p className="text-xs text-ocular-text-main font-semibold">{item.summary?.headline || 'Comparación de modelos RD'}</p>
+             {item.summary?.is_mixed_risk && (
+              <p className="text-[10px] text-ocular-text-muted font-semibold uppercase tracking-tight">
+                Altos: {item.summary?.risk_counts?.high ?? 0} | Medios: {item.summary?.risk_counts?.medium ?? 0} | Bajos: {item.summary?.risk_counts?.low ?? 0}
+              </p>
+             )}
           </div>
 
           <div className="grid grid-cols-2 gap-2 mt-2">

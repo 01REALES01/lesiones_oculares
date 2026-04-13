@@ -41,6 +41,15 @@ export const analysisService = {
     return response.data;
   },
 
+  analyzeDemo: async (file, model = 'densenet169') => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post(`/analyze-demo/?model=${model}`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
   analyzeDenseNet: async (file) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -58,6 +67,11 @@ export const analysisService = {
 
   getStats: async () => {
     const response = await api.get('/stats');
+    return response.data;
+  },
+
+  clearHistory: async () => {
+    const response = await api.delete('/history');
     return response.data;
   },
 

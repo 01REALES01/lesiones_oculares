@@ -1,23 +1,48 @@
 import { useState } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/ui/Sidebar';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import HistoryPage from './pages/History';
 import AnalysisDetail from './pages/Details';
 import Demo from './pages/Demo';
 import { useAnalysis } from './hooks/useAnalysis';
-import { LayoutDashboard, History, Settings, HelpCircle, Layout, Zap } from 'lucide-react';
+import { LayoutDashboard, History, Settings, HelpCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 
 function AppContent() {
   const { token } = useAuth();
+  const [showLanding, setShowLanding] = useState(() => {
+    const screen = sessionStorage.getItem('screen');
+    if (screen === 'landing') return true;
+    if (screen === 'demo') return false;
+    return !token;
+  });
+  const [showDemo, setShowDemo] = useState(() => sessionStorage.getItem('screen') === 'demo');
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [view, setView] = useState('main'); // main | detail
   const [resultBatch, setResultBatch] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const analysisState = useAnalysis();
+
+  if (showLanding) {
+    return (
+      <Landing
+        onEnterApp={() => { sessionStorage.removeItem('screen'); setShowLanding(false); }}
+        onEnterDemo={() => { sessionStorage.setItem('screen', 'demo'); setShowLanding(false); setShowDemo(true); }}
+      />
+    );
+  }
+
+  if (showDemo) {
+    return (
+      <Demo
+        onGoLanding={() => { sessionStorage.setItem('screen', 'landing'); setShowDemo(false); setShowLanding(true); }}
+      />
+    );
+  }
 
   if (!token) {
     return <Login />;
@@ -39,7 +64,7 @@ function AppContent() {
 
   const prevResult = () => {
     if (currentIndex > 0) {
-      setCurrentIndex(0);
+      setCurrentIndex(currentIndex - 1);
     }
   };
 
@@ -47,10 +72,6 @@ function AppContent() {
     { 
       key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, 
       onClick: () => { setActiveTab('dashboard'); setView('main'); } 
-    },
-    { 
-      key: 'demo', label: 'Demo DenseNet', icon: Zap, 
-      onClick: () => { setActiveTab('demo'); setView('main'); } 
     },
     { 
       key: 'history', label: 'Historial', icon: History, 
@@ -73,6 +94,7 @@ function AppContent() {
         toggle={() => setSidebarOpen(!sidebarOpen)} 
         links={navLinks}
         activeKey={activeTab}
+        onGoLanding={() => { sessionStorage.setItem('screen', 'landing'); setShowLanding(true); }}
       />
       
       <main className="flex-1 overflow-y-auto relative">
@@ -86,9 +108,7 @@ function AppContent() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.4 }}
               >
-                {activeTab === 'demo' ? (
-                  <Demo onBack={() => setActiveTab('dashboard')} />
-                ) : activeTab === 'history' ? (
+                {activeTab === 'history' ? (
                   <HistoryPage onViewDetail={navigateToDetail} />
                 ) : (
                   <Dashboard

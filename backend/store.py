@@ -135,9 +135,59 @@ def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         items = g["items"]
         rep = items[0]
         res = rep.get("result", {})
+
+        risk_rank = {"low": 0, "medium": 1, "high": 2}
+
+        def _safe_int(value: Any, default: int = 0) -> int:
+            try:
+                return int(value)
+            except Exception:
+                return default
+
+        def _risk_label_es(risk_value: str) -> str:
+            if risk_value == "high":
+                return "prioridad alta"
+            if risk_value == "medium":
+                return "monitoreo"
+            return "estable"
+
+        # Build aggregate risk stats for the whole group (single or batch)
+        group_risk_counts = {"high": 0, "medium": 0, "low": 0}
+        group_grades: List[int] = []
+        for item in items:
+            item_res = item.get("result", {})
+            item_primary = item_res.get("primary_result") or {}
+            item_summary = item_res.get("comparison_summary") or {}
+
+            item_risk = item_summary.get("risk_level") or item_res.get("risk_level") or "low"
+            if item_risk not in group_risk_counts:
+                item_risk = "low"
+            group_risk_counts[item_risk] += 1
+
+            grade_value = item_primary.get("predicted_class", item_res.get("predicted_class", 0))
+            group_grades.append(_safe_int(grade_value, 0))
+
+        present_risks = [k for k, count in group_risk_counts.items() if count > 0]
+        highest_risk = "low"
+        if present_risks:
+            highest_risk = max(present_risks, key=lambda risk: risk_rank[risk])
+
+        is_mixed_risk = len(present_risks) > 1
         
         primary_result = res.get("primary_result") or {}
         comparison_summary = res.get("comparison_summary") or {}
+
+        summary_risk_level = "mixed" if is_mixed_risk else highest_risk
+
+        if len(items) > 1:
+            summary_headline = (
+                f"Lote mixto: {group_risk_counts['high']} altos, "
+                f"{group_risk_counts['medium']} medios, {group_risk_counts['low']} bajos"
+                if is_mixed_risk
+                else f"Lote homogéneo: {_risk_label_es(highest_risk)}"
+            )
+        else:
+            summary_headline = comparison_summary.get("headline") or res.get("diagnosis")
         
         out.append({
             "inference_id": rep["inference_id"],
@@ -148,11 +198,14 @@ def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
             "models_used": rep["models_used"],
             "inference_times_ms": rep["inference_times_ms"],
             "summary": {
-                "headline": comparison_summary.get("headline") or res.get("diagnosis"),
-                "risk_level": comparison_summary.get("risk_level") or res.get("risk_level") or rep.get("risk_level"),
+                "headline": summary_headline,
+                "risk_level": summary_risk_level,
+                "risk_max_level": highest_risk,
+                "is_mixed_risk": is_mixed_risk,
+                "risk_counts": group_risk_counts,
                 "positive_models": comparison_summary.get("positive_models"),
                 "total_models": comparison_summary.get("total_models") or len(rep.get("models_used", [])),
-                "primary_grade": primary_result.get("predicted_class", res.get("predicted_class")),
+                "primary_grade": max(group_grades) if group_grades else primary_result.get("predicted_class", res.get("predicted_class")),
                 "primary_confidence": primary_result.get("confidence_percent", res.get("confidence_percent")),
                 "primary_diagnosis": primary_result.get("diagnosis", res.get("diagnosis")),
                 "recommendation_short": comparison_summary.get("recommendation_short") or res.get("recommendation_short") or res.get("explanation", {}).get("recommendation_short"),
@@ -169,6 +222,32 @@ def get_batch(batch_id: str) -> List[Dict[str, Any]]:
         for iid in _inference_ids_order
         if _inference_store.get(iid) and _inference_store[iid].get("batch_id") == batch_id
     ]
+
+
+def clear_history(delete_images: bool = False) -> Dict[str, Any]:
+    """Limpia historial completo y opcionalmente borra imágenes guardadas."""
+    global _inference_store, _inference_ids_order
+
+    deleted_records = len(_inference_ids_order)
+    _inference_store = {}
+    _inference_ids_order = []
+
+    deleted_images = 0
+    if delete_images:
+        _ensure_data_dir()
+        for image_path in _IMAGES_DIR.glob("*"):
+            if image_path.is_file():
+                try:
+                    image_path.unlink()
+                    deleted_images += 1
+                except Exception:
+                    pass
+
+    _save_to_file()
+    return {
+        "deleted_records": deleted_records,
+        "deleted_images": deleted_images,
+    }
 
 
 def get_global_stats() -> Dict[str, Any]:

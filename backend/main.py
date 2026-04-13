@@ -26,7 +26,7 @@ from backend.models.segmentation_vnet import segment_optic_disc
 from backend.models.glaucoma_classifier import predict_glaucoma
 from backend.models.lesion_detector import detect_hemorrhages
 from backend.postprocessing.report import build_report, graph_data_for_frontend
-from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch
+from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch, clear_history
 from backend.ml_manager import ml_manager
 from contextlib import asynccontextmanager
 # Auth imports
@@ -34,6 +34,8 @@ from backend.auth import (
     Token, User, get_current_user, create_access_token, 
     get_user, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES
 )
+
+MODEL_RUNTIME_METADATA = {}
 
 # Disclaimer fijo (apoyo/tamizaje, no diagnóstico)
 DISCLAIMER = (
@@ -48,10 +50,10 @@ RD_MODEL_SPECS = {
         "model_type": "densenet169",
         "label": "DenseNet169",
     },
-    "mobilenetv3": {
-        "model_key": "lesiones_mobilenet",
-        "model_type": "mobilenetv3",
-        "label": "MobileNetV3",
+    "resnet50": {
+        "model_key": "lesiones_priority",
+        "model_type": "resnet50",
+        "label": "Modelo Nuevo",
     },
     "xception": {
         "model_key": "lesiones_xception",
@@ -61,23 +63,43 @@ RD_MODEL_SPECS = {
 }
 
 
-def _load_first_available_model(model_key: str, filenames: List[str]) -> None:
+def _load_first_available_model(model_key: str, candidates: List[dict]) -> None:
     last_error = None
-    for filename in filenames:
+    for candidate in candidates:
+        filename = candidate["filename"]
         try:
             ml_manager.load_model(model_key, filename)
+            MODEL_RUNTIME_METADATA[model_key] = {
+                "filename": filename,
+                "model_type": candidate.get("model_type"),
+                "label": candidate.get("label", filename),
+            }
             print(f"Model '{model_key}' loaded from '{filename}'.")
             return
         except Exception as exc:
             last_error = exc
-    print(f"Warning: Could not load model '{model_key}' from candidates {filenames}: {last_error}")
+    print(f"Warning: Could not load model '{model_key}' from candidates {[item['filename'] for item in candidates]}: {last_error}")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load available DR models. Fallback per model is handled at inference time.
-    _load_first_available_model("lesiones_densenet", ["densenet_169_aptos_fine.h5"])
-    _load_first_available_model("lesiones_mobilenet", ["mobilenetv3_model_fino.keras", "mobilenetv3_model.keras"])
-    _load_first_available_model("lesiones_xception", ["xception_aptos_fine2.h5", "xception_model.keras"])
+    _load_first_available_model("lesiones_densenet", [
+        {"filename": "densenet_169_aptos_fine.h5", "model_type": "densenet169", "label": "DenseNet169"},
+    ])
+    _load_first_available_model("lesiones_priority", [
+        {"filename": "efficientnetB0.keras", "model_type": "efficientnet", "label": "EfficientNetB0"},
+        {"filename": "efficientnet_model.keras", "model_type": "efficientnet", "label": "EfficientNet"},
+        {"filename": "efficientnetB0.h5", "model_type": "efficientnet", "label": "EfficientNetB0"},
+        {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50 Fine"},
+        {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
+        {"filename": "mobilenetv3_model_fine.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Fine"},
+        {"filename": "mobilenetv3_model_fino.keras", "model_type": "mobilenetv3", "label": "MobileNetV3"},
+        {"filename": "mobilenetv3_model.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Legacy"},
+    ])
+    _load_first_available_model("lesiones_xception", [
+        {"filename": "xception_aptos_fine2.h5", "model_type": "xception", "label": "Xception"},
+        {"filename": "xception_model.keras", "model_type": "xception", "label": "Xception"},
+    ])
     yield
 
 app = FastAPI(title=settings.app_name, version="0.3.0", lifespan=lifespan)
@@ -187,10 +209,12 @@ def _normalize_rd_prediction(model_id: str, model_spec: dict, prediction: dict, 
     dr_grade = int(prediction.get("predicted_class", 0))
     confidence = float(prediction.get("confidence_percent", 0.0))
     risk_level = _rd_risk_level(dr_grade)
+    runtime_meta = MODEL_RUNTIME_METADATA.get(model_spec["model_key"], {})
+    model_name = runtime_meta.get("label", model_spec["label"])
     return {
         "model_id": model_id,
-        "model_name": model_spec["label"],
-        "model_used": model_spec["label"],
+        "model_name": model_name,
+        "model_used": model_name,
         "model_loaded": model_loaded,
         "predicted_class": dr_grade,
         "confidence_percent": round(confidence, 2),
@@ -369,6 +393,17 @@ async def history(
     Devuelve lista de análisis recientes con ID, timestamp, modelos usados y resumen.
     """
     return {"inferences": list_inferences(limit=limit, offset=offset)}
+
+
+@app.delete("/history")
+async def reset_history(current_user: User = Depends(get_current_user)):
+    """Elimina historial completo y reinicia métricas globales del dashboard."""
+    result = clear_history(delete_images=True)
+    return {
+        "ok": True,
+        "message": "Historial reiniciado correctamente.",
+        **result,
+    }
 
 
 @app.get("/batches/{batch_id}")
@@ -563,8 +598,8 @@ async def analyze_rd_comparison(
     request: Request,
     files: List[UploadFile] = File(...),
     models: str = Query(
-        "densenet169,mobilenetv3,xception",
-        description="Modelos RD a ejecutar: densenet169, mobilenetv3, xception.",
+        "densenet169,resnet50,xception",
+        description="Modelos RD a ejecutar: densenet169, resnet50, xception.",
     ),
     current_user: User = Depends(get_current_user),
 ):
@@ -579,7 +614,7 @@ async def analyze_rd_comparison(
         if model_id not in RD_MODEL_SPECS:
             return JSONResponse(
                 status_code=400,
-                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, mobilenetv3 y/o xception."},
+                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50 y/o xception."},
             )
 
     loop = asyncio.get_event_loop()
@@ -614,13 +649,14 @@ async def analyze_rd_comparison(
                 t0 = time.perf_counter()
 
                 if model_loaded:
+                    runtime_meta = MODEL_RUNTIME_METADATA.get(model_spec["model_key"], {})
                     prediction = await loop.run_in_executor(
                         None,
-                        lambda model_spec=model_spec: ml_manager.predict_single(
+                        lambda model_spec=model_spec, runtime_meta=runtime_meta: ml_manager.predict_single(
                             model_key=model_spec["model_key"],
                             image_bytes=image_bytes,
                             target_size=None,
-                            model_type=model_spec["model_type"],
+                            model_type=runtime_meta.get("model_type", model_spec["model_type"]),
                         ),
                     )
                 else:
@@ -677,6 +713,84 @@ async def analyze_rd_comparison(
         )
 
     return final_results
+
+
+@app.post("/analyze-demo/")
+async def analyze_demo(
+    file: UploadFile = File(...),
+    model: str = Query("densenet169", description="Modelo a usar: densenet169, resnet50 o xception."),
+):
+    """
+    Análisis demo sin autenticación. Solo 1 imagen, 1 modelo, sin guardar historial.
+    """
+    model_id = model.strip().lower()
+    if model_id not in RD_MODEL_SPECS:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50 o xception."},
+        )
+
+    loop = asyncio.get_event_loop()
+    try:
+        img = _read_image_from_upload(file)
+        preprocessed_image = preprocess_fundus(img)
+        file.file.seek(0)
+        image_bytes = file.file.read()
+        image_id = save_image_to_disk(image_bytes, file.filename)
+
+        model_spec = RD_MODEL_SPECS[model_id]
+        model_loaded = model_spec["model_key"] in ml_manager.models
+        t0 = time.perf_counter()
+
+        if model_loaded:
+            runtime_meta = MODEL_RUNTIME_METADATA.get(model_spec["model_key"], {})
+            prediction = await loop.run_in_executor(
+                None,
+                lambda: ml_manager.predict_single(
+                    model_key=model_spec["model_key"],
+                    image_bytes=image_bytes,
+                    target_size=None,
+                    model_type=runtime_meta.get("model_type", model_spec["model_type"]),
+                ),
+            )
+        else:
+            prediction = await loop.run_in_executor(
+                None,
+                lambda: _predict_rd_fallback(preprocessed_image, model_spec["label"]),
+            )
+
+        inference_time_ms = (time.perf_counter() - t0) * 1000
+        analysis_timestamp = datetime.now(timezone.utc).isoformat()
+        model_result = _normalize_rd_prediction(model_id, model_spec, prediction, model_loaded, inference_time_ms)
+
+        return {
+            "success": True,
+            "filename": file.filename,
+            "uploaded_image_preview": f"/images/{image_id}",
+            "model_used": model_result["model_name"],
+            "model_loaded": model_loaded,
+            "predicted_class": model_result["predicted_class"],
+            "confidence_percent": model_result["confidence_percent"],
+            "diagnosis": model_result["diagnosis"],
+            "clinical_description": model_result["clinical_description"],
+            "raw_probabilities": model_result["raw_probabilities"],
+            "risk_level": model_result["risk_level"],
+            "recommendation_short": model_result["recommendation_short"],
+            "inference_time_ms": round(inference_time_ms, 2),
+            "timestamp": analysis_timestamp,
+            "explanation": {
+                "dr_grade": model_result["predicted_class"],
+                "dr_diagnosis": model_result["diagnosis"],
+                "recommendation_short": model_result["recommendation_short"],
+                "risk_level": model_result["risk_level"],
+            },
+            "disclaimer": DISCLAIMER,
+        }
+    except Exception as e:
+        return JSONResponse(
+            status_code=400,
+            content={"detail": f"Error procesando imagen: {str(e)}"},
+        )
 
 
 @app.post("/analyze-retina/")

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Clipboard, Upload, Cpu, Plus, CheckCircle2, AlertCircle, Loader2, Clock, X } from 'lucide-react';
+import { Activity, Clipboard, Upload, Cpu, Plus, CheckCircle2, AlertCircle, Loader2, Clock, X, Trash2 } from 'lucide-react';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
 import { analysisService } from '../services/api';
 
@@ -22,6 +22,9 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
   const [recentHistory, setRecentHistory] = useState([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [clearingHistory, setClearingHistory] = useState(false);
+  const [clearModalOpen, setClearModalOpen] = useState(false);
+  const [historyNotice, setHistoryNotice] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
   const [globalStats, setGlobalStats] = useState({
     total_analyses: 0,
@@ -29,6 +32,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     avg_confidence: 0.0,
     avg_latency_ms: 0.0
   });
+  const hasHistoryToClear = globalStats.total_analyses > 0;
 
   useEffect(() => {
     loadHistory();
@@ -47,6 +51,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   const selectedModelCount = Object.values(models).filter(Boolean).length;
 
   const loadHistory = async () => {
+    setHistoryLoading(true);
     try {
       const data = await analysisService.getHistory(5);
       setRecentHistory(data);
@@ -54,6 +59,39 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
       console.error(e);
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  const confirmClearHistory = async () => {
+    setClearingHistory(true);
+    setHistoryNotice(null);
+    try {
+      await analysisService.clearHistory();
+      setRecentHistory([]);
+      setGlobalStats({
+        total_analyses: 0,
+        rd_detected_rate: 0.0,
+        avg_confidence: 0.0,
+        avg_latency_ms: 0.0,
+      });
+      await loadHistory();
+      await loadStats();
+      setHistoryNotice({ type: 'success', message: 'Historial limpiado y métricas reiniciadas.' });
+      setClearModalOpen(false);
+    } catch (e) {
+      console.error('Error clearing history:', e);
+      const status = e?.response?.status;
+      const backendMsg = e?.response?.data?.detail || e?.response?.data?.message;
+      const hint = status === 404 || status === 405
+        ? ' Reinicia el backend para cargar el endpoint /history.'
+        : '';
+      setHistoryNotice({
+        type: 'error',
+        message: `No se pudo limpiar el historial.${backendMsg ? ` ${backendMsg}` : ''}${hint}`,
+      });
+      setClearModalOpen(false);
+    } finally {
+      setClearingHistory(false);
     }
   };
 
@@ -90,22 +128,49 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     if (extractedFiles.length > 0) addFiles(extractedFiles);
   };
 
-  const openHistoryItem = async (historyItem) => {
+  const mapRecordToDetail = (record) => ({
+    ...record.result,
+    inference_id: record.inference_id,
+    timestamp: record.timestamp,
+    traceability: {
+      inference_id: record.inference_id,
+      models_used: record.models_used,
+      inference_times_ms: record.inference_times_ms,
+      timestamp: record.timestamp,
+    },
+  });
+
+  const openHistoryItem = async (historyItem, forceBatch = false) => {
     try {
-      const fullRecord = await analysisService.getInference(historyItem.inference_id);
-      if (fullRecord?.result) {
-        onViewDetail({
-          ...fullRecord.result,
-          inference_id: fullRecord.inference_id,
-          timestamp: fullRecord.timestamp,
-          traceability: {
-            inference_id: fullRecord.inference_id,
-            models_used: fullRecord.models_used,
-            inference_times_ms: fullRecord.inference_times_ms,
-            timestamp: fullRecord.timestamp,
-          },
-        });
+      const isBatchByFlags = Boolean(
+        historyItem.is_batch ||
+        (historyItem.batch_id && historyItem.batch_size > 1) ||
+        ((historyItem.summary?.headline || '').toLowerCase().includes('lote') && historyItem.batch_id)
+      );
+
+      if ((forceBatch || isBatchByFlags) && historyItem.batch_id) {
+        const fullBatch = await analysisService.getBatch(historyItem.batch_id);
+        const mappedBatch = (fullBatch || []).map(mapRecordToDetail);
+
+        if (mappedBatch.length > 0) {
+          onViewDetail(mappedBatch, 0);
+        }
+        return;
       }
+
+      const fullRecord = await analysisService.getInference(historyItem.inference_id);
+      if (!fullRecord?.result) return;
+
+      if ((forceBatch || isBatchByFlags) && (fullRecord.batch_id || historyItem.batch_id)) {
+        const fullBatch = await analysisService.getBatch(fullRecord.batch_id || historyItem.batch_id);
+        const mappedBatch = (fullBatch || []).map(mapRecordToDetail);
+        if (mappedBatch.length > 0) {
+          onViewDetail(mappedBatch, 0);
+          return;
+        }
+      }
+
+      onViewDetail(mapRecordToDetail(fullRecord));
     } catch (fetchError) {
       console.error(fetchError);
     }
@@ -127,6 +192,29 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {historyNotice && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`fixed bottom-5 right-5 z-[95] max-w-md rounded-2xl border px-4 py-3 text-sm font-semibold shadow-xl ${
+            historyNotice.type === 'success'
+              ? 'border-ocular-success/30 bg-ocular-success/10 text-ocular-success'
+              : 'border-ocular-error/30 bg-ocular-error/10 text-ocular-error'
+          }`}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <span>{historyNotice.message}</span>
+            <button
+              type="button"
+              onClick={() => setHistoryNotice(null)}
+              className="text-xs font-bold uppercase hover:opacity-80"
+            >
+              Cerrar
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-ocular-text-main">Panel de Control</h1>
@@ -226,7 +314,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 <p className="text-xs font-bold text-ocular-text-muted uppercase tracking-widest px-1">Modelos de Retinopatia Diabetica</p>
                 <div className="flex flex-wrap gap-4">
                   <ModelToggle icon={Cpu} label="DenseNet169" active={models.densenet169} onClick={() => toggleModel('densenet169', !models.densenet169)} />
-                  <ModelToggle icon={Cpu} label="MobileNetV3" active={models.mobilenetv3} onClick={() => toggleModel('mobilenetv3', !models.mobilenetv3)} />
+                  <ModelToggle icon={Cpu} label="ResNet50" active={models.resnet50} onClick={() => toggleModel('resnet50', !models.resnet50)} />
                   <ModelToggle icon={Cpu} label="Xception" active={models.xception} onClick={() => toggleModel('xception', !models.xception)} />
                 </div>
 
@@ -313,9 +401,22 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 <Clock size={18} className="text-primary" />
                 <h3 className="font-bold text-ocular-text-main">Historial</h3>
               </div>
-              <button type="button" onClick={() => onGoHistory?.()} className="text-[10px] font-bold uppercase text-primary hover:underline">
-                Ver Todo
-              </button>
+              <div className="flex items-center gap-3">
+                {hasHistoryToClear && (
+                  <button
+                    type="button"
+                    onClick={() => setClearModalOpen(true)}
+                    disabled={clearingHistory}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/60 bg-white/80 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:border-ocular-error/40 hover:text-ocular-error transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <Trash2 size={12} />
+                    {clearingHistory ? 'Limpiando...' : 'Limpiar'}
+                  </button>
+                )}
+                <button type="button" onClick={() => onGoHistory?.()} className="text-[10px] font-bold uppercase text-primary hover:underline">
+                  Ver Todo
+                </button>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -324,30 +425,48 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   .fill(0)
                   .map((_, i) => <div key={i} className="h-16 animate-pulse bg-white/30 rounded-2xl" />)
               ) : recentHistory.length > 0 ? (
-                recentHistory.map((item, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    onClick={() => openHistoryItem(item)}
-                    className="w-full group p-3 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all text-left flex items-center gap-3"
-                  >
-                    <div
-                      className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                        item.summary?.risk_level === 'high'
-                          ? 'bg-ocular-error/10 text-ocular-error'
-                          : item.summary?.risk_level === 'medium'
-                            ? 'bg-amber-400/10 text-amber-500'
-                            : 'bg-ocular-success/10 text-ocular-success'
-                      }`}
-                    >
-                      <Clipboard size={18} />
+                recentHistory.map((item, i) => {
+                  const isBatchItem = Boolean(
+                    item.is_batch ||
+                    (item.batch_id && item.batch_size > 1) ||
+                    ((item.summary?.headline || '').toLowerCase().includes('lote') && item.batch_id)
+                  );
+                  return (
+                    <div key={i} className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => openHistoryItem(item)}
+                        className="w-full group p-3 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all text-left flex items-center gap-3"
+                      >
+                        <div
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                            item.summary?.risk_level === 'high'
+                              ? 'bg-ocular-error/10 text-ocular-error'
+                              : item.summary?.risk_level === 'medium'
+                                ? 'bg-amber-400/10 text-amber-500'
+                                : 'bg-ocular-success/10 text-ocular-success'
+                          }`}
+                        >
+                          <Clipboard size={18} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-bold text-ocular-text-main group-hover:text-primary transition-colors">
+                              {isBatchItem && item.batch_id
+                                ? `Lote #${item.batch_id.substring(0, 6)}`
+                                : `Analisis #${item.inference_id.substring(0, 5)}`}
+                            </p>
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isBatchItem ? 'bg-primary/10 text-primary' : 'bg-slate-200/70 text-slate-600'}`}>
+                              {isBatchItem ? `Lote${item.batch_size ? ` (${item.batch_size})` : ''}` : 'Individual'}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-ocular-text-muted uppercase font-bold truncate">{item.summary?.headline || new Date(item.timestamp).toLocaleDateString()}</p>
+                        </div>
+                      </button>
+
                     </div>
-                    <div>
-                      <p className="text-sm font-bold text-ocular-text-main group-hover:text-primary transition-colors">Analisis #{item.inference_id.substring(0, 5)}</p>
-                      <p className="text-[10px] text-ocular-text-muted uppercase font-bold">{item.summary?.headline || new Date(item.timestamp).toLocaleDateString()}</p>
-                    </div>
-                  </button>
-                ))
+                  );
+                })
               ) : (
                 <p className="text-center text-xs text-ocular-text-muted py-8">No hay registros previos.</p>
               )}
@@ -360,6 +479,49 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           </GlassCard>
         </div>
       </div>
+
+      <AnimatePresence>
+        {clearModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 14, scale: 0.98 }}
+              className="w-full max-w-md rounded-3xl border border-white/30 bg-white/90 backdrop-blur-xl shadow-2xl p-6 space-y-5"
+            >
+              <div className="space-y-2">
+                <h4 className="text-lg font-black text-ocular-text-main">Limpiar historial</h4>
+                <p className="text-sm text-ocular-text-muted">
+                  Esto eliminará todo el historial y reiniciará las métricas del dashboard.
+                </p>
+              </div>
+              <div className="flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setClearModalOpen(false)}
+                  disabled={clearingHistory}
+                  className="px-4 py-2 rounded-xl border border-white/60 bg-white/80 text-ocular-text-main font-bold text-sm hover:bg-white"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmClearHistory}
+                  disabled={clearingHistory}
+                  className="px-4 py-2 rounded-xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 disabled:opacity-60"
+                >
+                  {clearingHistory ? 'Limpiando...' : 'Sí, limpiar'}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

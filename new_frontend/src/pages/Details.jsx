@@ -40,7 +40,16 @@ function suggestionByGrade(grade) {
   return 'No se observan signos aparentes de retinopatia diabetica. Se recomienda control oftalmologico periodico.';
 }
 
-export default function AnalysisDetail({ result, batch = [], currentIndex = 0, onNext, onPrev, onBack }) {
+export default function AnalysisDetail({
+  result,
+  batch = [],
+  currentIndex = 0,
+  onNext,
+  onPrev,
+  onBack,
+  showActions = true,
+  showReportId = true,
+}) {
   if (!result) return null;
 
   const isBatch = batch.length > 1;
@@ -114,14 +123,16 @@ export default function AnalysisDetail({ result, batch = [], currentIndex = 0, o
           )}
         </div>
 
-        <div className="flex gap-3">
-          <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white/40 rounded-xl border border-white/60 text-ocular-text-muted hover:text-primary transition-all font-bold text-xs uppercase">
-            <Printer size={18} /> Imprimir
-          </button>
-          <button onClick={handleExportJSON} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all font-bold text-xs uppercase">
-            <FileDown size={18} /> Exportar Datos
-          </button>
-        </div>
+        {showActions && (
+          <div className="flex gap-3">
+            <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white/40 rounded-xl border border-white/60 text-ocular-text-muted hover:text-primary transition-all font-bold text-xs uppercase">
+              <Printer size={18} /> Imprimir
+            </button>
+            <button onClick={handleExportJSON} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all font-bold text-xs uppercase">
+              <FileDown size={18} /> Exportar Datos
+            </button>
+          </div>
+        )}
       </div>
 
       <AnimatePresence mode="wait">
@@ -135,7 +146,9 @@ export default function AnalysisDetail({ result, batch = [], currentIndex = 0, o
           <div className="xl:col-span-4 space-y-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold text-ocular-text-main">Veredicto Clinico</h2>
-              <p className="text-sm text-ocular-text-muted font-medium uppercase tracking-widest">ID Reporte: #{result.inference_id?.substring(0, 8)}</p>
+              {showReportId && (
+                <p className="text-sm text-ocular-text-muted font-medium uppercase tracking-widest">ID Reporte: #{result.inference_id?.substring(0, 8)}</p>
+              )}
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">
                   Fecha: {formatTimestamp(timestamp)}

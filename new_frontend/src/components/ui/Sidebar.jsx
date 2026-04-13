@@ -1,9 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils';
-import { LogOut, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, User, House } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
-export const Sidebar = ({ isOpen, toggle, links, activeKey }) => {
+export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
   const { logout } = useAuth();
 
   return (
@@ -76,6 +76,27 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey }) => {
 
       {/* Footer / User Area */}
       <div className="p-3 border-t border-white/20 mt-auto">
+        {onGoLanding && (
+          <button
+            onClick={onGoLanding}
+            className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary/10 text-primary hover:bg-primary/15 transition-colors group overflow-hidden mb-2"
+          >
+            <House size={22} className="flex-shrink-0" />
+            <AnimatePresence>
+              {isOpen && (
+                <motion.span
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="font-semibold whitespace-nowrap"
+                >
+                  Volver a Landing
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        )}
+
         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/30 mb-2 overflow-hidden">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
             <User size={18} />

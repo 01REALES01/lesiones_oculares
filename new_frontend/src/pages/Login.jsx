@@ -116,7 +116,7 @@ export default function Login() {
 
         <div className="mt-8 text-center border-t border-white/20 pt-6">
           <p className="text-xs text-ocular-text-muted uppercase tracking-widest font-semibold opacity-50">
-            OcularAI Research Group &copy;
+            OcularAI Research Groups &copy;
           </p>
         </div>
       </GlassCard>
