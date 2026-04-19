@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 
@@ -49,6 +49,7 @@ export default function AnalysisDetail({
   onBack,
   showActions = true,
   showReportId = true,
+  onDelete,
 }) {
   if (!result) return null;
 
@@ -130,6 +131,13 @@ export default function AnalysisDetail({
             </button>
             <button onClick={handleExportJSON} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all font-bold text-xs uppercase">
               <FileDown size={18} /> Exportar Datos
+            </button>
+            <button 
+              onClick={() => onDelete?.(result.inference_id)} 
+              className="flex items-center gap-2 px-4 py-2 bg-white/40 border border-white/60 text-ocular-error rounded-xl hover:bg-ocular-error/10 transition-all font-bold text-xs uppercase"
+              title="Eliminar este analisis"
+            >
+              <Trash2 size={18} /> Borrar
             </button>
           </div>
         )}
@@ -301,7 +309,7 @@ export default function AnalysisDetail({
 
             <div className="p-6 bg-white/40 border border-white/60 rounded-3xl space-y-3">
               <div className="flex items-center gap-2 text-primary font-bold text-sm">
-                <ClipboardList size={18} /> Sugerencia de la IA
+                <ClipboardList size={18} /> Sugerencia
               </div>
               <p className="text-sm text-ocular-text-main leading-relaxed italic font-medium">
                 "{summary.recommendation_short || primaryResult.recommendation_short || suggestionByGrade(consensusGrade)}"
@@ -346,58 +354,58 @@ export default function AnalysisDetail({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {comparisonModels.map((item) => {
-                    const itemProbabilities = probabilityLabels.map((label, index) => ({
-                      label,
-                      value: normalizeProbability(item.raw_probabilities?.[index] ?? 0),
-                    }));
-                    return (
-                      <GlassCard key={item.model_id} className="p-5 border border-white/50 bg-white/60 space-y-4">
-                        <div className="flex items-center justify-between gap-3">
-                          <div>
-                            <p className="text-xs font-bold text-ocular-text-muted uppercase tracking-wider">{item.model_name}</p>
-                            <p className="text-lg font-bold text-ocular-text-main">{item.diagnosis}</p>
-                          </div>
-                          <span className={cn(
-                            'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
-                            item.predicted_class > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'
-                          )}>
-                            G{item.predicted_class}
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div className="rounded-2xl bg-white/70 border border-white/70 p-3">
-                            <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Confianza</p>
-                            <p className="text-lg font-bold text-ocular-text-main">{Number(item.confidence_percent).toFixed(1)}%</p>
-                          </div>
-                          <div className="rounded-2xl bg-white/70 border border-white/70 p-3">
-                            <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Latencia</p>
-                            <p className="text-lg font-bold text-ocular-text-main">{item.inference_time_ms.toFixed(2)} ms</p>
-                          </div>
-                        </div>
-
-                        <div className="space-y-2">
-                          {itemProbabilities.map((probability) => (
-                            <div key={`${item.model_id}-${probability.label}`} className="space-y-1">
-                              <div className="flex items-center justify-between text-[11px] font-semibold text-ocular-text-main">
-                                <span>{probability.label}</span>
-                                <span>{probability.value.toFixed(1)}%</span>
-                              </div>
-                              <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden">
-                                <div
-                                  className={cn(
-                                    'h-full rounded-full transition-all duration-500',
-                                    probability.label === `G${item.predicted_class}` ? 'bg-primary' : 'bg-indigo-300'
-                                  )}
-                                  style={{ width: `${probability.value}%` }}
-                                />
-                              </div>
+                      const itemProbabilities = probabilityLabels.map((label, index) => ({
+                        label,
+                        value: normalizeProbability(item.raw_probabilities?.[index] ?? 0),
+                      }));
+                      return (
+                        <GlassCard key={item.model_id} className="p-5 border border-white/50 bg-white/60 space-y-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <div>
+                              <p className="text-xs font-bold text-ocular-text-muted uppercase tracking-wider">{item.model_name}</p>
+                              <p className="text-lg font-bold text-ocular-text-main">{item.diagnosis}</p>
                             </div>
-                          ))}
-                        </div>
-                      </GlassCard>
-                    );
-                  })}
+                            <span className={cn(
+                              'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
+                              item.predicted_class > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'
+                            )}>
+                              G{item.predicted_class}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div className="rounded-2xl bg-white/70 border border-white/70 p-3">
+                              <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Confianza</p>
+                              <p className="text-lg font-bold text-ocular-text-main">{Number(item.confidence_percent).toFixed(1)}%</p>
+                            </div>
+                            <div className="rounded-2xl bg-white/70 border border-white/70 p-3">
+                              <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Latencia</p>
+                              <p className="text-lg font-bold text-ocular-text-main">{item.inference_time_ms.toFixed(2)} ms</p>
+                            </div>
+                          </div>
+
+                          <div className="space-y-2">
+                            {itemProbabilities.map((probability) => (
+                              <div key={`${item.model_id}-${probability.label}`} className="space-y-1">
+                                <div className="flex items-center justify-between text-[11px] font-semibold text-ocular-text-main">
+                                  <span>{probability.label}</span>
+                                  <span>{probability.value.toFixed(1)}%</span>
+                                </div>
+                                <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      'h-full rounded-full transition-all duration-500',
+                                      probability.label === `G${item.predicted_class}` ? 'bg-primary' : 'bg-indigo-300'
+                                    )}
+                                    style={{ width: `${probability.value}%` }}
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </GlassCard>
+                      );
+                    })}
                   </div>
                 </div>
               ) : (

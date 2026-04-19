@@ -10,6 +10,7 @@ import Demo from './pages/Demo';
 import { useAnalysis } from './hooks/useAnalysis';
 import { LayoutDashboard, History, Settings, HelpCircle } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { analysisService } from './services/api';
 
 function AppContent() {
   const { token } = useAuth();
@@ -65,6 +66,27 @@ function AppContent() {
   const prevResult = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
+    }
+  };
+
+  const handleDeleteDetail = async (inference_id) => {
+    try {
+      await analysisService.deleteAnalysis(inference_id);
+      
+      const newBatch = resultBatch.filter(item => item.inference_id !== inference_id);
+      
+      if (newBatch.length === 0) {
+        setResultBatch([]);
+        setView('main');
+      } else {
+        setResultBatch(newBatch);
+        // Ajustar el índice si era el último
+        if (currentIndex >= newBatch.length) {
+          setCurrentIndex(newBatch.length - 1);
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting from detail:', error);
     }
   };
 
@@ -133,6 +155,7 @@ function AppContent() {
                   onNext={nextResult}
                   onPrev={prevResult}
                   onBack={() => setView('main')} 
+                  onDelete={handleDeleteDetail}
                 />
               </motion.div>
             )}

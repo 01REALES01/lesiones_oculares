@@ -250,6 +250,49 @@ def clear_history(delete_images: bool = False) -> Dict[str, Any]:
     }
 
 
+def delete_inference(inference_id: str) -> bool:
+    """Elimina un análisis específico."""
+    global _inference_store, _inference_ids_order
+    
+    if inference_id not in _inference_store:
+        return False
+        
+    # Eliminar imagen si existe
+    record = _inference_store.get(inference_id)
+    img_preview = record.get("result", {}).get("uploaded_image_preview")
+    if img_preview and img_preview.startswith("/images/"):
+        filename = img_preview.replace("/images/", "")
+        img_path = _IMAGES_DIR / filename
+        if img_path.exists():
+            try: img_path.unlink()
+            except: pass
+
+    # Quitar del store y orden
+    _inference_store.pop(inference_id, None)
+    if inference_id in _inference_ids_order:
+        _inference_ids_order.remove(inference_id)
+        
+    _save_to_file()
+    return True
+
+
+def delete_batch(batch_id: str) -> int:
+    """Elimina todas las inferencias que pertenecen a un mismo lote."""
+    global _inference_store, _inference_ids_order
+    
+    ids_to_delete = [
+        iid for iid, record in _inference_store.items()
+        if record.get("batch_id") == batch_id
+    ]
+    
+    count = 0
+    for iid in ids_to_delete:
+        if delete_inference(iid):
+            count += 1
+            
+    return count
+
+
 def get_global_stats() -> Dict[str, Any]:
     """
     Calcula métricas globales para el Dashboard:

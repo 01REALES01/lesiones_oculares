@@ -83,6 +83,16 @@ export const analysisService = {
   getBatch: async (batchId) => {
     const response = await api.get(`/batches/${batchId}`);
     return response.data;
+  },
+
+  deleteAnalysis: async (id) => {
+    const response = await api.delete(`/history/${id}`);
+    return response.data;
+  },
+  
+  deleteBatch: async (batchId) => {
+    const response = await api.delete(`/batches/${batchId}`);
+    return response.data;
   }
 };
 

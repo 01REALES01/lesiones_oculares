@@ -26,7 +26,7 @@ from backend.models.segmentation_vnet import segment_optic_disc
 from backend.models.glaucoma_classifier import predict_glaucoma
 from backend.models.lesion_detector import detect_hemorrhages
 from backend.postprocessing.report import build_report, graph_data_for_frontend
-from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch, clear_history
+from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch, clear_history, delete_batch
 from backend.ml_manager import ml_manager
 from contextlib import asynccontextmanager
 # Auth imports
@@ -404,6 +404,25 @@ async def reset_history(current_user: User = Depends(get_current_user)):
         "message": "Historial reiniciado correctamente.",
         **result,
     }
+
+
+@app.delete("/history/{inference_id}")
+async def delete_single_inference(inference_id: str, current_user: User = Depends(get_current_user)):
+    """Elimina un análisis específico del historial."""
+    from backend.store import delete_inference
+    success = delete_inference(inference_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="Análisis no encontrado")
+    return {"ok": True, "message": "Análisis eliminado correctamente."}
+
+
+@app.delete("/batches/{batch_id}")
+async def delete_entire_batch(batch_id: str, current_user: User = Depends(get_current_user)):
+    """Elimina todas las inferencias asociadas a un lote."""
+    count = delete_batch(batch_id)
+    if count == 0:
+        raise HTTPException(status_code=404, detail="Lote no encontrado o vacío")
+    return {"ok": True, "message": f"Lote eliminado correctamente ({count} análisis)."}
 
 
 @app.get("/batches/{batch_id}")

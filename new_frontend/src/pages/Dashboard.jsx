@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity, Clipboard, Upload, Cpu, Plus, CheckCircle2, AlertCircle, Loader2, Clock, X, Trash2 } from 'lucide-react';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
@@ -26,6 +26,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   const [clearModalOpen, setClearModalOpen] = useState(false);
   const [historyNotice, setHistoryNotice] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [resultsVisible, setResultsVisible] = useState(true);
   const [globalStats, setGlobalStats] = useState({
     total_analyses: 0,
     rd_detected_rate: 0.0,
@@ -33,6 +34,22 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     avg_latency_ms: 0.0
   });
   const hasHistoryToClear = globalStats.total_analyses > 0;
+  const resultsRef = useRef(null);
+
+  useEffect(() => {
+    if (historyNotice) {
+      const timer = setTimeout(() => {
+        setHistoryNotice(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [historyNotice]);
+
+  useEffect(() => {
+    if (results && resultsRef.current) {
+      resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [results]);
 
   useEffect(() => {
     loadHistory();
@@ -187,11 +204,36 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     }));
 
     setResults(withPreview);
-    loadHistory();
+    setResultsVisible(true);
+    await loadHistory();
+    await loadStats();
+  };
+
+  const deleteItem = async (e, item) => {
+    e.stopPropagation();
+    const isBatch = item.is_batch && item.batch_id;
+    try {
+      if (isBatch) {
+        await analysisService.deleteBatch(item.batch_id);
+      } else {
+        await analysisService.deleteAnalysis(item.inference_id);
+      }
+      
+      setRecentHistory(prev => prev.filter(h => {
+        if (isBatch) return h.batch_id !== item.batch_id;
+        return h.inference_id !== item.inference_id;
+      }));
+      
+      await loadStats();
+      setHistoryNotice({ type: 'success', message: isBatch ? 'Lote eliminado.' : 'Analisis eliminado.' });
+    } catch (e) {
+      console.error("Error eliminando:", e);
+      setHistoryNotice({ type: 'error', message: 'No se pudo eliminar.' });
+    }
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <>
       {historyNotice && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -214,6 +256,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           </div>
         </motion.div>
       )}
+      <div className="space-y-8 animate-in fade-in duration-500">
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -221,10 +264,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           <p className="text-ocular-text-muted">Compara uno, dos o tres modelos de retinopatia diabetica en una sola ejecucion.</p>
         </div>
         <div className="flex items-center gap-3">
-          <GlassCard className="py-2 px-4 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-ocular-success animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-ocular-text-muted">Servidor IA: Online</span>
-          </GlassCard>
+          {/* Servidor IA removido a petición del usuario */}
         </div>
       </div>
 
@@ -380,15 +420,57 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
             )}
           </GlassCard>
 
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {results && (
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
-                <h3 className="text-lg font-bold text-ocular-text-main px-1">Resultados Recientes</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {results.map((res, i) => (
-                    <ResultMiniCard key={i} result={res} onClick={() => onViewDetail(results, i)} />
-                  ))}
-                </div>
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                {resultsVisible ? (
+                  <motion.div 
+                    key="results-list"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="space-y-4 pt-4"
+                  >
+                    <div className="flex items-center justify-between px-1">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={18} className="text-ocular-success" />
+                        <h3 className="text-lg font-bold text-ocular-text-main">Resultados del Análisis</h3>
+                      </div>
+                      <button 
+                        onClick={() => setResultsVisible(false)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-white/60 rounded-xl text-[10px] font-bold text-ocular-text-muted hover:text-primary hover:border-primary/30 transition-all uppercase tracking-widest shadow-sm"
+                      >
+                        <X size={14} /> Ocultar
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {results.map((res, i) => (
+                        <ResultMiniCard key={i} result={res} onClick={() => onViewDetail(results, i)} />
+                      ))}
+                    </div>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="results-hidden"
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    className="pt-4"
+                  >
+                    <button
+                      onClick={() => setResultsVisible(true)}
+                      className="w-full p-4 bg-white/40 border border-white/60 border-dashed rounded-3xl flex items-center justify-center gap-3 text-ocular-text-muted hover:text-primary hover:bg-white/60 transition-all group"
+                    >
+                      <Plus className="group-hover:rotate-90 transition-transform" />
+                      <span className="text-sm font-bold uppercase tracking-widest">Mostrar resultados del último análisis ({results.length})</span>
+                    </button>
+                  </motion.div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -433,10 +515,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   );
                   return (
                     <div key={i} className="space-y-2">
-                      <button
-                        type="button"
+                      <div
+                        role="button"
                         onClick={() => openHistoryItem(item)}
-                        className="w-full group p-3 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all text-left flex items-center gap-3"
+                        className="w-full group p-3 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all text-left flex items-center gap-3 cursor-pointer"
                       >
                         <div
                           className={`w-10 h-10 rounded-xl flex items-center justify-center ${
@@ -462,7 +544,15 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                           </div>
                           <p className="text-[10px] text-ocular-text-muted uppercase font-bold truncate">{item.summary?.headline || new Date(item.timestamp).toLocaleDateString()}</p>
                         </div>
-                      </button>
+                        <div
+                          role="button"
+                          onClick={(e) => deleteItem(e, item)}
+                          className="p-2 rounded-xl text-ocular-text-muted hover:bg-ocular-error/10 hover:text-ocular-error transition-all opacity-0 group-hover:opacity-100"
+                          title="Eliminar este analisis o lote"
+                        >
+                          <Trash2 size={16} />
+                        </div>
+                      </div>
 
                     </div>
                   );
@@ -523,6 +613,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }
 

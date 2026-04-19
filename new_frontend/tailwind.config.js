@@ -25,6 +25,9 @@ export default {
           error: '#ef4444',
         }
       },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Open Sans', 'Helvetica Neue', 'sans-serif'],
+      },
       backdropBlur: {
         xs: '2px',
       },

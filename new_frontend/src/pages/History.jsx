@@ -144,8 +144,40 @@ export default function HistoryPage({ onViewDetail }) {
     }
   };
 
+  const deleteItem = async (e, item) => {
+    e.stopPropagation();
+    const isBatch = item.is_batch && item.batch_id;
+    try {
+      if (isBatch) {
+        await analysisService.deleteBatch(item.batch_id);
+      } else {
+        await analysisService.deleteAnalysis(item.inference_id);
+      }
+      
+      setHistory(prev => prev.filter(h => {
+        if (isBatch) return h.batch_id !== item.batch_id;
+        return h.inference_id !== item.inference_id;
+      }));
+      
+      setHistoryNotice({ type: 'success', message: isBatch ? 'Lote eliminado.' : 'Analisis eliminado.' });
+    } catch (e) {
+      console.error("Error eliminando:", e);
+      setHistoryNotice({ type: 'error', message: 'No se pudo eliminar.' });
+    }
+  };
+
+  // Auto-hide notices after 2 seconds
+  useEffect(() => {
+    if (historyNotice) {
+      const timer = setTimeout(() => {
+        setHistoryNotice(null);
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [historyNotice]);
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
+    <>
       {historyNotice && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
@@ -168,6 +200,7 @@ export default function HistoryPage({ onViewDetail }) {
           </div>
         </motion.div>
       )}
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
 
       {/* Header & Controls */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-5">
@@ -232,6 +265,7 @@ export default function HistoryPage({ onViewDetail }) {
                 item={item}
                 index={index}
                 onClick={() => openHistoryDetail(item)}
+                onDelete={(e) => deleteItem(e, item)}
               />
             ))}
           </AnimatePresence>
@@ -241,7 +275,7 @@ export default function HistoryPage({ onViewDetail }) {
           <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
           <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
-          <button onClick={() => { setSearch(""); setRiskFilter("all"); }} className="mt-4 text-primary font-bold hover:underline">Ver todo el historial</button>
+          <button onClick={() => { setSearch(""); setRiskFilter("all"); }} className="mt-4 text-primary font-bold hover:underline">Limpiar búsqueda y filtros</button>
         </GlassCard>
       )}
 
@@ -310,10 +344,11 @@ export default function HistoryPage({ onViewDetail }) {
         )}
       </AnimatePresence>
     </div>
+    </>
   );
 }
 
-function HistoryCard({ item, onClick, index }) {
+function HistoryCard({ item, onClick, onDelete, index }) {
   const riskLevel = item.summary?.risk_level || 'low';
   const riskMaxLevel = item.summary?.risk_max_level || riskLevel;
   const color = riskLevel === 'mixed'
@@ -351,6 +386,13 @@ function HistoryCard({ item, onClick, index }) {
             <span className="text-[10px] text-ocular-text-muted font-bold flex items-center gap-1">
                 <Calendar size={12} /> {new Date(item.timestamp).toLocaleDateString()}
             </span>
+            <button
+              onClick={onDelete}
+              className="p-1.5 rounded-lg bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100"
+              title="Eliminar este análisis"
+            >
+              <Trash2 size={12} />
+            </button>
           </div>
 
           <div className="space-y-1">
