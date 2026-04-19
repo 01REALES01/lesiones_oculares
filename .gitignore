@@ -34,6 +34,7 @@ Thumbs.db
 *.pth
 *.h5
 *.pkl
+*.keras
 models/*.onnx
 data/
 datasets/
