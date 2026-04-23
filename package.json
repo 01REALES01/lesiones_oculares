@@ -1,0 +1,13 @@
+{
+  "name": "proyecto-final",
+  "private": true,
+  "description": "Orquestación local: API + new_frontend",
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c cyan,magenta \"npm run dev:api\" \"npm run dev:web\"",
+    "dev:api": "bash scripts/run-backend.sh",
+    "dev:web": "npm run dev --prefix new_frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -64,6 +64,28 @@ Incluimos: requerimientos, front-end, back-end, tres modelos, postprocesamiento,
 
 ## Cómo ejecutar
 
+### Todo junto (API + `new_frontend`)
+
+**Primera vez** (raíz del repo): instalar dependencias del orquestador, del backend y del front.
+
+```bash
+cd Proyecto_final
+npm install
+pip install -r requirements.txt
+cd new_frontend && npm install && cd ..
+```
+
+**Cada vez que trabajes**, un solo comando en la raíz:
+
+```bash
+npm run dev
+```
+
+- Activa `.venv` automáticamente si existe en la raíz del proyecto.
+- API: **http://127.0.0.1:8000/docs** · Interfaz Vite: la URL que muestre la terminal (suele ser **http://127.0.0.1:5173**).
+- **Ctrl+C** detiene API y frontend a la vez.
+- En Windows hace falta **Git Bash** o WSL para el script `scripts/run-backend.sh`.
+
 ### Backend (API)
 
 ```bash

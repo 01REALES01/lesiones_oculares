@@ -20,6 +20,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 
+try:
+    import anthropic as anthropic_sdk
+except ImportError:
+    anthropic_sdk = None
 from backend.config import settings
 from backend.preprocessing.fundus import preprocess_fundus
 from backend.models.segmentation_vnet import segment_optic_disc
@@ -28,6 +32,7 @@ from backend.models.lesion_detector import detect_hemorrhages
 from backend.postprocessing.report import build_report, graph_data_for_frontend
 from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch, clear_history, delete_batch
 from backend.ml_manager import ml_manager
+from backend.agents import brain_agent, AgentAnalysisResponse
 from contextlib import asynccontextmanager
 # Auth imports
 from backend.auth import (
@@ -625,6 +630,23 @@ async def analyze_rd_comparison(
     """
     Analiza una o más retinografías comparando 1, 2 o 3 modelos de retinopatía diabética.
     """
+    try:
+        return await _analyze_rd_comparison_impl(request, files, models)
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        print(f"[analyze-rd-comparison] Error: {e}\n{tb}", flush=True)
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error en el servidor al procesar el lote: {str(e)}"},
+        )
+
+
+async def _analyze_rd_comparison_impl(
+    request: Request,
+    files: List[UploadFile],
+    models: str,
+):
     selected_models = [model.strip().lower() for model in models.split(",") if model.strip()]
     if not selected_models:
         selected_models = list(RD_MODEL_SPECS.keys())
@@ -636,7 +658,7 @@ async def analyze_rd_comparison(
                 content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50 y/o xception."},
             )
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     final_results = []
     batch_id = str(uuid.uuid4())
     cancelled = False
@@ -977,3 +999,78 @@ async def analyze_retina(
 
     return final_results
 
+
+# ---------------------------------------------------------------------------
+# Agente Cerebro: orquestador LLM que decide dinámicamente qué modelos usar
+# ---------------------------------------------------------------------------
+
+@app.post("/analyze-agent/", response_model=AgentAnalysisResponse)
+async def analyze_agent(
+    file: UploadFile = File(...),
+    analysis_request: str = Query(
+        default=(
+            "Realiza un análisis retiniano completo que cubra retinopatía diabética, "
+            "riesgo de glaucoma y evaluación del disco óptico."
+        ),
+        description=(
+            "Instrucción en lenguaje natural para el agente cerebro. "
+            "El agente decidirá qué modelos ML invocar según la solicitud."
+        ),
+    ),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Endpoint del agente cerebro. Claude orquesta los modelos A/B/C dinámicamente
+    según la solicitud de análisis. Los resultados se guardan en el store para trazabilidad.
+    """
+    try:
+        image_bytes = await file.read()
+
+        arr = np.frombuffer(image_bytes, dtype=np.uint8)
+        import cv2 as _cv2
+        img = _cv2.imdecode(arr, _cv2.IMREAD_COLOR)
+        if img is None:
+            return JSONResponse(
+                status_code=400,
+                content={"detail": "El archivo no es una imagen válida."},
+            )
+        image_size = (img.shape[1], img.shape[0])
+
+        image_id = save_image_to_disk(image_bytes, file.filename)
+
+        result = await brain_agent.run(
+            image_bytes=image_bytes,
+            filename=file.filename,
+            image_id=image_id,
+            image_size=image_size,
+            analysis_request=analysis_request,
+        )
+        return result
+
+    except Exception as e:
+        if anthropic_sdk is not None and isinstance(e, anthropic_sdk.AuthenticationError):
+            return JSONResponse(
+                status_code=401,
+                content={"detail": "ANTHROPIC_API_KEY inválida o no configurada."},
+            )
+        if anthropic_sdk is not None and isinstance(e, anthropic_sdk.RateLimitError):
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Rate limit de la API de Anthropic. Intente nuevamente."},
+            )
+        if anthropic_sdk is not None and isinstance(e, anthropic_sdk.APIStatusError):
+            return JSONResponse(
+                status_code=502,
+                content={"detail": f"Error de API Anthropic ({e.status_code}): {e.message}"},
+            )
+        if isinstance(e, ModuleNotFoundError) and getattr(e, "name", None) == "anthropic":
+            return JSONResponse(
+                status_code=503,
+                content={
+                    "detail": "Falta el paquete anthropic. En la raíz del repo: pip install -r requirements.txt"
+                },
+            )
+        return JSONResponse(
+            status_code=500,
+            content={"detail": f"Error interno del agente cerebro: {str(e)}"},
+        )

@@ -26,3 +26,6 @@ scikit-learn>=1.3.0
 # Autenticacion (JWT)
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
+
+# Agente Cerebro (Anthropic SDK)
+anthropic>=0.51.0

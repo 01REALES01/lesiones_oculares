@@ -18,7 +18,9 @@ function AppContent() {
     const screen = sessionStorage.getItem('screen');
     if (screen === 'landing') return true;
     if (screen === 'demo') return false;
-    return !token;
+    if (screen === 'app') return false;
+    // Nueva pestaña / sesión: mostrar landing aunque haya token guardado
+    return true;
   });
   const [showDemo, setShowDemo] = useState(() => sessionStorage.getItem('screen') === 'demo');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -31,7 +33,7 @@ function AppContent() {
   if (showLanding) {
     return (
       <Landing
-        onEnterApp={() => { sessionStorage.removeItem('screen'); setShowLanding(false); }}
+        onEnterApp={() => { sessionStorage.setItem('screen', 'app'); setShowLanding(false); }}
         onEnterDemo={() => { sessionStorage.setItem('screen', 'demo'); setShowLanding(false); setShowDemo(true); }}
       />
     );

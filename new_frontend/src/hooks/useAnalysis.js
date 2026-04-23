@@ -64,7 +64,15 @@ export const useAnalysis = () => {
               return { success: false, cancelled: true };
             }
       console.error("Análisis fallido:", e);
-      const msg = e.response?.data?.detail || "Error de conexión con el servidor.";
+      let msg = e.response?.data?.detail;
+      if (!msg) {
+        if (e.code === 'ERR_NETWORK' || e.message === 'Network Error') {
+          msg =
+            'No hay respuesta del servidor. ¿Está la API en marcha en http://127.0.0.1:8000? (desde la raíz del repo: npm run dev, o uvicorn backend.main:app --reload). Luego recarga esta página.';
+        } else {
+          msg = e.message || 'Error de conexión con el servidor.';
+        }
+      }
       setError(msg);
       return { success: false, error: msg };
     } finally {

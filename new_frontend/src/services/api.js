@@ -1,17 +1,33 @@
 import axios from 'axios';
 
+/**
+ * En `npm run dev`, llamar directo a FastAPI evita 502: el proxy HTTP de Vite corta
+ * conexiones largas (lotes de imágenes + TensorFlow). En build, se usa /api o VITE_API_BASE.
+ */
+function getApiBaseURL() {
+  const fromEnv = import.meta.env.VITE_API_BASE;
+  if (fromEnv) return fromEnv.replace(/\/$/, '');
+  if (import.meta.env.DEV) return 'http://127.0.0.1:8000';
+  return '/api';
+}
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: getApiBaseURL(),
+  timeout: 1_800_000, // 30 min: lotes (varias imágenes × modelos)
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: false,
 });
 
-// Interceptor para añadir el token a las peticiones
+// Interceptor: token + FormData sin Content-Type fijo (axios debe poner boundary en multipart)
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
   }
   return config;
 });
@@ -34,9 +50,10 @@ export const analysisService = {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
 
-    const response = await api.post(`/analyze-rd-comparison/?models=${modelsStr}`,
+    const response = await api.post(
+      `/analyze-rd-comparison/?models=${encodeURIComponent(modelsStr)}`,
       formData,
-      { headers: { 'Content-Type': 'multipart/form-data' }, signal }
+      { signal }
     );
     return response.data;
   },
@@ -44,9 +61,7 @@ export const analysisService = {
   analyzeDemo: async (file, model = 'densenet169') => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post(`/analyze-demo/?model=${model}`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await api.post(`/analyze-demo/?model=${encodeURIComponent(model)}`, formData);
     return response.data;
   },
 
@@ -54,9 +69,7 @@ export const analysisService = {
     const formData = new FormData();
     formData.append('file', file);
 
-    const response = await api.post('/analyze-densenet/', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
+    const response = await api.post('/analyze-densenet/', formData);
     return response.data;
   },
 

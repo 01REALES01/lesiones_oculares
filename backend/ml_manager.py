@@ -2,14 +2,22 @@ import os
 import io
 import numpy as np
 
-# Force legacy tf.keras loader for older serialized models.
-os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
+# TF_USE_LEGACY_KERAS=1 solo es válido si existe el paquete `tf_keras` (requirements.txt).
+# Sin él, TensorFlow falla al importar con "Keras cannot be imported".
+try:
+    import tf_keras  # noqa: F401
+    os.environ.setdefault("TF_USE_LEGACY_KERAS", "1")
+except ImportError:
+    os.environ["TF_USE_LEGACY_KERAS"] = "0"
 
 import tensorflow as tf
 from PIL import Image
 
-# Use mixed precision if models were trained with it (as per notebooks)
-tf.keras.mixed_precision.set_global_policy('mixed_float16')
+# Mixed precision (si falla en algún entorno, seguimos sin bloquear el arranque)
+try:
+    tf.keras.mixed_precision.set_global_policy("mixed_float16")
+except Exception:
+    pass
 
 class MLManager:
     _instance = None

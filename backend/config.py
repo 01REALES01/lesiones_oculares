@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     model_segmentation_path: str = ""
     model_classifier_path: str = ""
     model_detector_path: str = ""
+    anthropic_api_key: str = ""
 
     class Config:
         env_file = ".env"

@@ -1,7 +1,24 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Activity, Clipboard, Upload, Cpu, Plus, CheckCircle2, AlertCircle, Loader2, Clock, X, Trash2 } from 'lucide-react';
+import {
+  Activity,
+  Clipboard,
+  Upload,
+  Plus,
+  CheckCircle2,
+  AlertCircle,
+  Loader2,
+  Clock,
+  X,
+  Trash2,
+  Layers,
+  Radio,
+  ScanEye,
+  ChevronRight,
+  Zap,
+} from 'lucide-react';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
+import { SwitchToggle } from '../components/ui/SwitchToggle';
 import { analysisService } from '../services/api';
 
 export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
@@ -35,6 +52,12 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   });
   const hasHistoryToClear = globalStats.total_analyses > 0;
   const resultsRef = useRef(null);
+  const folderInputRef = useRef(null);
+
+  useEffect(() => {
+    const el = folderInputRef.current;
+    if (el) el.setAttribute('webkitdirectory', '');
+  }, []);
 
   useEffect(() => {
     if (historyNotice) {
@@ -256,49 +279,52 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           </div>
         </motion.div>
       )}
-      <div className="space-y-8 animate-in fade-in duration-500">
-
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-ocular-text-main">Panel de Control</h1>
-          <p className="text-ocular-text-muted">Compara uno, dos o tres modelos de retinopatia diabetica en una sola ejecucion.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {/* Servidor IA removido a petición del usuario */}
+      <div className="space-y-8 animate-in fade-in duration-500 min-h-0">
+      <div className="relative overflow-hidden rounded-3xl border border-sky-100/80 bg-gradient-to-br from-sky-50/90 via-white to-white px-6 py-7 shadow-[0_12px_40px_-20px_rgba(30,100,200,0.2)] sm:px-8 sm:py-8">
+        <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_80%_50%_at_20%_0%,rgba(56,189,248,0.12),transparent_55%)]" />
+        <div className="relative flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+              Analizar nueva retinografía
+            </h1>
+            <p className="mt-1 max-w-xl text-sm text-slate-500 sm:text-base">
+              Inicialice el pipeline de diagnóstico ocular en alta resolución. Compare uno, dos o tres modelos de retinopatía diabética en una sola ejecución.
+            </p>
+          </div>
+          <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+            {globalStats.total_analyses} análisis en sistema
+          </p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard title="Analisis Totales" value={globalStats.total_analyses.toString()} icon={Activity} />
-        <StatsCard title="Casos RD Detectados" value={`${globalStats.rd_detected_rate}%`} icon={AlertCircle} delay={0.1} />
-        <StatsCard title="Confianza Promedio" value={`${globalStats.avg_confidence}%`} icon={CheckCircle2} delay={0.2} />
-        <StatsCard title="Latencia Media" value={`${globalStats.avg_latency_ms}ms`} icon={Clock} delay={0.3} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <StatsCard title="Analisis totales" value={globalStats.total_analyses.toString()} icon={Activity} />
+        <StatsCard title="RD detectada" value={`${globalStats.rd_detected_rate}%`} icon={AlertCircle} delay={0.1} />
+        <StatsCard title="Confianza" value={`${globalStats.avg_confidence}%`} icon={CheckCircle2} delay={0.2} />
+        <StatsCard title="Latencia" value={`${globalStats.avg_latency_ms}ms`} icon={Clock} delay={0.3} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-8 space-y-8">
-          <GlassCard className="overflow-hidden p-0 border-none shadow-2xl">
-            <div className="p-8 space-y-6">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/10 text-primary rounded-lg">
-                    <Upload size={20} />
-                  </div>
-                  <h2 className="text-xl font-bold text-ocular-text-main">Nuevo Analisis</h2>
-                </div>
-                {files.length > 0 && (
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+        <div className="space-y-5 lg:col-span-7 xl:col-span-8">
+          <GlassCard className="border border-slate-200/60 bg-white/80 p-0 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08)] backdrop-blur">
+            <div className="space-y-0 p-6 sm:p-8">
+              {files.length > 0 && (
+                <div className="mb-4 flex justify-end">
                   <button
                     type="button"
                     onClick={clearFiles}
                     className="text-[10px] font-bold text-ocular-error hover:underline uppercase tracking-widest"
                   >
-                    Limpiar Lote
+                    Vaciar lote
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               <div
-                onClick={() => document.getElementById('dash-file-input').click()}
+                onClick={() => {
+                  if (loading) return;
+                  document.getElementById('dash-file-input')?.click();
+                }}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setIsDragging(true);
@@ -306,43 +332,91 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 className={`
-                  relative border-2 border-dashed rounded-3xl p-12 transition-all duration-300 cursor-pointer
-                  group flex flex-col items-center justify-center text-center gap-4
-                  ${isDragging ? 'border-primary bg-primary/10 scale-[1.01]' : files.length > 0 ? 'border-primary bg-primary/5' : 'border-white/40 hover:border-primary/50 hover:bg-white/40'}
+                  relative min-h-[240px] cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300
+                  flex flex-col items-center justify-center text-center gap-3 px-5 py-10
+                  ${
+                    isDragging
+                      ? 'border-sky-400 bg-sky-50/80 scale-[1.01] shadow-[inset_0_0_0_1px_rgba(14,165,233,0.2)]'
+                      : files.length > 0
+                        ? 'border-sky-300/80 bg-sky-50/40'
+                        : 'border-sky-200/80 bg-slate-50/30 hover:border-sky-300 hover:bg-sky-50/30'
+                  }
                 `}
               >
-                <input id="dash-file-input" type="file" multiple className="hidden" onChange={handleFileChange} />
+                <input
+                  id="dash-file-input"
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <input
+                  ref={folderInputRef}
+                  id="dash-folder-input"
+                  type="file"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
 
                 <div
                   className={`
-                    p-5 rounded-2xl transition-all duration-300
-                    ${files.length > 0 ? 'bg-primary text-white scale-110 shadow-lg shadow-primary/20' : 'bg-white/50 text-ocular-text-muted group-hover:text-primary'}
+                    flex h-16 w-16 items-center justify-center rounded-full border border-sky-200/60 bg-white shadow-sm transition-all
+                    ${files.length > 0 ? 'text-sky-600 ring-2 ring-sky-200/50' : 'text-slate-400'}
                   `}
                 >
-                  <Upload size={32} />
+                  <Upload className="h-7 w-7" />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-sky-700 sm:text-lg">
+                    {files.length > 0 ? `${files.length} imágenes listas` : 'Suelte retinografías aquí'}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-500 sm:text-sm">Compatible con JPEG, PNG, TIFF. También arrastre una carpeta.</p>
                 </div>
 
-                <div>
-                  <p className="text-lg font-bold text-ocular-text-main">
-                    {files.length > 0 ? `${files.length} archivos en espera` : 'Cargar Lote o Carpetas'}
-                  </p>
-                  <p className="text-sm text-ocular-text-muted mt-1">Arrastra carpetas completas o haz clic para anadir imagenes</p>
+                <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById('dash-file-input')?.click();
+                    }}
+                    className="rounded-full border border-slate-200/90 bg-slate-100/90 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/90"
+                  >
+                    Nube / archivos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById('dash-folder-input')?.click();
+                    }}
+                    className="rounded-full bg-sky-500/90 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-sky-600"
+                  >
+                    Carpeta
+                  </button>
                 </div>
 
                 {files.length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-2 mt-4 max-h-32 overflow-y-auto p-2">
+                  <div className="mt-2 flex max-h-32 w-full flex-wrap justify-center gap-2 overflow-y-auto p-1">
                     {files.map((f, i) => (
-                      <div key={i} className="group/item flex items-center gap-2 px-3 py-1.5 bg-white/50 hover:bg-white border border-white rounded-xl transition-all animate-in zoom-in-75 duration-200">
-                        <span className="text-[10px] font-bold text-ocular-text-main truncate max-w-[120px]">{f.name}</span>
+                      <div
+                        key={i}
+                        className="group/item flex max-w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-white/90 px-2.5 py-1.5 pr-1 shadow-sm transition"
+                      >
+                        <span className="truncate text-[10px] font-bold text-slate-700 sm:max-w-[140px]">
+                          {f.name}
+                        </span>
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             removeFile(i);
                           }}
-                          className="text-ocular-text-muted hover:text-ocular-error transition-colors"
+                          className="rounded-lg p-1 text-slate-400 transition hover:bg-red-50 hover:text-ocular-error"
                         >
-                          <Plus size={14} className="rotate-45" />
+                          <X size={14} />
                         </button>
                       </div>
                     ))}
@@ -350,76 +424,196 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 )}
               </div>
 
-              <div className="space-y-4">
-                <p className="text-xs font-bold text-ocular-text-muted uppercase tracking-widest px-1">Modelos de Retinopatia Diabetica</p>
-                <div className="flex flex-wrap gap-4">
-                  <ModelToggle icon={Cpu} label="DenseNet169" active={models.densenet169} onClick={() => toggleModel('densenet169', !models.densenet169)} />
-                  <ModelToggle icon={Cpu} label="ResNet50" active={models.resnet50} onClick={() => toggleModel('resnet50', !models.resnet50)} />
-                  <ModelToggle icon={Cpu} label="Xception" active={models.xception} onClick={() => toggleModel('xception', !models.xception)} />
-                </div>
-
-                <div className="p-4 bg-white/40 rounded-2xl border border-white/20 flex items-center justify-between gap-6">
-                  <span className="text-xs font-bold text-ocular-text-muted uppercase tracking-wider">Comparacion activa</span>
-                  <span className="text-sm font-bold text-ocular-text-main">
-                    {selectedModelCount === 0
-                      ? 'Selecciona al menos un modelo'
-                      : `${selectedModelCount} ${selectedModelCount === 1 ? 'modelo seleccionado' : 'modelos seleccionados'}`}
-                  </span>
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded-2xl border border-ocular-error/20 bg-ocular-error/10 px-4 py-3 text-sm font-medium text-ocular-error">
-                  {error}
-                </div>
-              )}
-
-              <div className="pt-4 flex gap-3">
-                <button
-                  type="button"
-                  disabled={loading || files.length === 0 || selectedModelCount === 0}
-                  onClick={handleStartComparison}
-                  className={`
-                    flex-1 btn-premium py-4 text-lg
-                    ${loading || files.length === 0 || selectedModelCount === 0 ? 'bg-ocular-text-muted/20 text-ocular-text-muted cursor-not-allowed' : 'bg-primary text-white hover:bg-primary-dark shadow-primary/30'}
-                  `}
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Ejecutando comparacion de modelos...
-                    </>
-                  ) : (
-                    <>
-                      <Activity size={22} />
-                      Iniciar Comparacion Clinica
-                    </>
-                  )}
-                </button>
-                {loading && (
-                  <button
-                    type="button"
-                    onClick={cancelAnalyze}
-                    className="px-5 py-4 rounded-2xl border-2 border-ocular-error/40 text-ocular-error font-bold hover:bg-ocular-error/10 transition-all flex items-center gap-2"
-                    title="Cancelar ejecucion"
-                  >
-                    <X size={20} />
-                    Cancelar
-                  </button>
-                )}
+              <div className="mt-0 flex items-center justify-between border-t border-slate-100/80 px-1 py-3 text-[10px] font-bold uppercase tracking-widest text-sky-600/90">
+                <span>
+                  Estado:{' '}
+                  {loading
+                    ? 'procesando'
+                    : files.length
+                      ? `${files.length} archivo(s)`
+                      : 'esperando imágenes'}
+                </span>
+                <span>Buffer: 1,2 GB</span>
               </div>
             </div>
+          </GlassCard>
+        </div>
 
-            {loading && (
-              <motion.div
-                className="h-1 bg-primary"
-                initial={{ width: 0 }}
-                animate={{ width: '100%' }}
-                transition={{ duration: 2, repeat: Infinity }}
+        <div className="space-y-4 lg:col-span-5 xl:col-span-4">
+          <GlassCard className="border border-slate-200/60 bg-white/80 p-6 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08)] backdrop-blur sm:p-7">
+            <div className="mb-5 flex items-center justify-between gap-2">
+              <h2 className="text-lg font-bold text-slate-900">Modelos a procesar</h2>
+              <span className="rounded-full bg-sky-600 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider text-white">
+                motor v3.2
+              </span>
+            </div>
+
+            <ul className="space-y-3">
+              <ModelRow
+                id="densenet"
+                labelId="lbl-densenet"
+                icon={Layers}
+                title="DenseNet169"
+                sub="Mapea representaciones en profundidad"
+                active={models.densenet169}
+                onToggle={() => toggleModel('densenet169', !models.densenet169)}
               />
+              <ModelRow
+                id="resnet"
+                labelId="lbl-resnet"
+                icon={ScanEye}
+                title="ResNet50"
+                sub="Balance residuo y velocidad"
+                active={models.resnet50}
+                onToggle={() => toggleModel('resnet50', !models.resnet50)}
+              />
+              <ModelRow
+                id="xception"
+                labelId="lbl-xception"
+                icon={Radio}
+                title="Xception"
+                sub="Convoluciones separables en profundidad"
+                active={models.xception}
+                onToggle={() => toggleModel('xception', !models.xception)}
+              />
+            </ul>
+
+            {error && (
+              <div className="mt-4 rounded-2xl border border-ocular-error/25 bg-ocular-error/10 px-3 py-2.5 text-xs font-medium text-ocular-error">
+                {error}
+              </div>
             )}
+
+            <div className="mt-5 space-y-2">
+              <button
+                type="button"
+                disabled={loading || files.length === 0 || selectedModelCount === 0}
+                onClick={handleStartComparison}
+                className={`
+                  flex w-full items-center justify-center gap-2 rounded-2xl py-4 text-base font-bold text-white transition
+                  ${
+                    loading || files.length === 0 || selectedModelCount === 0
+                      ? 'cursor-not-allowed bg-slate-300/90 text-slate-500'
+                      : 'bg-sky-500 shadow-md shadow-sky-500/25 hover:bg-sky-600'
+                  }
+                `}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 shrink-0 animate-spin" />
+                    Procesando…
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-5 w-5 shrink-0" fill="currentColor" />
+                    Procesar imágenes
+                  </>
+                )}
+              </button>
+              {loading && (
+                <button
+                  type="button"
+                  onClick={cancelAnalyze}
+                  className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-red-200 py-2.5 text-sm font-bold text-ocular-error transition hover:bg-red-50"
+                >
+                  <X size={18} />
+                  Cancelar
+                </button>
+              )}
+              <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                Tiempo estimado:{' '}
+                {files.length && selectedModelCount
+                  ? `~${Math.min(90, 8 + files.length * selectedModelCount * 2)} s`
+                  : '—'}
+              </p>
+            </div>
           </GlassCard>
 
+          <button
+            type="button"
+            onClick={() => {
+              if (recentHistory[0]) openHistoryItem(recentHistory[0]);
+            }}
+            disabled={!recentHistory[0]}
+            className="w-full text-left"
+          >
+            <GlassCard
+              className={`
+                flex w-full items-center gap-3 border border-slate-200/60 bg-white/90 p-4 transition
+                ${recentHistory[0] ? 'hover:border-sky-300/80 hover:shadow-md' : 'opacity-60'}
+              `}
+            >
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200/80 bg-slate-200/30">
+                <div className="h-full w-full scale-125 bg-gradient-to-br from-slate-700 to-slate-900 opacity-90" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[9px] font-extrabold uppercase tracking-widest text-sky-600">Referencia reciente</p>
+                <p className="truncate text-sm font-bold text-slate-800">
+                  {recentHistory[0]
+                    ? (() => {
+                        const h = recentHistory[0];
+                        const batch =
+                          h.is_batch ||
+                          (h.batch_id && h.batch_size > 1) ||
+                          ((h.summary?.headline || '').toLowerCase().includes('lote') && h.batch_id);
+                        if (batch && h.batch_id) {
+                          return `Lote #${h.batch_id.substring(0, 6)}: preprocesado`;
+                        }
+                        return `Paciente #${h.inference_id.substring(0, 5)}: preprocesado`;
+                      })()
+                    : 'Sin ejecuciones aún'}
+                </p>
+              </div>
+              <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />
+            </GlassCard>
+          </button>
+
+          <GlassCard className="bg-primary p-4 text-white shadow-md shadow-primary/20 sm:p-5">
+            <h4 className="font-bold">Tip de uso</h4>
+            <p className="mt-1 text-xs leading-relaxed text-white/85">
+              Use imágenes nítidas, retinocentrada e iluminación homogénea. Active varios modelos para comparar la señal de
+              riesgo de RD.
+            </p>
+          </GlassCard>
+        </div>
+      </div>
+
+      <GlassCard className="border border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-sky-50/40 p-4 sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Latencia de red</p>
+            <p className="mt-0.5 text-sm font-bold text-slate-800">
+              {globalStats.avg_latency_ms > 0 ? `${globalStats.avg_latency_ms} ms` : '—'}
+            </p>
+          </div>
+          <div>
+            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Uso de GPU</p>
+            <p className="mt-0.5 text-sm font-bold text-slate-800">TensorFlow / local</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Almacenamiento</p>
+            <p className="mt-0.5 text-sm font-bold text-slate-800">Clúster 1,2 GB</p>
+          </div>
+          <div>
+            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Confianza diagnóstica</p>
+            <div className="mt-1.5 flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/80">
+                <div
+                  className="h-full rounded-full bg-sky-500 transition-all"
+                  style={{ width: `${Math.min(100, Math.max(0, globalStats.avg_confidence))}%` }}
+                />
+              </div>
+              <span className="w-12 text-right text-xs font-bold text-sky-700">
+                {globalStats.avg_confidence > 0 ? `${globalStats.avg_confidence.toFixed(1)}%` : '—'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </GlassCard>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        <div className="space-y-6 lg:col-span-8 xl:col-span-9" ref={resultsRef}>
+        <GlassCard className="border border-slate-200/50 bg-white/60 p-4 sm:p-6">
           <AnimatePresence mode="wait">
             {results && (
               <motion.div
@@ -474,6 +668,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               </motion.div>
             )}
           </AnimatePresence>
+          {!results && (
+            <p className="py-8 text-center text-xs text-slate-400">Los resultados del análisis aparecerán aquí.</p>
+          )}
+        </GlassCard>
         </div>
 
         <div className="lg:col-span-4 space-y-6">
@@ -562,11 +760,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               )}
             </div>
           </GlassCard>
-
-          <GlassCard className="bg-primary text-white border-none shadow-primary/20">
-            <h4 className="font-bold mb-2">Tip de Uso</h4>
-            <p className="text-xs text-white/80 leading-relaxed">Para comparar correctamente los modelos de retinopatia diabetica, utiliza imagenes nitidas, bien iluminadas y con la retina centrada.</p>
-          </GlassCard>
         </div>
       </div>
 
@@ -617,19 +810,30 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   );
 }
 
-function ModelToggle({ icon: Icon, label, active, onClick }) {
+function ModelRow({ id, labelId, icon: Icon, title, sub, active, onToggle }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <li
       className={`
-        flex items-center gap-2 px-4 py-3 rounded-2xl border font-bold text-sm transition-all
-        ${active ? 'bg-white text-primary border-white shadow-md' : 'bg-white/30 text-ocular-text-muted border-white/20 hover:bg-white/40'}
+        flex items-center gap-3 rounded-2xl border p-3 transition-all
+        ${active ? 'border-sky-200/80 bg-sky-50/50 shadow-sm' : 'border-slate-200/60 bg-slate-50/40'}
       `}
     >
-      <Icon size={18} />
-      {label}
-    </button>
+      <div
+        className={`
+          flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border
+          ${active ? 'border-sky-200/80 bg-white text-sky-600' : 'border-slate-200/80 bg-white/80 text-slate-400'}
+        `}
+      >
+        <Icon className="h-5 w-5" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-bold text-slate-900" id={labelId}>
+          {title}
+        </p>
+        <p className="text-[11px] text-slate-500">{sub}</p>
+      </div>
+      <SwitchToggle id={id} labelId={labelId} active={active} onToggle={onToggle} />
+    </li>
   );
 }
 
