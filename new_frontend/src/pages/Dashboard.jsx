@@ -578,39 +578,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         </div>
       </div>
 
-      <GlassCard className="border border-slate-200/60 bg-gradient-to-r from-slate-50/80 to-sky-50/40 p-4 sm:p-5">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Latencia de red</p>
-            <p className="mt-0.5 text-sm font-bold text-slate-800">
-              {globalStats.avg_latency_ms > 0 ? `${globalStats.avg_latency_ms} ms` : '—'}
-            </p>
-          </div>
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Uso de GPU</p>
-            <p className="mt-0.5 text-sm font-bold text-slate-800">TensorFlow / local</p>
-          </div>
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Almacenamiento</p>
-            <p className="mt-0.5 text-sm font-bold text-slate-800">Clúster 1,2 GB</p>
-          </div>
-          <div>
-            <p className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Confianza diagnóstica</p>
-            <div className="mt-1.5 flex items-center gap-2">
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-200/80">
-                <div
-                  className="h-full rounded-full bg-sky-500 transition-all"
-                  style={{ width: `${Math.min(100, Math.max(0, globalStats.avg_confidence))}%` }}
-                />
-              </div>
-              <span className="w-12 text-right text-xs font-bold text-sky-700">
-                {globalStats.avg_confidence > 0 ? `${globalStats.avg_confidence.toFixed(1)}%` : '—'}
-              </span>
-            </div>
-          </div>
-        </div>
-      </GlassCard>
-
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
         <div className="space-y-6 lg:col-span-8 xl:col-span-9" ref={resultsRef}>
         <GlassCard className="border border-slate-200/50 bg-white/60 p-4 sm:p-6">

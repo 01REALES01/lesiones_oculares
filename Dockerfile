@@ -1,10 +1,14 @@
 # Backend API - Análisis de retinografías
-FROM python:3.11-slim
+# Copia backend/ (incluye modelos .keras en el contexto de build si existen; ver README Docker).
+# Alternativa: montar solo lectura ./backend/models:/app/backend/models en docker-compose.
+FROM python:3.11-slim-bookworm
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libgl1-mesa-glx libglib2.0-0 \
+    libgomp1 \
+    libgl1 \
+    libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .

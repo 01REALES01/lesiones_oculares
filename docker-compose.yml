@@ -1,19 +1,29 @@
-# Prototipo desplegable: backend API + frontend web
-# Uso: docker-compose up --build
-# Frontend: http://localhost:80  (API en /api/*)
+# Prototipo desplegable: API (FastAPI) + new_frontend (Nginx)
+# Uso: docker compose up --build
+# Interfaz: http://localhost:80  —  API: mismo origen vía /api/*; imágenes: /images/*
+# Persistencia: volumen ./data  —  colocar modelos en backend/models/ (build o ver README)
 
 services:
   backend:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "8000:8000"
     environment:
-      - PYTHONPATH=/app
+      PYTHONPATH: /app
+      # Opcional (agente / Anthropic). Mejor: archivo .env en la raíz y copiar claves.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - ./data:/app/data
+      # Descomentar para montar pesos del host (si la carpeta local está vacía, oculta modelos embebidos en la imagen)
+      # - ./backend/models:/app/backend/models:ro
+    # env_file:
+    #   - .env
+    # Descomentar env_file arriba si mantiene secretos en .env (no versionado)
 
   frontend:
-    build: ./frontend
+    build: ./new_frontend
     ports:
       - "80:80"
     depends_on:

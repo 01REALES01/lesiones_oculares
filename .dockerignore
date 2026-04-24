@@ -1,0 +1,24 @@
+# Reducir contexto al construir imagen de backend (raíz)
+.git
+.github
+.venv
+venv
+env
+__pycache__
+*.py[cod]
+.mypy_cache
+.pytest_cache
+node_modules
+new_frontend
+frontend
+frontend/node_modules
+data
+datasets
+*.log
+.DS_Store
+.idea
+.vscode
+docs
+evaluation
+**/.pytest_cache
+dist

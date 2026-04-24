@@ -20,6 +20,8 @@ _inference_ids_order: List[str] = []
 _MAX_IN_MEMORY = 500  # límite de registros en memoria
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "inferences.json"
 _IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "images"
+# Misma ruta que usa save_image_to_disk; expuesta para StaticFiles en main
+IMAGES_DIR = _IMAGES_DIR
 
 
 def _ensure_data_dir() -> None:

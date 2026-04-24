@@ -104,16 +104,32 @@ npm install
 npm run dev
 ```
 
-Interfaz: **http://127.0.0.1:5173** (el proxy envía `/api` al backend en el puerto 8000).
+Interfaz: **http://127.0.0.1:5173** (en dev, las peticiones a la API van a `127.0.0.1:8000` y `/images` se proxifica con Vite; ver `new_frontend/src/services/api.js`).
 
-### Prototipo con Docker
+### Docker (API + `new_frontend`)
+
+Requisito: [Docker](https://docs.docker.com/get-docker/) y **Docker Compose v2** (comando `docker compose`).
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
-- Frontend: **http://localhost** (puerto 80)  
-- API: **http://localhost:8000** (o vía frontend en `/api`)
+- **Aplicación web (Nginx):** **http://localhost** (puerto 80). El cliente usa la base **`/api`**; Nginx hace *proxy* al contenedor `backend:8000` (sin el prefijo `/api`, igual que en el [nginx.conf](new_frontend/nginx.conf) del `new_frontend`).
+- **Rutas auxiliares:** las miniaturas bajo **`/images/...`** se proxifican al mismo API para que coincidan con el upload y con [store](backend/store.py) (`data/images` en la raíz del repo, montado en `/app/data` dentro del contenedor).
+- **API directa (depuración):** **http://localhost:8000** (también expuesta en [docker-compose.yml](docker-compose.yml)).
+
+**Persistencia (no se pierde al recrear contenedores):** el volumen monta el directorio **`./data` del host** en **`/app/data`** (historial `inferences.json` e imágenes almacenadas). Crear `data` antes o dejar que la aplicación la cree; no versionar datos sensibles.
+
+**Modelos (`.keras` / `.h5`):** suelen estar en [`.gitignore`](.gitignore) por tamaño. Opciones:
+
+1. Construir la imagen con los ficheros ya presentes en **`backend/models/`** (el `Dockerfile` hace `COPY backend`; no se excluyen `*.keras` en [`.dockerignore`](.dockerignore)).  
+2. O montar solo lectura, descomentando en `docker-compose` la línea `backend/models` (si en el host la carpeta queda **vacía**, anula los modelos embebidos en la imagen; conviene rellenar con los pesos o no usar ese montaje).
+
+Variables opcionales: **`ANTHROPIC_API_KEY`** (agente) se puede exportar o pasar en un `.env` (descomentar `env_file` en `docker-compose` si aplica; no subir secretos a git).
+
+La primera build puede ser **lenta** (TensorFlow y dependencias vía `pip`).
+
+**Nota:** el directorio **`frontend/`** es un prototipo anterior; el stack con Compose usa **`new_frontend/`**.
 
 ---
 
@@ -151,7 +167,8 @@ Proyecto_final/
 │   ├── 06-explicabilidad-xai/
 │   └── 07-stack-tecnologico-api/
 ├── backend/                   # API FastAPI, modelos, preprocesamiento, store
-├── frontend/                  # Interfaz web (React + Vite)
+├── new_frontend/              # Interfaz web actual (Vite; desplegada con Docker)
+├── frontend/                 # Prototipo React + Vite (legado)
 ├── evaluation/                # Script de evaluación y métricas
 ├── docs/
 │   ├── MANUAL_USUARIO.md      # Manual de usuario

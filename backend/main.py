@@ -30,7 +30,17 @@ from backend.models.segmentation_vnet import segment_optic_disc
 from backend.models.glaucoma_classifier import predict_glaucoma
 from backend.models.lesion_detector import detect_hemorrhages
 from backend.postprocessing.report import build_report, graph_data_for_frontend
-from backend.store import save_inference, get_inference, list_inferences, get_global_stats, save_image_to_disk, get_batch, clear_history, delete_batch
+from backend.store import (
+    save_inference,
+    get_inference,
+    list_inferences,
+    get_global_stats,
+    save_image_to_disk,
+    get_batch,
+    clear_history,
+    delete_batch,
+    IMAGES_DIR,
+)
 from backend.ml_manager import ml_manager
 from backend.agents import brain_agent, AgentAnalysisResponse
 from contextlib import asynccontextmanager
@@ -109,10 +119,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, version="0.3.0", lifespan=lifespan)
 
-from pathlib import Path
-_images_dir = Path(__file__).resolve().parent / "data" / "images"
-_images_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/images", StaticFiles(directory=str(_images_dir)), name="images")
+IMAGES_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
 
 # CORS Configuration
 app.add_middleware(
