@@ -1,15 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2 } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
+import { analysisService } from '../services/api';
 
 const probabilityLabels = ['G0', 'G1', 'G2', 'G3', 'G4'];
 
 function normalizeProbability(value) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return 0;
-  const percent = parsed <= 1 ? parsed * 100 : parsed;
-  return Math.max(0, Math.min(100, percent));
+  //const percent = parsed <= 1 ? parsed * 100 : parsed;
+  return Math.max(0, Math.min(100, parsed));
 }
 
 function formatTimestamp(timestamp) {
@@ -86,6 +87,24 @@ export default function AnalysisDetail({
     anchor.remove();
   };
 
+  const handleExportExcel = async () => {
+    if (!isBatch || !batch[0]?.batch_id) return;
+    try {
+      const blob = await analysisService.exportBatchExcel(batch[0].batch_id);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `batch_${batch[0].batch_id}.xlsx`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting Excel:', error);
+      // Optionally show a toast or alert
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -129,8 +148,9 @@ export default function AnalysisDetail({
             <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white/40 rounded-xl border border-white/60 text-ocular-text-muted hover:text-primary transition-all font-bold text-xs uppercase">
               <Printer size={18} /> Imprimir
             </button>
-            <button onClick={handleExportJSON} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all font-bold text-xs uppercase">
-              <FileDown size={18} /> Exportar Datos
+            <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all font-bold text-xs uppercase">
+              {isBatch ? <FileSpreadsheet size={18} /> : <FileDown size={18} />}
+              {isBatch ? 'Exportar Excel' : 'Exportar Datos'}
             </button>
             <button 
               onClick={() => onDelete?.(result.inference_id)} 
