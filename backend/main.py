@@ -24,6 +24,14 @@ try:
     import anthropic as anthropic_sdk
 except ImportError:
     anthropic_sdk = None
+
+import openpyxl
+from io import BytesIO
+from fastapi.responses import StreamingResponse
+from openpyxl.styles import PatternFill, Font, Alignment
+from openpyxl import styles
+from datetime import datetime
+
 from backend.config import settings
 from backend.preprocessing.fundus import preprocess_fundus
 from backend.models.segmentation_vnet import segment_optic_disc
@@ -463,6 +471,109 @@ async def get_batch_by_id(batch_id: str):
     if not records:
         return JSONResponse(status_code=404, content={"detail": "Batch not found"})
     return records
+
+
+@app.get("/export/batch/{batch_id}/excel")
+async def export_batch_to_excel(batch_id: str):
+    """Exporta los datos de un lote a un archivo Excel."""
+    records = get_batch(batch_id)
+    if not records:
+        raise HTTPException(status_code=404, detail="Batch not found")
+    
+    # Procesar los datos según la lógica proporcionada
+    json_main = {}
+    all_models = set()
+    for record in records:
+        result = record.get("result", {})
+        filename = result.get("filename", "unknown")
+        model_comparisons = result.get("model_comparisons", [])
+        
+        dic_per_infe = {}
+        for comparison in model_comparisons:
+            comparison_model_name = comparison.get("model_id", "unknown")
+            comparison_probs = comparison.get("raw_probabilities", [])
+            dic_per_infe[comparison_model_name] = comparison_probs
+            all_models.add(comparison_model_name)
+        
+        json_main[filename] = dic_per_infe
+    
+    models = sorted(list(all_models))
+    
+    # Obtener fecha del batch
+    if records:
+        batch_timestamp = records[0]["timestamp"]
+        batch_date = datetime.fromisoformat(batch_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    else:
+        batch_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    
+    # Etiquetas para grados
+    grade_labels = ["NO R.D", "Leve", "Moderado", "Severo", "Proliferativo"]
+    
+    # Crear el Excel
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Batch Data"
+    
+    num_columns = len(models) + 1  # Nombre + models
+    last_col = openpyxl.utils.get_column_letter(num_columns)
+    
+    # Info del batch
+    ws.merge_cells(f'A1:{last_col}1')
+    cell = ws['A1']
+    cell.value = "OCULAR-AI"
+    cell.font = Font(size=24, bold=True)
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.merge_cells(f'A2:{last_col}2')
+    cell = ws['A2']
+    cell.value = f"Lote de {len(json_main)} archivos - {batch_date}"
+    cell.font = Font(size=12, bold=True)
+    cell.alignment = Alignment(horizontal='center', vertical='center')
+    ws.append([])
+    
+    # Encabezados
+    headers = ["Nombre"] + models
+    ws.append(headers)
+    
+    # Aplicar color azul a los encabezados
+    fill = PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")
+    for col_num in range(1, num_columns + 1):
+        cell = ws.cell(row=4, column=col_num)
+        cell.fill = fill
+        cell.alignment = Alignment(horizontal='center', vertical='center')
+    
+    # Datos
+    for filename, model_data in json_main.items():
+        row = [filename]
+        for model in models:
+            probs = model_data.get(model, [0]*5)
+            # Formatear como texto con etiquetas y porcentajes
+            formatted = "\n".join([
+                f"{label}: {prob}%" for label, prob in zip(grade_labels, probs[:5])
+            ])
+            row.append(formatted)
+        ws.append(row)
+    
+    # Centrar todas las celdas y ajustar formato
+    for row in ws.iter_rows():
+        for cell in row:
+            if cell.value is not None:
+                cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    
+    # Ajustar ancho de columnas
+    for col_num in range(1, num_columns + 1):
+        col_letter = openpyxl.utils.get_column_letter(col_num)
+        ws.column_dimensions[col_letter].width = 25
+    
+    # Guardar en BytesIO
+    bio = BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    
+    return StreamingResponse(
+        bio,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename=batch_{batch_id}.xlsx"}
+    )
 
 
 @app.get("/inferences/{inference_id}")

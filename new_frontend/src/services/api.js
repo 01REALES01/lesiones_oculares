@@ -98,6 +98,13 @@ export const analysisService = {
     return response.data;
   },
 
+  exportBatchExcel: async (batchId) => {
+    const response = await api.get(`/export/batch/${batchId}/excel`, { 
+      responseType: 'blob',
+    });
+    return response.data;
+  },
+
   deleteAnalysis: async (id) => {
     const response = await api.delete(`/history/${id}`);
     return response.data;

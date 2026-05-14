@@ -89,6 +89,7 @@ export default function HistoryPage({ onViewDetail }) {
           ...b.result,
           inference_id: b.inference_id,
           timestamp: b.timestamp,
+          batch_id: b.batch_id, //se agrego batch_id para identificar que es parte de un lote en el deatiles jsx
           traceability: {
             inference_id: b.inference_id,
             models_used: b.models_used,
