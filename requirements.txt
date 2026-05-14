@@ -29,3 +29,6 @@ passlib[bcrypt]>=1.7.4
 
 # Agente Cerebro (Anthropic SDK)
 anthropic>=0.51.0
+
+# HTTP requests (ROBLE)
+httpx>=0.28.0

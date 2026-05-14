@@ -47,8 +47,10 @@ from contextlib import asynccontextmanager
 # Auth imports
 from backend.auth import (
     Token, User, get_current_user, create_access_token, 
-    get_user, verify_password, ACCESS_TOKEN_EXPIRE_MINUTES
+    get_user, verify_password, oauth2_scheme, ACCESS_TOKEN_EXPIRE_MINUTES
 )
+
+import httpx
 
 MODEL_RUNTIME_METADATA = {}
 
@@ -131,27 +133,43 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.post("/token", response_model=Token)
+@app.post("/token")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    user_dict = get_user(form_data.username)
-    if not user_dict:
+    try:
+        async with httpx.AsyncClient() as client:
+            print("ROBLE URL:", f"{settings.roble_auth_base}/{settings.roble_db_name}/login")
+            print("EMAIL:", form_data.username)
+            response = await client.post(
+                
+                f"{settings.roble_auth_base}/{settings.roble_db_name}/login",
+                json={
+                    "email": form_data.username,
+                    "password": form_data.password,
+                },
+                timeout=10.0,
+            )
+        print("ROBLE STATUS:", response.status_code)
+        print("ROBLE BODY:", response.text)
+        if response.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Correo o contraseña incorrectos",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        data = response.json()
+
+        return {
+            "access_token": data["accessToken"],
+            "refresh_token": data["refreshToken"],
+            "token_type": "bearer",
+        }
+
+    except httpx.RequestError:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario o contraseña incorrectos",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar con ROBLE. Intenta nuevamente.",
         )
-    user = user_dict
-    if not verify_password(form_data.password, user["hashed_password"]):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Usuario o contraseña incorrectos",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user["username"]}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
 
 
 def _read_image_from_upload(file: UploadFile) -> np.ndarray:
@@ -1081,4 +1099,30 @@ async def analyze_agent(
         return JSONResponse(
             status_code=500,
             content={"detail": f"Error interno del agente cerebro: {str(e)}"},
+        )
+
+@app.post("/logout")
+async def logout(token: str = Depends(oauth2_scheme)):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.roble_auth_base}/{settings.roble_db_name}/logout",
+                headers={
+                    "Authorization": f"Bearer {token}"
+                },
+                timeout=10.0,
+            )
+
+        if response.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=400,
+                detail="No se pudo cerrar sesión en ROBLE"
+            )
+
+        return {"message": "Sesión cerrada correctamente"}
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=503,
+            detail="Error conectando con ROBLE"
         )

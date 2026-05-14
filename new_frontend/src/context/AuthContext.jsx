@@ -19,11 +19,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('token');
-    sessionStorage.removeItem('screen');
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem("token");
+
+      await fetch("http://localhost:8000/logout", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error("Error cerrando sesión:", error);
+    }
+
+    localStorage.removeItem("token");
     setToken(null);
-    setUser(null);
   };
 
   return (

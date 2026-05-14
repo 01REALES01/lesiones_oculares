@@ -14,6 +14,9 @@ from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
+import httpx
+from backend.config import settings
+
 # ---- Configuración ----
 SECRET_KEY = "SECRET_SUPER_SECRETO_PARA_FONDOS_DE_OJO"
 ALGORITHM = "HS256"
@@ -72,15 +75,26 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
         detail="No se pudieron validar las credenciales",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
 
-    user = get_user(username)
-    if user is None:
-        raise credentials_exception
-    return User(username=user["username"])
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.roble_auth_base}/{settings.roble_db_name}/verify-token",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10.0,
+            )
+
+        if response.status_code not in (200, 201):
+            raise credentials_exception
+
+        data = response.json()
+
+        email = data.get("email") or data.get("user", {}).get("email") or "usuario_roble"
+
+        return User(username=email)
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo verificar el token con ROBLE.",
+        )

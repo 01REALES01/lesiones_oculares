@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     model_detector_path: str = ""
     anthropic_api_key: str = ""
 
+    #ROBLE
+    roble_auth_base: str = "https://roble-api.openlab.uninorte.edu.co/auth"
+    roble_db_name: str = "ocularai_fa7b13fe81"
+    
     class Config:
         env_file = ".env"
         extra = "ignore"
