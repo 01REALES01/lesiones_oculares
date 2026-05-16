@@ -30,12 +30,8 @@ def _ensure_data_dir() -> None:
 
 
 def save_image_to_disk(img_bytes: bytes, filename: str) -> str:
-    """Guarda imagen físicamente y devuelve su ID determinístico."""
-    _ensure_data_dir()
-    file_id = f"{uuid.uuid4().hex}_{filename}"
-    file_path = _IMAGES_DIR / file_id
-    with open(file_path, "wb") as f:
-        f.write(img_bytes)
+    """Simula guardado (deshabilitado por petición del usuario)."""
+    file_id = f"no_save_{uuid.uuid4().hex}"
     return file_id
 
 
@@ -67,6 +63,29 @@ def _save_to_file() -> None:
             )
     except Exception:
         pass
+
+def save_inferences_batch(records: List[Dict[str, Any]]) -> List[str]:
+    """Guarda múltiples registros de una vez para optimizar rendimiento."""
+    _ensure_data_dir()
+    ids = []
+    for r in records:
+        iid = r.get("inference_id") or str(uuid.uuid4())
+        r["inference_id"] = iid
+        if "timestamp" not in r:
+            r["timestamp"] = datetime.now(timezone.utc).isoformat()
+        
+        _inference_store[iid] = r
+        if iid not in _inference_ids_order:
+            _inference_ids_order.append(iid)
+        ids.append(iid)
+        
+    # Mantener límite
+    while len(_inference_ids_order) > _MAX_IN_MEMORY:
+        old_id = _inference_ids_order.pop(0)
+        _inference_store.pop(old_id, None)
+        
+    _save_to_file()
+    return ids
 
 
 def save_inference(
@@ -212,6 +231,7 @@ def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
                 "primary_diagnosis": primary_result.get("diagnosis", res.get("diagnosis")),
                 "recommendation_short": comparison_summary.get("recommendation_short") or res.get("recommendation_short") or res.get("explanation", {}).get("recommendation_short"),
                 "filename": res.get("filename") if len(items) == 1 else f"Lote de {len(items)} imágenes",
+                "batch_filenames": [item.get("result", {}).get("filename") for item in items if item.get("result", {}).get("filename")],
             },
         })
     return out

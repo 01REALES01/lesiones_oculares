@@ -14,6 +14,7 @@ from typing import Any, List, Optional
 from datetime import timedelta, datetime, timezone
 
 import numpy as np
+import cv2
 from fastapi import FastAPI, File, Query, UploadFile, Depends, HTTPException, status, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -40,6 +41,7 @@ from backend.models.lesion_detector import detect_hemorrhages
 from backend.postprocessing.report import build_report, graph_data_for_frontend
 from backend.store import (
     save_inference,
+    save_inferences_batch,
     get_inference,
     list_inferences,
     get_global_stats,
@@ -196,6 +198,16 @@ def _rd_risk_level(dr_grade: int) -> str:
     if dr_grade > 0:
         return "medium"
     return "low"
+
+
+def _encode_image_to_bytes(img_rgb: np.ndarray) -> bytes:
+    """Convierte un array numpy RGB a bytes JPEG para guardado y modelos."""
+    # OpenCV imencode espera BGR
+    img_bgr = cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR)
+    success, buffer = cv2.imencode('.jpg', img_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
+    if not success:
+        raise ValueError("No se pudo codificar la imagen preprocesada.")
+    return buffer.tobytes()
 
 
 def _rd_recommendation_short(dr_grade: int) -> str:
@@ -602,22 +614,20 @@ async def analyze_densenet(
         # 1. Leer imagen
         img = _read_image_from_upload(file)
         
-        # 2. Preprocesar
-        image = preprocess_fundus(img)
+        # 2. Preprocesar (Aplica Recorte + Ben Graham + Resize 224x224)
+        preprocessed_rgb = preprocess_fundus(img)
         
+        # 3. Convertir a bytes para guardado e inferencia
+        # Usamos la imagen preprocesada para todo de ahora en adelante
+        image_bytes = _encode_image_to_bytes(preprocessed_rgb)
+        image_id = save_image_to_disk(image_bytes, file.filename)
+
         # 3. Ejecutar modelo DenseNet
         t0 = time.perf_counter()
         
         model_loaded = "lesiones_densenet" in ml_manager.models
 
         if model_loaded:
-            # Leer bytes de imagen para pasar al modelo
-            file.file.seek(0)
-            image_bytes = file.file.read()
-            
-            # Guardamos a disco
-            image_id = save_image_to_disk(image_bytes, file.filename)
-
             # Ejecutar predicción real
             model_result = await loop.run_in_executor(
                 None,
@@ -797,6 +807,7 @@ async def _analyze_rd_comparison_impl(
 
     loop = asyncio.get_running_loop()
     final_results = []
+    inferences_to_save = []
     batch_id = str(uuid.uuid4())
     cancelled = False
 
@@ -807,11 +818,22 @@ async def _analyze_rd_comparison_impl(
 
         try:
             img = _read_image_from_upload(file)
-            preprocessed_image = preprocess_fundus(img)
-            file.file.seek(0)
-            image_bytes = file.file.read()
+            # 1. Pasar de BGR a RGB
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            
+            # 2. Cropping (Recorte de bordes negros)
+            from backend.preprocessing.fundus import crop_img, apply_ben_graham_rgb
+            img_cropped = crop_img(img_rgb)
+            
+            # 3. Resize (Esta es la versión que mostramos al usuario)
+            display_rgb = cv2.resize(img_cropped, (224, 224), interpolation=cv2.INTER_CUBIC)
+            
+            # 4. Ben Graham (Esta es la versión que el modelo IA necesita)
+            preprocessed_rgb = apply_ben_graham_rgb(display_rgb)
+            
+            # Convertir a bytes para guardado e inferencia
+            image_bytes = _encode_image_to_bytes(preprocessed_rgb)
             image_id = save_image_to_disk(image_bytes, file.filename)
-            file.file.seek(0)
 
             model_results = []
             inference_times_ms = {}
@@ -840,7 +862,7 @@ async def _analyze_rd_comparison_impl(
                 else:
                     prediction = await loop.run_in_executor(
                         None,
-                        lambda model_label=model_spec["label"]: _predict_rd_fallback(preprocessed_image, model_label),
+                        lambda model_label=model_spec["label"]: _predict_rd_fallback(preprocessed_rgb, model_label),
                     )
 
                 inference_time_ms = (time.perf_counter() - t0) * 1000
@@ -854,21 +876,23 @@ async def _analyze_rd_comparison_impl(
                 break
 
             result = _build_rd_comparison_result(file.filename, selected_models, model_results, analysis_timestamp)
-            result["uploaded_image_preview"] = f"/images/{image_id}"
+            
+            # Devolver Base64 para previsualización inmediata sin guardar en disco
+            import base64
+            # Mostramos la versión display_rgb (sin Ben Graham) pero recortada/redimensionada
+            display_bgr = cv2.cvtColor(display_rgb, cv2.COLOR_RGB2BGR)
+            _, buffer = cv2.imencode(".jpg", display_bgr)
+            img_base64 = base64.b64encode(buffer).decode("utf-8")
+            result["uploaded_image_preview"] = f"data:image/jpeg;base64,{img_base64}"
 
             if await request.is_disconnected():
                 cancelled = True
                 break
 
-            inference_id = save_inference(
-                models_used=selected_models,
-                inference_times_ms=inference_times_ms,
-                result=result,
-                image_size=(img.shape[1], img.shape[0]),
-                batch_id=batch_id,
-            )
-
+            inference_id = str(uuid.uuid4())
+            
             result["inference_id"] = inference_id
+            result["batch_id"] = batch_id
             result["success"] = True
             result["traceability"] = {
                 "inference_id": inference_id,
@@ -877,6 +901,17 @@ async def _analyze_rd_comparison_impl(
                 "timestamp": analysis_timestamp,
             }
             final_results.append(result)
+            
+            inferences_to_save.append({
+                "inference_id": inference_id,
+                "timestamp": analysis_timestamp,
+                "models_used": selected_models,
+                "inference_times_ms": inference_times_ms,
+                "result": result,
+                "image_size": (img.shape[1], img.shape[0]),
+                "batch_id": batch_id,
+            })
+
         except Exception as e:
             final_results.append({
                 "filename": file.filename,
@@ -889,6 +924,10 @@ async def _analyze_rd_comparison_impl(
             status_code=499,
             content={"detail": "Analisis cancelado por el cliente."},
         )
+
+    # Guardado masivo para optimizar I/O
+    if inferences_to_save:
+        save_inferences_batch(inferences_to_save)
 
     return final_results
 
@@ -911,9 +950,11 @@ async def analyze_demo(
     loop = asyncio.get_event_loop()
     try:
         img = _read_image_from_upload(file)
-        preprocessed_image = preprocess_fundus(img)
-        file.file.seek(0)
-        image_bytes = file.file.read()
+        # Preprocesar
+        preprocessed_rgb = preprocess_fundus(img)
+        
+        # Convertir a bytes para guardado e inferencia
+        image_bytes = _encode_image_to_bytes(preprocessed_rgb)
         image_id = save_image_to_disk(image_bytes, file.filename)
 
         model_spec = RD_MODEL_SPECS[model_id]
@@ -934,7 +975,7 @@ async def analyze_demo(
         else:
             prediction = await loop.run_in_executor(
                 None,
-                lambda: _predict_rd_fallback(preprocessed_image, model_spec["label"]),
+                lambda: _predict_rd_fallback(preprocessed_rgb, model_spec["label"]),
             )
 
         inference_time_ms = (time.perf_counter() - t0) * 1000
@@ -1050,12 +1091,15 @@ async def analyze_retina(
                 })
                 continue
 
-            file.file.seek(0)
-            image_bytes = file.file.read()
+            # 2. Preprocesar (Aplica Recorte + Ben Graham + Resize 224x224)
+            preprocessed_rgb = preprocess_fundus(img)
+            
+            # Convertir a bytes para guardado e inferencia
+            image_bytes = _encode_image_to_bytes(preprocessed_rgb)
             image_id = save_image_to_disk(image_bytes, file.filename)
             
-            # 2. Preprocesar
-            image = preprocess_fundus(img)
+            # Usar la versión preprocesada (numpy) para los modelos legados A y B
+            image = preprocessed_rgb
 
             # 3. Ejecutar modelos
             results_by_model = {}

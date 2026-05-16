@@ -16,7 +16,9 @@ import {
   ScanEye,
   ChevronRight,
   Zap,
+  FileSpreadsheet,
 } from 'lucide-react';
+import { cn } from '../utils';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
 import { SwitchToggle } from '../components/ui/SwitchToggle';
 import { analysisService } from '../services/api';
@@ -220,16 +222,37 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     const res = await handleAnalyze();
     if (!res?.success) return;
 
-    const previews = files.map((file) => URL.createObjectURL(file));
-    const withPreview = (res.data || []).map((item, index) => ({
+    const withPreview = (res.data || []).map((item) => ({
       ...item,
-      uploaded_image_preview: previews[index] || null,
+      uploaded_image_preview: item.uploaded_image_preview?.startsWith('data:') 
+        ? item.uploaded_image_preview
+        : item.uploaded_image_preview 
+          ? `${analysisService.apiBase}${item.uploaded_image_preview}` 
+          : null,
     }));
 
     setResults(withPreview);
     setResultsVisible(true);
     await loadHistory();
     await loadStats();
+  };
+
+  const handleExportExcelResults = async () => {
+    const batchId = results?.[0]?.batch_id;
+    if (!batchId) return;
+    try {
+      const blob = await analysisService.exportBatchExcel(batchId);
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `batch_${batchId}.xlsx`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting Excel from dashboard:', error);
+    }
   };
 
   const deleteItem = async (e, item) => {
@@ -305,7 +328,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-        <div className="space-y-5 lg:col-span-7 xl:col-span-8">
+        <div className="space-y-6 lg:col-span-7 xl:col-span-8">
           <GlassCard className="border border-slate-200/60 bg-white/80 p-0 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08)] backdrop-blur">
             <div className="space-y-0 p-6 sm:p-8">
               {files.length > 0 && (
@@ -321,10 +344,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               )}
 
               <div
-                onClick={() => {
-                  if (loading) return;
-                  document.getElementById('dash-file-input')?.click();
-                }}
                 onDragOver={(e) => {
                   e.preventDefault();
                   setIsDragging(true);
@@ -332,7 +351,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 onDragLeave={() => setIsDragging(false)}
                 onDrop={handleDrop}
                 className={`
-                  relative min-h-[240px] cursor-pointer rounded-2xl border-2 border-dashed transition-all duration-300
+                  relative min-h-[240px] rounded-2xl border-2 border-dashed transition-all duration-300
                   flex flex-col items-center justify-center text-center gap-3 px-5 py-10
                   ${
                     isDragging
@@ -376,26 +395,18 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 </div>
 
                 <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      document.getElementById('dash-file-input')?.click();
-                    }}
-                    className="rounded-full border border-slate-200/90 bg-slate-100/90 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/90"
+                  <label
+                    htmlFor="dash-file-input"
+                    className="cursor-pointer rounded-full border border-slate-200/90 bg-slate-100/90 px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 transition hover:bg-slate-200/90"
                   >
-                    Nube / archivos
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      document.getElementById('dash-folder-input')?.click();
-                    }}
-                    className="rounded-full bg-sky-500/90 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-sky-600"
+                    Archivos
+                  </label>
+                  <label
+                    htmlFor="dash-folder-input"
+                    className="cursor-pointer rounded-full bg-sky-500/90 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-sky-600"
                   >
-                    Carpeta
-                  </button>
+                    Carpetas
+                  </label>
                 </div>
 
                 {files.length > 0 && (
@@ -437,7 +448,80 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               </div>
             </div>
           </GlassCard>
+
+          <div ref={resultsRef}>
+            <GlassCard className="border border-slate-200/50 bg-white/60 p-4 sm:p-6">
+              <AnimatePresence mode="wait">
+                {results && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="overflow-hidden"
+                  >
+                    {resultsVisible ? (
+                      <motion.div 
+                        key="results-list"
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="space-y-4 pt-4"
+                      >
+                        <div className="flex items-center justify-between px-1">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 size={18} className="text-ocular-success" />
+                            <h3 className="text-lg font-bold text-ocular-text-main">Resultados del Análisis</h3>
+                          </div>
+                          <div className="flex gap-2">
+                            {results?.[0]?.batch_id && (
+                              <button 
+                                onClick={handleExportExcelResults}
+                                className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-bold hover:bg-primary-dark transition-all uppercase tracking-widest shadow-sm shadow-primary/20"
+                              >
+                                <FileSpreadsheet size={14} /> Exportar Lote
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => setResultsVisible(false)}
+                              className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-white/60 rounded-xl text-[10px] font-bold text-ocular-text-muted hover:text-primary hover:border-primary/30 transition-all uppercase tracking-widest shadow-sm"
+                            >
+                              <X size={14} /> Ocultar
+                            </button>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {results.map((res, i) => (
+                            <ResultMiniCard key={i} result={res} onClick={() => onViewDetail(results, i)} />
+                          ))}
+                        </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="results-hidden"
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        className="pt-4"
+                      >
+                        <button
+                          onClick={() => setResultsVisible(true)}
+                          className="w-full p-4 bg-white/40 border border-white/60 border-dashed rounded-3xl flex items-center justify-center gap-3 text-ocular-text-muted hover:text-primary hover:bg-white/60 transition-all group"
+                        >
+                          <Plus className="group-hover:rotate-90 transition-transform" />
+                          <span className="text-sm font-bold uppercase tracking-widest">Mostrar resultados del último análisis ({results.length})</span>
+                        </button>
+                      </motion.div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+              {!results && (
+                <p className="py-8 text-center text-xs text-slate-400">Los resultados del análisis aparecerán aquí.</p>
+              )}
+            </GlassCard>
+          </div>
         </div>
+
 
         <div className="space-y-4 lg:col-span-5 xl:col-span-4">
           <GlassCard className="border border-slate-200/60 bg-white/80 p-6 shadow-[0_4px_24px_-4px_rgba(15,23,42,0.08)] backdrop-blur sm:p-7">
@@ -543,8 +627,8 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 ${recentHistory[0] ? 'hover:border-sky-300/80 hover:shadow-md' : 'opacity-60'}
               `}
             >
-              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-slate-200/80 bg-slate-200/30">
-                <div className="h-full w-full scale-125 bg-gradient-to-br from-slate-700 to-slate-900 opacity-90" />
+              <div className="h-12 w-12 shrink-0 overflow-hidden rounded-full border border-sky-200 bg-sky-50 flex items-center justify-center text-sky-600 shadow-inner">
+                <Zap size={20} fill="currentColor" className="opacity-80" />
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-[9px] font-extrabold uppercase tracking-widest text-sky-600">Referencia reciente</p>
@@ -552,14 +636,11 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   {recentHistory[0]
                     ? (() => {
                         const h = recentHistory[0];
-                        const batch =
-                          h.is_batch ||
-                          (h.batch_id && h.batch_size > 1) ||
-                          ((h.summary?.headline || '').toLowerCase().includes('lote') && h.batch_id);
-                        if (batch && h.batch_id) {
-                          return `Lote #${h.batch_id.substring(0, 6)}: preprocesado`;
-                        }
-                        return `Paciente #${h.inference_id.substring(0, 5)}: preprocesado`;
+                        const batch = h.is_batch || (h.batch_id && h.batch_size > 1);
+                        const label = batch ? 'Lote' : 'Paciente';
+                        const id = (h.batch_id || h.inference_id || '').substring(0, 6);
+                        const fileName = h.summary?.filename || h.filename || 'Análisis';
+                        return `${label} #${id}: ${fileName}`;
                       })()
                     : 'Sin ejecuciones aún'}
                 </p>
@@ -568,80 +649,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
             </GlassCard>
           </button>
 
-          <GlassCard className="bg-primary p-4 text-white shadow-md shadow-primary/20 sm:p-5">
-            <h4 className="font-bold">Tip de uso</h4>
-            <p className="mt-1 text-xs leading-relaxed text-white/85">
-              Use imágenes nítidas, retinocentrada e iluminación homogénea. Active varios modelos para comparar la señal de
-              riesgo de RD.
-            </p>
-          </GlassCard>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="space-y-6 lg:col-span-8 xl:col-span-9" ref={resultsRef}>
-        <GlassCard className="border border-slate-200/50 bg-white/60 p-4 sm:p-6">
-          <AnimatePresence mode="wait">
-            {results && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
-              >
-                {resultsVisible ? (
-                  <motion.div 
-                    key="results-list"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-4 pt-4"
-                  >
-                    <div className="flex items-center justify-between px-1">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 size={18} className="text-ocular-success" />
-                        <h3 className="text-lg font-bold text-ocular-text-main">Resultados del Análisis</h3>
-                      </div>
-                      <button 
-                        onClick={() => setResultsVisible(false)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-white/60 rounded-xl text-[10px] font-bold text-ocular-text-muted hover:text-primary hover:border-primary/30 transition-all uppercase tracking-widest shadow-sm"
-                      >
-                        <X size={14} /> Ocultar
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {results.map((res, i) => (
-                        <ResultMiniCard key={i} result={res} onClick={() => onViewDetail(results, i)} />
-                      ))}
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="results-hidden"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    className="pt-4"
-                  >
-                    <button
-                      onClick={() => setResultsVisible(true)}
-                      className="w-full p-4 bg-white/40 border border-white/60 border-dashed rounded-3xl flex items-center justify-center gap-3 text-ocular-text-muted hover:text-primary hover:bg-white/60 transition-all group"
-                    >
-                      <Plus className="group-hover:rotate-90 transition-transform" />
-                      <span className="text-sm font-bold uppercase tracking-widest">Mostrar resultados del último análisis ({results.length})</span>
-                    </button>
-                  </motion.div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {!results && (
-            <p className="py-8 text-center text-xs text-slate-400">Los resultados del análisis aparecerán aquí.</p>
-          )}
-        </GlassCard>
-        </div>
-
-        <div className="lg:col-span-4 space-y-6">
           <GlassCard className="p-6">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
@@ -727,6 +734,14 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               )}
             </div>
           </GlassCard>
+
+          <GlassCard className="bg-primary p-4 text-white shadow-md shadow-primary/20 sm:p-5">
+            <h4 className="font-bold">Tip de uso</h4>
+            <p className="mt-1 text-xs leading-relaxed text-white/85">
+              Use imágenes nítidas, retinocentrada e iluminación homogénea. Active varios modelos para comparar la señal de
+              riesgo de RD.
+            </p>
+          </GlassCard>
         </div>
       </div>
 
@@ -806,22 +821,35 @@ function ModelRow({ id, labelId, icon: Icon, title, sub, active, onToggle }) {
 
 function ResultMiniCard({ result, onClick }) {
   const comparisonSummary = result.comparison_summary || {};
+  const isError = result.success === false || !!result.error;
+  
   return (
     <button
       type="button"
       onClick={onClick}
-      className="glass-panel p-4 flex items-center justify-between group hover:border-primary/40 transition-all border-white/40"
+      className={cn(
+        "glass-panel p-4 flex items-center justify-between group transition-all border-white/40",
+        isError ? "hover:border-red-400/40" : "hover:border-primary/40"
+      )}
     >
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-ocular-success/10 text-ocular-success rounded-xl flex items-center justify-center">
-          <CheckCircle2 size={18} />
+      <div className="flex items-center gap-3 overflow-hidden">
+        <div className={cn(
+          "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+          isError ? "bg-red-100 text-red-600" : "bg-ocular-success/10 text-ocular-success"
+        )}>
+          {isError ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
         </div>
-        <div className="text-left">
-          <p className="text-sm font-bold text-ocular-text-main group-hover:text-primary transition-colors truncate max-w-[120px]">{result.filename}</p>
-          <p className="text-[10px] text-ocular-text-muted font-bold">{comparisonSummary.headline || 'PROCESO EXITOSO'}</p>
+        <div className="text-left overflow-hidden">
+          <p className="text-sm font-bold text-ocular-text-main group-hover:text-primary transition-colors truncate">{result.filename}</p>
+          <p className={cn(
+            "text-[10px] font-bold truncate",
+            isError ? "text-red-500" : "text-ocular-text-muted"
+          )}>
+            {isError ? (result.error || 'Error en análisis') : (comparisonSummary.headline || 'Análisis finalizado')}
+          </p>
         </div>
       </div>
-      <Plus size={16} className="text-ocular-text-muted group-hover:text-primary transition-all" />
+      <Plus size={16} className="text-ocular-text-muted group-hover:text-primary transition-all shrink-0 ml-2" />
     </button>
   );
 }

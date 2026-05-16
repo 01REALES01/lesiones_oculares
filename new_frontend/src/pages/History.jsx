@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Calendar, ChevronRight, FileText, Loader2, Trash2 } from 'lucide-react';
+import { Search, Calendar, ChevronRight, FileText, Loader2, Trash2, AlertCircle } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { analysisService } from '../services/api';
 import { cn } from '../utils';
@@ -12,8 +12,11 @@ export default function HistoryPage({ onViewDetail }) {
   const [clearModalOpen, setClearModalOpen] = useState(false);
   const [historyNotice, setHistoryNotice] = useState(null);
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [riskFilter, setRiskFilter] = useState("all"); // all | high | medium | low | mixed
   const [page, setPage] = useState(0);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
   const limit = 12;
   const hasHistoryToClear = history.length > 0;
 
@@ -24,7 +27,7 @@ export default function HistoryPage({ onViewDetail }) {
   // Reset to page 0 whenever filter or search changes
   useEffect(() => {
     if (page !== 0) setPage(0);
-  }, [riskFilter, search]);
+  }, [riskFilter, search, dateFilter]);
 
 
   const loadAllHistory = async () => {
@@ -52,13 +55,16 @@ export default function HistoryPage({ onViewDetail }) {
   };
 
   const filteredHistory = history.filter(item => {
-    const matchesSearch = item.inference_id.toLowerCase().includes(search.toLowerCase()) || 
-                         (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase());
+    const matchesSearch = (item.batch_id || "").toLowerCase().includes(search.toLowerCase()) || 
+                         (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase()) ||
+                         (item.summary?.batch_filenames || []).some(fn => fn.toLowerCase().includes(search.toLowerCase()));
 
     const itemLevel = item.summary?.risk_level || 'low';
     const itemMaxLevel = item.summary?.risk_max_level || itemLevel;
     const riskCounts = item.summary?.risk_counts || {};
     const mixedHasRisk = (level) => Number(riskCounts[level] || 0) > 0;
+    const matchesDate = !dateFilter || new Date(item.timestamp).toISOString().split('T')[0] === dateFilter;
+
     const matchesRisk =
       riskFilter === 'all' ||
       itemLevel === riskFilter ||
@@ -68,7 +74,7 @@ export default function HistoryPage({ onViewDetail }) {
         (riskFilter === 'low' && mixedHasRisk('low'))
       ));
 
-    return matchesSearch && matchesRisk;
+    return matchesSearch && matchesRisk && matchesDate;
   });
 
   const totalPages = Math.max(1, Math.ceil(filteredHistory.length / limit));
@@ -97,7 +103,16 @@ export default function HistoryPage({ onViewDetail }) {
             timestamp: b.timestamp,
           }
         }));
-        onViewDetail(mappedBatch, 0);
+        // Intentar encontrar el índice de la imagen si hay una búsqueda activa
+        let targetIndex = 0;
+        if (search) {
+          const foundIndex = mappedBatch.findIndex(b => 
+            (b.filename || b.summary?.filename || "").toLowerCase().includes(search.toLowerCase())
+          );
+          if (foundIndex !== -1) targetIndex = foundIndex;
+        }
+        
+        onViewDetail(mappedBatch, targetIndex);
       } else {
         const fullRecord = await analysisService.getInference(item.inference_id);
         if (fullRecord?.result) {
@@ -145,25 +160,38 @@ export default function HistoryPage({ onViewDetail }) {
     }
   };
 
-  const deleteItem = async (e, item) => {
+  const deleteItem = (e, item) => {
     e.stopPropagation();
+    setItemToDelete(item);
+    setDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+    const item = itemToDelete;
     const isBatch = item.is_batch && item.batch_id;
+    
+    // Borrado optimista
+    const previousHistory = [...history];
+    setHistory(prev => prev.filter(h => {
+      if (isBatch) return h.batch_id !== item.batch_id;
+      return h.inference_id !== item.inference_id;
+    }));
+    
+    setDeleteModalOpen(false);
+    setItemToDelete(null);
+
     try {
       if (isBatch) {
         await analysisService.deleteBatch(item.batch_id);
       } else {
         await analysisService.deleteAnalysis(item.inference_id);
       }
-      
-      setHistory(prev => prev.filter(h => {
-        if (isBatch) return h.batch_id !== item.batch_id;
-        return h.inference_id !== item.inference_id;
-      }));
-      
-      setHistoryNotice({ type: 'success', message: isBatch ? 'Lote eliminado.' : 'Analisis eliminado.' });
+      setHistoryNotice({ type: 'success', message: isBatch ? 'Lote eliminado.' : 'Análisis eliminado.' });
     } catch (e) {
       console.error("Error eliminando:", e);
-      setHistoryNotice({ type: 'error', message: 'No se pudo eliminar.' });
+      setHistory(previousHistory);
+      setHistoryNotice({ type: 'error', message: 'No se pudo eliminar del servidor.' });
     }
   };
 
@@ -221,6 +249,24 @@ export default function HistoryPage({ onViewDetail }) {
               className="bg-white/50 border border-white/60 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary transition-all w-64"
             />
           </div>
+
+          <div className="relative group">
+            <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4 pointer-events-none group-focus-within:scale-110 transition-transform" />
+            <input 
+              type="date" 
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="bg-white/70 border border-white/60 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/5 transition-all w-48 font-bold text-ocular-text-main shadow-sm"
+            />
+            {dateFilter && (
+              <button 
+                onClick={(e) => { e.preventDefault(); setDateFilter(""); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-black text-ocular-error uppercase hover:scale-105 transition-transform"
+              >
+                ×
+              </button>
+            )}
+          </div>
           
           <div className="flex bg-white/40 p-1 rounded-xl border border-white/60">
             {['all', 'high', 'medium', 'low', 'mixed'].map((f) => (
@@ -276,7 +322,7 @@ export default function HistoryPage({ onViewDetail }) {
           <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
           <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
           <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
-          <button onClick={() => { setSearch(""); setRiskFilter("all"); }} className="mt-4 text-primary font-bold hover:underline">Limpiar búsqueda y filtros</button>
+          <button onClick={() => { setSearch(""); setRiskFilter("all"); setDateFilter(""); }} className="mt-4 text-primary font-bold hover:underline">Limpiar búsqueda y filtros</button>
         </GlassCard>
       )}
 
@@ -308,36 +354,81 @@ export default function HistoryPage({ onViewDetail }) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+            className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
           >
             <motion.div
-              initial={{ opacity: 0, y: 14, scale: 0.98 }}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 14, scale: 0.98 }}
-              className="w-full max-w-md rounded-3xl border border-white/30 bg-white/90 backdrop-blur-xl shadow-2xl p-6 space-y-5"
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
             >
+              <div className="w-20 h-20 bg-ocular-error/10 rounded-3xl flex items-center justify-center mx-auto text-ocular-error">
+                <Trash2 size={40} />
+              </div>
               <div className="space-y-2">
-                <h4 className="text-lg font-black text-ocular-text-main">Limpiar historial</h4>
-                <p className="text-sm text-ocular-text-muted">
-                  Esto eliminará todos los registros de historial.
+                <h4 className="text-2xl font-black text-ocular-text-main tracking-tight">¿Limpiar Historial?</h4>
+                <p className="text-sm text-ocular-text-muted font-medium">
+                  Esta acción eliminará todos los registros de forma permanente. No se puede deshacer.
                 </p>
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <button
                   type="button"
                   onClick={() => setClearModalOpen(false)}
-                  disabled={clearingHistory}
-                  className="px-4 py-2 rounded-xl border border-white/60 bg-white/80 text-ocular-text-main font-bold text-sm hover:bg-white"
+                  className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
                 >
                   Cancelar
                 </button>
                 <button
                   type="button"
                   onClick={confirmClearHistory}
-                  disabled={clearingHistory}
-                  className="px-4 py-2 rounded-xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 disabled:opacity-60"
+                  className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
                 >
-                  {clearingHistory ? 'Limpiando...' : 'Sí, limpiar'}
+                  Confirmar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {deleteModalOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              className="w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
+            >
+              <div className="w-20 h-20 bg-ocular-error/10 rounded-3xl flex items-center justify-center mx-auto text-ocular-error">
+                <AlertCircle className="w-10 h-10" />
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-2xl font-black text-ocular-text-main tracking-tight">¿Eliminar Análisis?</h4>
+                <p className="text-sm text-ocular-text-muted font-medium">
+                  {itemToDelete?.is_batch 
+                    ? `Estás por eliminar un lote de ${itemToDelete.batch_size} imágenes.` 
+                    : `Se eliminará el análisis del archivo "${itemToDelete?.summary?.filename || 'Desconocido'}".`}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setDeleteModalOpen(false); setItemToDelete(null); }}
+                  className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
+                >
+                  No, volver
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
+                >
+                  Sí, eliminar
                 </button>
               </div>
             </motion.div>
@@ -398,10 +489,15 @@ function HistoryCard({ item, onClick, onDelete, index }) {
 
           <div className="space-y-1">
              <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
-                <FileText size={16} className="text-primary" /> {item.is_batch ? `Lote de ${item.batch_size} Análisis` : `Analisis #${item.inference_id.substring(0,8)}`}
+                <FileText size={16} className="text-primary" /> 
+                {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0,8)}` : `Archivo: ${item.summary?.filename || 'Sin nombre'}`}
              </h3>
-             <p className="text-[10px] text-ocular-text-muted font-medium truncate uppercase tracking-tighter">Archivo: {item.summary?.filename || 'Desconocido'}</p>
-             <p className="text-xs text-ocular-text-main font-semibold">{item.summary?.headline || 'Comparación de modelos RD'}</p>
+             {item.is_batch && (
+               <p className="text-[10px] text-ocular-text-muted font-bold truncate uppercase tracking-widest">
+                  Contiene <span className="text-primary">{item.batch_size} imágenes</span>
+               </p>
+             )}
+             <p className="text-xs text-ocular-text-main font-semibold mt-1">{item.summary?.headline || 'Comparación de modelos RD'}</p>
              {item.summary?.is_mixed_risk && (
               <p className="text-[10px] text-ocular-text-muted font-semibold uppercase tracking-tight">
                 Altos: {item.summary?.risk_counts?.high ?? 0} | Medios: {item.summary?.risk_counts?.medium ?? 0} | Bajos: {item.summary?.risk_counts?.low ?? 0}

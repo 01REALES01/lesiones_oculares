@@ -32,6 +32,19 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Interceptor de respuesta: Manejo de errores globales (ej: 401)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401 && !error.config.url.includes('/token')) {
+      // Token expirado o inválido: Limpiar y redirigir
+      localStorage.removeItem('token');
+      window.location.reload(); // Esto forzará al App.jsx a mostrar el Login
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const authService = {
   login: async (username, password) => {
     const formData = new URLSearchParams();
@@ -43,6 +56,9 @@ export const authService = {
     });
     return response.data;
   },
+  logout: async () => {
+    return await api.post('/logout');
+  }
 };
 
 export const analysisService = {

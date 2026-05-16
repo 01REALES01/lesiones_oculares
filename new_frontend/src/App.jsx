@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/ui/Sidebar';
 import Landing from './pages/Landing';
@@ -29,6 +29,18 @@ function AppContent() {
   const [resultBatch, setResultBatch] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const analysisState = useAnalysis();
+  const { logout } = useAuth();
+
+  // Validación inmediata de credenciales al entrar al dashboard
+  useEffect(() => {
+    if (token) {
+      // Intentar obtener perfil de usuario para validar token
+      analysisService.getStats().catch(err => {
+        // El interceptor en api.js se encargará de hacer logout si es 401
+        console.error("Token inválido o expirado al inicio:", err);
+      });
+    }
+  }, [token]);
 
   if (showLanding) {
     return (
@@ -48,7 +60,7 @@ function AppContent() {
   }
 
   if (!token) {
-    return <Login />;
+    return <Login onGoLanding={() => { sessionStorage.setItem('screen', 'landing'); setShowLanding(true); }} />;
   }
 
   const navigateToDetail = (results, index = 0) => {
@@ -158,6 +170,7 @@ function AppContent() {
                   onPrev={prevResult}
                   onBack={() => setView('main')} 
                   onDelete={handleDeleteDetail}
+                  hideImage={activeTab === 'history'}
                 />
               </motion.div>
             )}

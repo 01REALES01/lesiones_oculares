@@ -51,6 +51,7 @@ export default function AnalysisDetail({
   showActions = true,
   showReportId = true,
   onDelete,
+  hideImage = false,
 }) {
   if (!result) return null;
 
@@ -60,10 +61,12 @@ export default function AnalysisDetail({
   const summary = result.comparison_summary || {};
   const primaryResult = result.primary_result || result;
   const traceability = result.traceability || {};
-  const timestamp = result.timestamp || traceability.timestamp || null;
+  const timestamp = result.timestamp || traceability.timestamp || result.timestamp || null;
   const averageLatency = hasComparison
-    ? comparisonModels.reduce((total, item) => total + Number(item.inference_time_ms || 0), 0) / comparisonModels.length
+    ? (comparisonModels.reduce((total, item) => total + Number(item.inference_time_ms || 0), 0) / comparisonModels.length)
     : Number(result.inference_time_ms ?? traceability?.inference_times_ms?.C ?? 0);
+  
+  const inferenceId = result.inference_id || traceability.inference_id || 'N/A';
   const activeRisk = summary.risk_level || primaryResult.risk_level || result.risk_level || 'low';
   const consensusGrade = summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
   const rightPanelTitle = hasComparison ? 'Comparacion de Modelos RD' : 'Imagen Analizada';
@@ -175,7 +178,9 @@ export default function AnalysisDetail({
             <div className="space-y-1">
               <h2 className="text-2xl font-bold text-ocular-text-main">Veredicto Clinico</h2>
               {showReportId && (
-                <p className="text-sm text-ocular-text-muted font-medium uppercase tracking-widest">ID Reporte: #{result.inference_id?.substring(0, 8)}</p>
+                <p className="text-[10px] text-ocular-text-muted font-bold uppercase tracking-widest">
+                  Nombre del archivo: <span className="text-primary">{result.filename || result.summary?.filename || 'Sin nombre'}</span>
+                </p>
               )}
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 <span className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">
@@ -357,7 +362,7 @@ export default function AnalysisDetail({
 
               {hasComparison ? (
                 <div className="p-6 space-y-6">
-                  {result.uploaded_image_preview && (
+                  {!hideImage && result.uploaded_image_preview && (
                     <GlassCard className="p-4 border border-white/50 bg-white/60">
                       <div className="space-y-3">
                         <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Retinografia analizada</p>
@@ -430,7 +435,7 @@ export default function AnalysisDetail({
                 </div>
               ) : (
                 <div className="flex-1 relative bg-black/60 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[500px]">
-                  {result.uploaded_image_preview ? (
+                  {!hideImage && result.uploaded_image_preview ? (
                     <div className="relative group">
                       <img
                         src={result.uploaded_image_preview}
@@ -443,7 +448,9 @@ export default function AnalysisDetail({
                       <div className="w-20 h-20 bg-white/10 rounded-3xl mx-auto flex items-center justify-center animate-pulse">
                         <Eye size={40} className="text-white/20" />
                       </div>
-                      <p className="text-white/40 text-sm font-bold uppercase tracking-widest">Previsualizacion no disponible</p>
+                      <p className="text-white/40 text-sm font-bold uppercase tracking-widest">
+                        {hideImage ? 'Visualización de imagen omitida' : 'Previsualización no disponible'}
+                      </p>
                     </div>
                   )}
                 </div>

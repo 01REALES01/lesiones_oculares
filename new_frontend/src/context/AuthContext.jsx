@@ -21,14 +21,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      const token = localStorage.getItem("token");
-
-      await fetch("http://localhost:8000/logout", {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await authService.logout();
     } catch (error) {
       console.error("Error cerrando sesión:", error);
     }

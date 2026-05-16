@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { Fingerprint, LogIn, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 
-export default function Login() {
+export default function Login({ onGoLanding }) {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -114,7 +114,13 @@ export default function Login() {
           </button>
         </form>
 
-        <div className="mt-8 text-center border-t border-white/20 pt-6">
+        <div className="mt-8 text-center border-t border-white/20 pt-6 space-y-4">
+          <button
+            onClick={onGoLanding}
+            className="text-xs font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
+          >
+            Volver a la página principal
+          </button>
           <p className="text-xs text-ocular-text-muted uppercase tracking-widest font-semibold opacity-50">
             OcularAI Research Groups &copy;
           </p>
