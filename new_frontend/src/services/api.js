@@ -99,6 +99,13 @@ export const analysisService = {
     return response.data;
   },
 
+  exportInferencePDF: async (inferenceId) => {
+    const response = await api.get(`/export-pdf/${inferenceId}`, {
+      responseType: 'blob'
+    });
+    return response.data;
+  },
+  
   clearHistory: async () => {
     const response = await api.delete('/history');
     return response.data;

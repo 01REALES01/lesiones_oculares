@@ -1,10 +1,13 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet } from 'lucide-react';
+import { useState, useRef } from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import { analysisService } from '../services/api';
 
-const probabilityLabels = ['G0', 'G1', 'G2', 'G3', 'G4'];
+const probabilityLabels = ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'];
 
 function normalizeProbability(value) {
   const parsed = Number(value);
@@ -33,12 +36,91 @@ function riskLabel(level) {
   return 'Bajo';
 }
 
+function gradeToLabel(grade) {
+  const labels = ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'];
+  return labels[grade] || `Grado ${grade}`;
+}
+
 function suggestionByGrade(grade) {
   if (grade >= 4) return 'Compatible con retinopatia diabetica proliferativa. Se recomienda evaluacion oftalmologica urgente.';
   if (grade >= 3) return 'Compatible con retinopatia diabetica severa. Se recomienda derivacion prioritaria a oftalmologia.';
   if (grade >= 2) return 'Compatible con retinopatia diabetica moderada. Se recomienda seguimiento oftalmologico estrecho.';
   if (grade >= 1) return 'Compatible con retinopatia diabetica leve. Se sugiere control oftalmologico programado.';
   return 'No se observan signos aparentes de retinopatia diabetica. Se recomienda control oftalmologico periodico.';
+}
+
+function getGradeStyle(grade) {
+  switch (grade) {
+    case 0: // NO R.D.
+      return 'border border-emerald-500 bg-emerald-500/10 text-emerald-700';
+    case 1: // Leve
+      return 'border border-sky-500 bg-sky-500/10 text-sky-700';
+    case 2: // Moderado
+      return 'border border-amber-500 bg-amber-500/10 text-amber-700';
+    case 3: // Severo
+      return 'border border-orange-500 bg-orange-500/10 text-orange-700';
+    case 4: // Proliferativo
+      return 'border border-rose-500 bg-rose-500/10 text-rose-700';
+    default:
+      return 'border border-slate-500 bg-slate-500/10 text-slate-700';
+  }
+}
+
+function ZoomableImage({ src, alt, className }) {
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [[x, y], setXY] = useState([0, 0]);
+  const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
+  const magnifierSize = 200;
+  const zoomLevel = 2.5;
+
+  return (
+    <div 
+      className={cn("relative overflow-hidden cursor-crosshair", className)}
+      onMouseEnter={(e) => {
+        const elem = e.currentTarget;
+        const { width, height } = elem.getBoundingClientRect();
+        setSize([width, height]);
+        setShowMagnifier(true);
+      }}
+      onMouseMove={(e) => {
+        const elem = e.currentTarget;
+        const { top, left } = elem.getBoundingClientRect();
+        const x = e.pageX - left - window.scrollX;
+        const y = e.pageY - top - window.scrollY;
+        setXY([x, y]);
+      }}
+      onMouseLeave={() => setShowMagnifier(false)}
+    >
+      <img src={src} alt={alt} className="w-full h-full object-contain" />
+      
+      <div data-html2canvas-ignore="true" className="absolute top-4 right-4 bg-primary text-white p-2 rounded-full shadow-lg no-print animate-pulse">
+        <Search size={18} />
+      </div>
+      
+      {showMagnifier && (
+        <div
+          style={{
+            position: "absolute",
+            pointerEvents: "none",
+            height: `${magnifierSize}px`,
+            width: `${magnifierSize}px`,
+            top: `${y - magnifierSize / 2}px`,
+            left: `${x - magnifierSize / 2}px`,
+            opacity: "1",
+            border: "2px solid rgba(255, 255, 255, 0.5)",
+            borderRadius: "50%",
+            backgroundColor: "white",
+            backgroundImage: `url('${src}')`,
+            backgroundRepeat: "no-repeat",
+            backgroundSize: `${imgWidth * zoomLevel}px ${imgHeight * zoomLevel}px`,
+            backgroundPosition: `${-x * zoomLevel + magnifierSize / 2}px ${-y * zoomLevel + magnifierSize / 2}px`,
+            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
+            zIndex: 50
+          }}
+        />
+      )}
+    </div>
+  );
 }
 
 export default function AnalysisDetail({
@@ -53,6 +135,9 @@ export default function AnalysisDetail({
   onDelete,
   hideImage = false,
 }) {
+  const reportRef = useRef(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
   if (!result) return null;
 
   const isBatch = batch.length > 1;
@@ -79,6 +164,41 @@ export default function AnalysisDetail({
     value: normalizeProbability(primaryResult.raw_probabilities?.[index] ?? result.raw_probabilities?.[index] ?? 0),
   }));
   const singleHasProbabilityData = singleProbabilities.some((item) => item.value > 0);
+
+  const handlePrint = async () => {
+    setIsGeneratingPdf(true);
+    
+    // Pequeño delay para asegurar que el React state se renderice (el header de Dr Ocular)
+    setTimeout(async () => {
+      if (!reportRef.current) return;
+      try {
+        const canvas = await html2canvas(reportRef.current, {
+          scale: 2, // Mejor calidad
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+        
+        const imgData = canvas.toDataURL('image/png');
+        
+        // Crear PDF con dimensiones adaptadas al canvas (una sola pagina larga o ancha)
+        const pdf = new jsPDF({
+          orientation: canvas.width > canvas.height ? 'l' : 'p',
+          unit: 'px',
+          format: [canvas.width, canvas.height]
+        });
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        
+        const fileName = result.filename || result.summary?.filename || 'analisis';
+        const cleanName = fileName.replace(/\.[^/.]+$/, ""); 
+        pdf.save(`Ocular_AI_${cleanName}.pdf`);
+      } catch (err) {
+        console.error('Error al generar el PDF', err);
+      } finally {
+        setIsGeneratingPdf(false);
+      }
+    }, 150);
+  };
 
   const handleExportJSON = () => {
     const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(result, null, 2))}`;
@@ -108,9 +228,6 @@ export default function AnalysisDetail({
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
 
   return (
     <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-500 pb-12 print:p-0">
@@ -148,10 +265,13 @@ export default function AnalysisDetail({
 
         {showActions && (
           <div className="flex gap-3">
-            <button onClick={handlePrint} className="flex items-center gap-2 px-4 py-2 bg-white/40 rounded-xl border border-white/60 text-ocular-text-muted hover:text-primary transition-all font-bold text-xs uppercase">
-              <Printer size={18} /> Imprimir
+            <button 
+              onClick={handlePrint} 
+              className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-sky-500 to-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 hover:scale-[1.02] active:scale-95 transition-all font-bold text-xs uppercase tracking-wide"
+            >
+              <Printer size={18} /> Imprimir / Guardar PDF
             </button>
-            <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:bg-primary-dark transition-all font-bold text-xs uppercase">
+            <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-white/60 text-ocular-text-main rounded-xl border border-white/80 hover:bg-white transition-all font-bold text-xs uppercase shadow-sm">
               {isBatch ? <FileSpreadsheet size={18} /> : <FileDown size={18} />}
               {isBatch ? 'Exportar Excel' : 'Exportar Datos'}
             </button>
@@ -172,9 +292,16 @@ export default function AnalysisDetail({
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           exit={{ opacity: 0, x: -10 }}
-          className="grid grid-cols-1 xl:grid-cols-12 gap-8"
         >
-          <div className="xl:col-span-4 space-y-6">
+          <div ref={reportRef} className="bg-slate-50/50 p-2 sm:p-6 rounded-3xl grid grid-cols-1 xl:grid-cols-12 gap-8">
+            {isGeneratingPdf && (
+              <div className="xl:col-span-12 mb-4 pb-4 border-b border-slate-200">
+                <h1 className="text-3xl font-black text-primary uppercase tracking-widest">Ocular AI Report</h1>
+                <p className="text-sm font-bold text-ocular-text-muted mt-1 uppercase">Emitido por: Dr. Ocular Admin User</p>
+                <p className="text-xs text-slate-400 mt-1">ID de Reporte: {inferenceId}</p>
+              </div>
+            )}
+            <div className="xl:col-span-4 space-y-6">
             <div className="space-y-1">
               <h2 className="text-2xl font-bold text-ocular-text-main">Veredicto Clinico</h2>
               {showReportId && (
@@ -220,10 +347,10 @@ export default function AnalysisDetail({
                       <p className="text-xl font-bold text-ocular-text-main">{summary.headline || 'Comparacion de modelos RD'}</p>
                     </div>
                     <div className={cn(
-                      'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
-                      consensusGrade > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'
+                      'px-3 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-sm',
+                      getGradeStyle(consensusGrade)
                     )}>
-                      G{consensusGrade}
+                      {gradeToLabel(consensusGrade)}
                     </div>
                   </div>
                 </GlassCard>
@@ -247,10 +374,10 @@ export default function AnalysisDetail({
                         </div>
                       </div>
                       <div className={cn(
-                        'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
-                        item.predicted_class > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'
+                        'px-3 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-sm',
+                        getGradeStyle(item.predicted_class)
                       )}>
-                        G{item.predicted_class}
+                        {gradeToLabel(item.predicted_class)}
                       </div>
                     </div>
 
@@ -284,10 +411,10 @@ export default function AnalysisDetail({
                     <span className="text-xl font-bold text-ocular-text-main">{primaryResult.diagnosis || result.diagnosis}</span>
                   </div>
                   <div className={cn(
-                    'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
-                    (primaryResult.predicted_class ?? 0) > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'
+                    'px-3 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-sm',
+                    getGradeStyle(primaryResult.predicted_class ?? 0)
                   )}>
-                    G{primaryResult.predicted_class ?? 0}
+                    {gradeToLabel(primaryResult.predicted_class ?? 0)}
                   </div>
                 </GlassCard>
 
@@ -319,7 +446,7 @@ export default function AnalysisDetail({
                             <div
                               className={cn(
                                 'h-full rounded-full transition-all duration-500',
-                                item.label === `G${primaryResult.predicted_class ?? 0}` ? 'bg-primary' : 'bg-indigo-300'
+                                item.label === gradeToLabel(primaryResult.predicted_class ?? 0) ? 'bg-primary' : 'bg-indigo-300'
                               )}
                               style={{ width: `${item.value}%` }}
                             />
@@ -365,12 +492,14 @@ export default function AnalysisDetail({
                   {!hideImage && result.uploaded_image_preview && (
                     <GlassCard className="p-4 border border-white/50 bg-white/60">
                       <div className="space-y-3">
-                        <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Retinografia analizada</p>
+                        <div className="flex items-center justify-between">
+                          <p className="text-[10px] font-bold text-ocular-text-muted uppercase tracking-wider">Retinografia analizada</p>
+                        </div>
                         <div className="rounded-2xl overflow-hidden bg-black/10 border border-white/50 flex items-center justify-center min-h-[220px]">
-                          <img
+                          <ZoomableImage
                             src={result.uploaded_image_preview}
                             alt="Retinografia analizada"
-                            className="max-h-[320px] object-contain"
+                            className="max-h-[320px]"
                           />
                         </div>
                       </div>
@@ -391,10 +520,10 @@ export default function AnalysisDetail({
                               <p className="text-lg font-bold text-ocular-text-main">{item.diagnosis}</p>
                             </div>
                             <span className={cn(
-                              'px-3 py-1 rounded-full text-[10px] font-bold uppercase',
-                              item.predicted_class > 0 ? 'bg-indigo-100 text-indigo-600' : 'bg-green-100 text-green-600'
+                              'px-3 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-sm',
+                              getGradeStyle(item.predicted_class)
                             )}>
-                              G{item.predicted_class}
+                              {gradeToLabel(item.predicted_class)}
                             </span>
                           </div>
 
@@ -420,7 +549,7 @@ export default function AnalysisDetail({
                                   <div
                                     className={cn(
                                       'h-full rounded-full transition-all duration-500',
-                                      probability.label === `G${item.predicted_class}` ? 'bg-primary' : 'bg-indigo-300'
+                                      probability.label === gradeToLabel(item.predicted_class) ? 'bg-primary' : 'bg-indigo-300'
                                     )}
                                     style={{ width: `${probability.value}%` }}
                                   />
@@ -434,15 +563,16 @@ export default function AnalysisDetail({
                   </div>
                 </div>
               ) : (
-                <div className="flex-1 relative bg-black/60 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[500px]">
+                <div className={cn(
+                  "flex-1 relative bg-black/60 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[500px]",
+                  hideImage && "print:hidden"
+                )}>
                   {!hideImage && result.uploaded_image_preview ? (
-                    <div className="relative group">
-                      <img
-                        src={result.uploaded_image_preview}
-                        alt="Retinografia analizada"
-                        className="max-h-[70vh] object-contain transition-transform duration-700 group-hover:scale-105"
-                      />
-                    </div>
+                    <ZoomableImage
+                      src={result.uploaded_image_preview}
+                      alt="Retinografia analizada"
+                      className="max-h-[70vh] w-full"
+                    />
                   ) : (
                     <div className="text-center space-y-4">
                       <div className="w-20 h-20 bg-white/10 rounded-3xl mx-auto flex items-center justify-center animate-pulse">
@@ -462,6 +592,7 @@ export default function AnalysisDetail({
                 </p>
               </div>
             </GlassCard>
+          </div>
           </div>
         </motion.div>
       </AnimatePresence>

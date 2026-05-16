@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/ui/Sidebar';
 import Landing from './pages/Landing';
@@ -22,14 +22,32 @@ function AppContent() {
     // Nueva pestaña / sesión: mostrar landing aunque haya token guardado
     return true;
   });
-  const [showDemo, setShowDemo] = useState(() => sessionStorage.getItem('screen') === 'demo');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [view, setView] = useState('main'); // main | detail
-  const [resultBatch, setResultBatch] = useState([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [showDemo, setShowDemo] = useState(() => sessionStorage.getItem('screen') === 'demo');
+  const [activeTab, setActiveTab] = useState(() => {
+    return sessionStorage.getItem('activeTab') || 'dashboard';
+  });
+  const [resultBatch, setResultBatch] = useState(() => {
+    const saved = sessionStorage.getItem('resultBatch');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    const saved = sessionStorage.getItem('currentIndex');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+  const [view, setView] = useState(() => {
+    return sessionStorage.getItem('view') || 'main'; // main | detail
+  });
   const analysisState = useAnalysis();
   const { logout } = useAuth();
+
+  // Persistencia de estado
+  useEffect(() => {
+    sessionStorage.setItem('resultBatch', JSON.stringify(resultBatch));
+    sessionStorage.setItem('currentIndex', currentIndex.toString());
+    sessionStorage.setItem('view', view);
+    sessionStorage.setItem('activeTab', activeTab);
+  }, [resultBatch, currentIndex, view, activeTab]);
 
   // Validación inmediata de credenciales al entrar al dashboard
   useEffect(() => {

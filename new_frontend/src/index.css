@@ -53,3 +53,58 @@
   0% { transform: translate(0, 0) scale(1); }
   100% { transform: translate(-5%, -5%) scale(1.1); }
 }
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+@media print {
+  @page {
+    margin: 5mm;
+    size: auto;
+  }
+
+  /* Ocultar elementos de navegación y UI que no van en el reporte */
+  aside, 
+  nav, 
+  button, 
+  .no-print,
+  .animate-pulse-slow {
+    display: none !important;
+  }
+
+  /* Permitir que el contenido fluya en múltiples páginas si es necesario, 
+     sin colapsar los contenedores flex */
+  body, main, .flex.h-screen, .overflow-y-auto, .overflow-hidden {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: auto !important;
+  }
+
+  /* Asegurar que los colores vibrantes y el diseño glass se impriman tal cual */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  .max-w-7xl {
+    padding: 0 !important;
+    margin: 0 auto !important;
+  }
+
+  /* Evitar cortes feos en las tarjetas */
+  .GlassCard, .glass-panel {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Ajuste de escala global para forzar 1 hoja en navegadores modernos */
+  main {
+    zoom: 0.8; 
+  }
+}

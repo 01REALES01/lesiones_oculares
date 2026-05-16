@@ -513,9 +513,11 @@ function HistoryCard({ item, onClick, onDelete, index }) {
                 </p>
              </div>
              <div className="bg-white/40 p-2 rounded-xl border border-white/60">
-               <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Grado Principal</p>
-                <p className="text-xs font-extrabold text-ocular-text-main">
-                  {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null ? `G${item.summary.primary_grade}` : 'N/A'}
+               <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Diagnóstico</p>
+                <p className="text-[10px] font-extrabold text-ocular-text-main truncate uppercase">
+                  {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null 
+                    ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][item.summary.primary_grade] || 'N/A'
+                    : 'N/A'}
                 </p>
              </div>
           </div>

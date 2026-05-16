@@ -10,7 +10,7 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
     <motion.aside
       initial={false}
       animate={{ width: isOpen ? 260 : 80 }}
-      className="h-screen bg-white/50 backdrop-blur-2xl border-r border-white/20 flex flex-col z-50 relative transition-all duration-300"
+      className="h-screen bg-white/50 backdrop-blur-2xl border-r border-white/20 flex flex-col z-50 relative transition-all duration-300 no-print"
     >
       {/* Toggle Button */}
       <button

@@ -588,6 +588,153 @@ async def export_batch_to_excel(batch_id: str):
     )
 
 
+@app.get("/export-pdf/{inference_id}")
+async def export_pdf(inference_id: str, current_user: User = Depends(get_current_user)):
+    from fpdf import FPDF
+    import base64
+    from io import BytesIO
+
+    record = get_inference(inference_id)
+    if not record:
+        raise HTTPException(status_code=404, detail="Inference not found")
+
+    result = record.get("result", {})
+    summary = result.get("comparison_summary", {})
+    primary = result.get("primary_result", {})
+    timestamp = record.get("timestamp")
+    
+    class PDF(FPDF):
+        def header(self):
+            self.set_fill_color(0, 102, 204)
+            self.rect(0, 0, 210, 40, 'F')
+            self.set_font('Arial', 'B', 24)
+            self.set_text_color(255, 255, 255)
+            self.cell(0, 20, 'OCULAR-AI REPORT', 0, 1, 'C')
+            self.set_font('Arial', '', 10)
+            self.cell(0, 0, 'Plataforma de Analisis de Retinografias', 0, 1, 'C')
+            self.ln(15)
+
+        def footer(self):
+            self.set_y(-20)
+            self.set_font('Arial', 'I', 8)
+            self.set_text_color(128, 128, 128)
+            self.cell(0, 10, f'Pagina {self.page_no()} | OcularAI Research Group - Report ID: {inference_id}', 0, 0, 'C')
+
+    pdf = PDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    
+    # Seccion 1: Info General
+    pdf.set_y(50)
+    pdf.set_font('Arial', 'B', 14)
+    pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 10, 'RESUMEN DEL ANALISIS', 0, 1, 'L')
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(5)
+
+    pdf.set_font('Arial', '', 10)
+    pdf.set_text_color(0, 0, 0)
+    pdf.cell(40, 7, 'Archivo:', 0, 0)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(0, 7, result.get("filename", "N/A"), 0, 1)
+    
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(40, 7, 'Fecha:', 0, 0)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(0, 7, timestamp or "N/A", 0, 1)
+
+    pdf.set_font('Arial', '', 10)
+    pdf.cell(40, 7, 'ID Reporte:', 0, 0)
+    pdf.set_font('Arial', 'B', 10)
+    pdf.cell(0, 7, inference_id, 0, 1)
+    pdf.ln(5)
+
+    # Seccion 2: Veredicto Clinico
+    pdf.set_font('Arial', 'B', 14)
+    pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 10, 'VEREDICTO CLINICO', 0, 1, 'L')
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(5)
+
+    risk_level = summary.get("risk_level") or result.get("risk_level", "low")
+    risk_text = "ALTO" if risk_level == "high" else ("MEDIO" if risk_level == "medium" else "BAJO")
+    
+    pdf.set_font('Arial', 'B', 12)
+    pdf.set_fill_color(240, 248, 255)
+    pdf.cell(0, 15, f' RIESGO ESTIMADO: {risk_text}', 1, 1, 'L', fill=True)
+    pdf.ln(5)
+
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(0, 7, 'Diagnostico sugerido:', 0, 1)
+    pdf.set_font('Arial', '', 11)
+    pdf.multi_cell(0, 7, summary.get("headline") or primary.get("diagnosis") or "No se detecto patologia significativa.")
+    pdf.ln(5)
+
+    pdf.set_font('Arial', 'B', 11)
+    pdf.cell(0, 7, 'Sugerencia medica:', 0, 1)
+    pdf.set_font('Arial', 'I', 11)
+    pdf.multi_cell(0, 7, f'"{summary.get("recommendation_short") or primary.get("recommendation_short") or "Se recomienda control periodico."}"')
+    pdf.ln(10)
+
+    # Seccion 3: Imagen (si existe)
+    img_data = result.get("uploaded_image_preview")
+    if img_data and "," in img_data:
+        try:
+            header, encoded = img_data.split(",", 1)
+            img_bytes = base64.b64decode(encoded)
+            img_stream = BytesIO(img_bytes)
+            
+            pdf.set_font('Arial', 'B', 14)
+            pdf.set_text_color(0, 51, 102)
+            pdf.cell(0, 10, 'RETINOGRAFIA ANALIZADA', 0, 1, 'L')
+            pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+            pdf.ln(5)
+            
+            # Guardar temporalmente para ReportLab o usar BytesIO con FPDF2
+            pdf.image(img_stream, x=45, w=120)
+            pdf.ln(5)
+        except Exception as e:
+            pdf.cell(0, 10, f'No se pudo cargar la imagen: {str(e)}', 0, 1)
+
+    # Seccion 4: Modelos
+    pdf.add_page()
+    pdf.set_font('Arial', 'B', 14)
+    pdf.set_text_color(0, 51, 102)
+    pdf.cell(0, 10, 'DETALLE POR MODELO IA', 0, 1, 'L')
+    pdf.line(10, pdf.get_y(), 200, pdf.get_y())
+    pdf.ln(5)
+
+    comparisons = result.get("model_comparisons", [])
+    if not comparisons:
+        # Single result
+        comparisons = [{
+            "model_name": primary.get("model_used", "Modelo IA"),
+            "diagnosis": primary.get("diagnosis", "N/A"),
+            "confidence_percent": primary.get("confidence_percent", 0),
+            "inference_time_ms": primary.get("inference_time_ms", 0)
+        }]
+
+    for comp in comparisons:
+        pdf.set_font('Arial', 'B', 11)
+        pdf.set_fill_color(245, 245, 245)
+        pdf.cell(0, 8, f' {comp.get("model_name")}', 0, 1, 'L', fill=True)
+        pdf.set_font('Arial', '', 10)
+        pdf.cell(40, 7, 'Diagnostico:', 0, 0)
+        pdf.cell(0, 7, comp.get("diagnosis", "N/A"), 0, 1)
+        pdf.cell(40, 7, 'Confianza:', 0, 0)
+        pdf.cell(0, 7, f'{float(comp.get("confidence_percent", 0)):.1f}%', 0, 1)
+        pdf.cell(40, 7, 'Latencia:', 0, 0)
+        pdf.cell(0, 7, f'{float(comp.get("inference_time_ms", 0)):.2f} ms', 0, 1)
+        pdf.ln(5)
+
+    pdf_output = pdf.output(dest='S')
+    return StreamingResponse(
+        BytesIO(pdf_output),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename=reporte_{inference_id}.pdf"}
+    )
+
+
 @app.get("/inferences/{inference_id}")
 async def get_inference_by_id(inference_id: str):
     """Obtiene el registro completo de una inferencia por ID (trazabilidad)."""
