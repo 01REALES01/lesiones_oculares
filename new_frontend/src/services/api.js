@@ -39,6 +39,7 @@ api.interceptors.response.use(
     if (error.response && error.response.status === 401 && !error.config.url.includes('/token')) {
       // Token expirado o inválido: Limpiar y redirigir
       localStorage.removeItem('token');
+      sessionStorage.setItem('session_expired', 'true');
       window.location.reload(); // Esto forzará al App.jsx a mostrar el Login
     }
     return Promise.reject(error);

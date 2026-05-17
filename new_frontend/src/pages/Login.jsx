@@ -10,6 +10,14 @@ export default function Login({ onGoLanding }) {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [expiredNotice, setExpiredNotice] = useState(() => {
+    const expired = sessionStorage.getItem('session_expired');
+    if (expired === 'true') {
+      sessionStorage.removeItem('session_expired');
+      return 'Su sesión ha expirado por inactividad o credenciales inválidas. Por favor, inicie sesión de nuevo.';
+    }
+    return null;
+  });
   
   const { login } = useAuth();
 
@@ -46,6 +54,30 @@ export default function Login({ onGoLanding }) {
           <h1 className="text-3xl font-extrabold text-ocular-text-main tracking-tight">OcularAI</h1>
           <p className="text-ocular-text-muted mt-2">Plataforma de Análisis de Retinografías</p>
         </div>
+
+        <AnimatePresence>
+          {expiredNotice && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, scale: 0.95 }}
+              animate={{ opacity: 1, height: 'auto', scale: 1 }}
+              exit={{ opacity: 0, height: 0, scale: 0.95 }}
+              className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 text-amber-700 rounded-2xl text-sm font-semibold mb-6"
+            >
+              <AlertCircle className="shrink-0 mt-0.5 text-amber-600" size={18} />
+              <div className="flex-1">
+                <p className="font-bold text-amber-800">Sesión Expirada</p>
+                <p className="text-xs text-amber-700/90 mt-0.5">{expiredNotice}</p>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setExpiredNotice(null)} 
+                className="text-amber-500 hover:text-amber-700 text-xs font-bold uppercase shrink-0"
+              >
+                Cerrar
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">

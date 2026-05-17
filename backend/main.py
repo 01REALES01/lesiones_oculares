@@ -430,7 +430,7 @@ async def health():
 
 
 @app.get("/stats")
-async def stats():
+async def stats(current_user: User = Depends(get_current_user)):
     return get_global_stats()
 
 
@@ -438,6 +438,7 @@ async def stats():
 async def history(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user),
 ):
     """
     Historial básico de inferencias (trazabilidad).
@@ -477,7 +478,7 @@ async def delete_entire_batch(batch_id: str, current_user: User = Depends(get_cu
 
 
 @app.get("/batches/{batch_id}")
-async def get_batch_by_id(batch_id: str):
+async def get_batch_by_id(batch_id: str, current_user: User = Depends(get_current_user)):
     """Obtiene todas las inferencias correspondientes a un mismo lote."""
     records = get_batch(batch_id)
     if not records:
@@ -486,7 +487,7 @@ async def get_batch_by_id(batch_id: str):
 
 
 @app.get("/export/batch/{batch_id}/excel")
-async def export_batch_to_excel(batch_id: str):
+async def export_batch_to_excel(batch_id: str, current_user: User = Depends(get_current_user)):
     """Exporta los datos de un lote a un archivo Excel."""
     records = get_batch(batch_id)
     if not records:
@@ -736,7 +737,7 @@ async def export_pdf(inference_id: str, current_user: User = Depends(get_current
 
 
 @app.get("/inferences/{inference_id}")
-async def get_inference_by_id(inference_id: str):
+async def get_inference_by_id(inference_id: str, current_user: User = Depends(get_current_user)):
     """Obtiene el registro completo de una inferencia por ID (trazabilidad)."""
     record = get_inference(inference_id)
     if not record:
