@@ -1,13 +1,36 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
-import { analysisService } from '../services/api';
+import api, { analysisService } from '../services/api';
 
 const probabilityLabels = ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'];
+
+function getImageUrl(result) {
+  if (!result) return null;
+  if (result.uploaded_image_preview) return result.uploaded_image_preview;
+  
+  // Si no hay preview en base64, intentar construir la URL estática de la imagen
+  const filename = result.filename || result.summary?.filename;
+  if (!filename) return null;
+  
+  // Obtener URL base de la API
+  let baseUrl = 'http://127.0.0.1:8000';
+  try {
+    const apiBase = api?.defaults?.baseURL;
+    if (apiBase) {
+      // Si termina en /api, el mount está en el host base
+      baseUrl = apiBase.endsWith('/api') ? apiBase.substring(0, apiBase.length - 4) : apiBase;
+    }
+  } catch (e) {
+    console.error("Error getting baseURL:", e);
+  }
+  
+  return `${baseUrl}/images/${filename}`;
+}
 
 function normalizeProbability(value) {
   const parsed = Number(value);
@@ -489,7 +512,7 @@ export default function AnalysisDetail({
 
               {hasComparison ? (
                 <div className="p-6 space-y-6">
-                  {!hideImage && result.uploaded_image_preview && (
+                  {!hideImage && getImageUrl(result) && (
                     <GlassCard className="p-4 border border-white/50 bg-white/60">
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
@@ -497,7 +520,7 @@ export default function AnalysisDetail({
                         </div>
                         <div className="rounded-2xl overflow-hidden bg-black/10 border border-white/50 flex items-center justify-center min-h-[220px]">
                           <ZoomableImage
-                            src={result.uploaded_image_preview}
+                            src={getImageUrl(result)}
                             alt="Retinografia analizada"
                             className="max-h-[320px]"
                           />
@@ -567,9 +590,9 @@ export default function AnalysisDetail({
                   "flex-1 relative bg-black/60 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[500px]",
                   hideImage && "print:hidden"
                 )}>
-                  {!hideImage && result.uploaded_image_preview ? (
+                  {!hideImage && getImageUrl(result) ? (
                     <ZoomableImage
-                      src={result.uploaded_image_preview}
+                      src={getImageUrl(result)}
                       alt="Retinografia analizada"
                       className="max-h-[70vh] w-full"
                     />

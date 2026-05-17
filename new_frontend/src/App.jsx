@@ -43,10 +43,27 @@ function AppContent() {
 
   // Persistencia de estado
   useEffect(() => {
-    sessionStorage.setItem('resultBatch', JSON.stringify(resultBatch));
-    sessionStorage.setItem('currentIndex', currentIndex.toString());
-    sessionStorage.setItem('view', view);
-    sessionStorage.setItem('activeTab', activeTab);
+    try {
+      sessionStorage.setItem('resultBatch', JSON.stringify(resultBatch));
+    } catch (e) {
+      console.warn("sessionStorage quota exceeded. Storing resultBatch without base64 image previews.", e);
+      try {
+        const cleanedBatch = resultBatch.map(item => ({
+          ...item,
+          uploaded_image_preview: item.uploaded_image_preview?.startsWith('data:') ? null : item.uploaded_image_preview
+        }));
+        sessionStorage.setItem('resultBatch', JSON.stringify(cleanedBatch));
+      } catch (err2) {
+        console.error("Failed to store even cleaned resultBatch in sessionStorage:", err2);
+      }
+    }
+    try {
+      sessionStorage.setItem('currentIndex', currentIndex.toString());
+      sessionStorage.setItem('view', view);
+      sessionStorage.setItem('activeTab', activeTab);
+    } catch (err3) {
+      console.error("Failed to store other state in sessionStorage:", err3);
+    }
   }, [resultBatch, currentIndex, view, activeTab]);
 
   // Validación inmediata de credenciales al entrar al dashboard
