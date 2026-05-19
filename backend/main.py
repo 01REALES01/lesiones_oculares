@@ -440,11 +440,13 @@ async def history(
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Historial básico de inferencias (trazabilidad).
-    Devuelve lista de análisis recientes con ID, timestamp, modelos usados y resumen.
-    """
-    return {"inferences": list_inferences(limit=limit, offset=offset)}
+    return {
+        "inferences": list_inferences(
+            limit=limit,
+            offset=offset,
+            user_email=current_user.email,
+        )
+    }
 
 
 @app.delete("/history")
@@ -926,7 +928,7 @@ async def analyze_rd_comparison(
     Analiza una o más retinografías comparando 1, 2 o 3 modelos de retinopatía diabética.
     """
     try:
-        return await _analyze_rd_comparison_impl(request, files, models)
+        return await _analyze_rd_comparison_impl(request, files, models, current_user)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -941,6 +943,7 @@ async def _analyze_rd_comparison_impl(
     request: Request,
     files: List[UploadFile],
     models: str,
+    current_user: User,
 ):
     selected_models = [model.strip().lower() for model in models.split(",") if model.strip()]
     if not selected_models:
@@ -1058,6 +1061,8 @@ async def _analyze_rd_comparison_impl(
                 "result": result,
                 "image_size": (img.shape[1], img.shape[0]),
                 "batch_id": batch_id,
+                "user_email": current_user.email,
+                "roble_user_id": current_user.roble_user_id,
             })
 
         except Exception as e:
@@ -1306,6 +1311,8 @@ async def analyze_retina(
                 result=result,
                 image_size=(img.shape[1], img.shape[0]),
                 batch_id=batch_id,
+                user_email=current_user.email,
+                roble_user_id=current_user.roble_user_id,
             )
 
             result["inference_id"] = inference_id

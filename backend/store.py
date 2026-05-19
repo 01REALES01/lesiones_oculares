@@ -94,6 +94,8 @@ def save_inference(
     result: Dict[str, Any],
     image_size: Optional[tuple] = None,
     batch_id: Optional[str] = None,
+    user_email: Optional[str] = None,
+    roble_user_id: Optional[str] = None,
 ) -> str:
     """
     Guarda un registro de inferencia y devuelve su ID.
@@ -108,6 +110,8 @@ def save_inference(
         "result": result,
         "image_size": list(image_size) if image_size else None,
         "batch_id": batch_id,
+        "user_email": user_email,
+        "roble_user_id": roble_user_id,
     }
     _inference_store[inference_id] = record
     _inference_ids_order.append(inference_id)
@@ -124,7 +128,7 @@ def get_inference(inference_id: str) -> Optional[Dict[str, Any]]:
     return _inference_store.get(inference_id)
 
 
-def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
+def list_inferences(limit: int = 50,offset: int = 0,user_email: Optional[str] = None,) -> List[Dict[str, Any]]:
     """
     Lista las últimas inferencias agrupadas por lote.
     """
@@ -135,7 +139,10 @@ def list_inferences(limit: int = 50, offset: int = 0) -> List[Dict[str, Any]]:
         r = _inference_store.get(iid)
         if not r:
             continue
-            
+        
+        if user_email and r.get("user_email") != user_email:
+            continue
+        
         batch_id = r.get("batch_id")
         if batch_id:
             if batch_id not in seen_batches:

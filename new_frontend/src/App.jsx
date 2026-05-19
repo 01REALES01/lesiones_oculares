@@ -39,7 +39,17 @@ function AppContent() {
     return sessionStorage.getItem('view') || 'main'; // main | detail
   });
   const analysisState = useAnalysis();
-  const { logout } = useAuth();
+  useEffect(() => {
+    if (!token) {
+      analysisState.setResults(null);
+      analysisState.clearFiles();
+      setResultBatch([]);
+      setCurrentIndex(0);
+      setView('main');
+      setActiveTab('dashboard');
+    }
+  }, [token]);
+    const { logout } = useAuth();
 
   // Persistencia de estado
   useEffect(() => {

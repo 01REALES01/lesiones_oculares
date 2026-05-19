@@ -29,6 +29,9 @@ class Token(BaseModel):
 
 class User(BaseModel):
     username: str
+    email: str | None = None
+    role: str = "user"
+    roble_user_id: str | None = None
 
 # ---- Hashing (SHA-256 + salt) ----
 _SALT = "retina_ai_salt_2024"
@@ -89,9 +92,16 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
         data = response.json()
 
-        email = data.get("email") or data.get("user", {}).get("email") or "usuario_roble"
+        email = data.get("email") or data.get("user", {}).get("email")
+        role = data.get("role") or data.get("user", {}).get("role", "user")
+        roble_user_id = data.get("sub") or data.get("id") or data.get("user", {}).get("id")
 
-        return User(username=email)
+        return User(
+            username=email or "usuario_roble",
+            email=email,
+            role=role,
+            roble_user_id=roble_user_id,
+        )
 
     except httpx.RequestError:
         raise HTTPException(
