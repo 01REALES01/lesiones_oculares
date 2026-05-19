@@ -22,6 +22,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 
 from backend.roble_db import roble_insert
+from backend.roble_db import ensure_user_exists
 
 try:
     import anthropic as anthropic_sdk
@@ -170,7 +171,18 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             )
 
         data = response.json()
+        
+        access_token = data["accessToken"]
 
+        current_user = User(
+            username=data["user"]["email"],
+            email=data["user"]["email"],
+            role=data["user"]["role"],
+            roble_user_id=data["user"]["id"],
+        )
+
+        #await ensure_user_exists(access_token, current_user)
+        
         return {
             "access_token": data["accessToken"],
             "refresh_token": data["refreshToken"],
