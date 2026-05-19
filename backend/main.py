@@ -21,6 +21,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 
+from backend.roble_db import roble_insert
+
 try:
     import anthropic as anthropic_sdk
 except ImportError:
@@ -1436,3 +1438,30 @@ async def logout(token: str = Depends(oauth2_scheme)):
             status_code=503,
             detail="Error conectando con ROBLE"
         )
+        
+@app.post("/test-roble-db")
+async def test_roble_db(
+    token: str = Depends(oauth2_scheme),
+    current_user: User = Depends(get_current_user),
+):
+    record = {
+        "roble_user_id": current_user.roble_user_id,
+        "email": current_user.email,
+        "nombre": current_user.username,
+        "rol": current_user.role,
+        "activo_app": True,
+        "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+        "ultimo_login": datetime.now(timezone.utc).isoformat(),
+    }
+
+    result = await roble_insert(
+        token=token,
+        table_name="usuarios_app",
+        records=[record],
+    )
+
+    return {
+        "ok": True,
+        "insert_result": result,
+        "record": record,
+    }
