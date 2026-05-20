@@ -34,7 +34,7 @@ export default function HistoryPage({ onViewDetail }) {
     if (!search.trim()) return [];
     const query = search.toLowerCase();
     const list = [];
-    
+
     for (const item of history) {
       // 1. Coincidencia por ID de lote/análisis
       const bId = item.batch_id || "";
@@ -48,7 +48,7 @@ export default function HistoryPage({ onViewDetail }) {
           targetIndex: 0
         });
       }
-      
+
       // 2. Coincidencia por nombre de archivo individual
       if (!item.is_batch && item.summary?.filename && item.summary.filename.toLowerCase().includes(query)) {
         if (!list.some(s => s.item.inference_id === item.inference_id)) {
@@ -61,7 +61,7 @@ export default function HistoryPage({ onViewDetail }) {
           });
         }
       }
-      
+
       // 3. Coincidencia por nombre de archivo dentro de un lote
       if (item.is_batch && item.summary?.batch_filenames) {
         item.summary.batch_filenames.forEach((fn, idx) => {
@@ -77,7 +77,7 @@ export default function HistoryPage({ onViewDetail }) {
         });
       }
     }
-    
+
     // Evitar duplicados exactos en sugerencias
     const uniqueList = [];
     const seenKeys = new Set();
@@ -88,7 +88,7 @@ export default function HistoryPage({ onViewDetail }) {
         uniqueList.push(sug);
       }
     }
-    
+
     return uniqueList.slice(0, 6);
   };
 
@@ -118,9 +118,9 @@ export default function HistoryPage({ onViewDetail }) {
   };
 
   const filteredHistory = history.filter(item => {
-    const matchesSearch = (item.batch_id || "").toLowerCase().includes(search.toLowerCase()) || 
-                         (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase()) ||
-                         (item.summary?.batch_filenames || []).some(fn => fn.toLowerCase().includes(search.toLowerCase()));
+    const matchesSearch = (item.batch_id || "").toLowerCase().includes(search.toLowerCase()) ||
+      (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase()) ||
+      (item.summary?.batch_filenames || []).some(fn => fn.toLowerCase().includes(search.toLowerCase()));
 
     const itemLevel = item.summary?.risk_level || 'low';
     const itemMaxLevel = item.summary?.risk_max_level || itemLevel;
@@ -171,12 +171,12 @@ export default function HistoryPage({ onViewDetail }) {
         if (forceIndex !== null) {
           targetIndex = forceIndex;
         } else if (search) {
-          const foundIndex = mappedBatch.findIndex(b => 
+          const foundIndex = mappedBatch.findIndex(b =>
             (b.filename || b.summary?.filename || "").toLowerCase().includes(search.toLowerCase())
           );
           if (foundIndex !== -1) targetIndex = foundIndex;
         }
-        
+
         onViewDetail(mappedBatch, targetIndex);
       } else {
         const fullRecord = await analysisService.getInference(item.inference_id);
@@ -235,14 +235,14 @@ export default function HistoryPage({ onViewDetail }) {
     if (!itemToDelete) return;
     const item = itemToDelete;
     const isBatch = item.is_batch && item.batch_id;
-    
+
     // Borrado optimista
     const previousHistory = [...history];
     setHistory(prev => prev.filter(h => {
       if (isBatch) return h.batch_id !== item.batch_id;
       return h.inference_id !== item.inference_id;
     }));
-    
+
     setDeleteModalOpen(false);
     setItemToDelete(null);
 
@@ -276,11 +276,10 @@ export default function HistoryPage({ onViewDetail }) {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`fixed bottom-5 right-5 z-[95] max-w-md rounded-2xl border px-4 py-3 text-sm font-semibold shadow-xl ${
-            historyNotice.type === 'success'
+          className={`fixed bottom-5 right-5 z-[95] max-w-md rounded-2xl border px-4 py-3 text-sm font-semibold shadow-xl ${historyNotice.type === 'success'
               ? 'border-ocular-success/30 bg-ocular-success/10 text-ocular-success'
               : 'border-ocular-error/30 bg-ocular-error/10 text-ocular-error'
-          }`}
+            }`}
         >
           <div className="flex items-center justify-between gap-3">
             <span>{historyNotice.message}</span>
@@ -296,271 +295,271 @@ export default function HistoryPage({ onViewDetail }) {
       )}
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
 
-      {/* Header & Controls */}
-      {/* Header & Controls */}
-      <div className="space-y-6 border-b border-slate-200/50 pb-6 mb-2">
-        <div>
-          <h1 className="text-3xl font-bold text-ocular-text-main">Historial de Evaluaciones</h1>
-          <p className="text-ocular-text-muted mt-1">Gestión y consulta de todos los análisis realizados por la plataforma.</p>
-        </div>
-        
-        <div className="flex flex-col gap-4 w-full">
-          {/* Fila superior: Buscador escrito */}
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ocular-text-muted w-4 h-4" />
-            <input 
-              type="text" 
-              placeholder="Buscar por ID o archivo..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onFocus={() => setShowSuggestions(true)}
-              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-              className="bg-white/50 border border-slate-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-primary transition-all w-full shadow-md font-medium text-ocular-text-main"
-            />
-            <AnimatePresence>
-              {showSuggestions && search.trim() && (
-                <motion.div
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 5 }}
-                  className="absolute left-0 right-0 mt-2 z-[99] rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden py-1.5 max-h-80 overflow-y-auto w-full"
-                >
-                  {getSuggestions().length > 0 ? (
-                    <>
-                      <div className="px-3 py-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
-                        Sugerencias de búsqueda
-                      </div>
-                      {getSuggestions().map((sug, idx) => (
-                        <button
-                          key={idx}
-                          type="button"
-                          onMouseDown={() => {
-                            openHistoryDetail(sug.item, sug.targetIndex);
-                            setShowSuggestions(false);
-                          }}
-                          className="w-full px-4 py-2.5 hover:bg-primary/5 flex items-center justify-between text-left transition-all border-b border-slate-100/50 last:border-none group"
-                        >
-                          <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="p-1.5 bg-sky-50 text-sky-600 rounded-lg shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                              <FileText size={14} />
-                            </div>
-                            <div className="overflow-hidden">
-                              <p className="text-xs font-bold text-slate-800 truncate group-hover:text-primary transition-colors">
-                                {sug.title}
-                              </p>
-                              <p className="text-[10px] text-slate-400 font-semibold truncate mt-0.5">
-                                {sug.subtitle}
-                              </p>
-                            </div>
-                          </div>
-                          <ChevronRight size={14} className="text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
-                        </button>
-                      ))}
-                      <div className="px-3 py-1.5 text-[9px] font-bold text-primary uppercase tracking-widest text-center mt-1 border-t border-slate-100/80 pt-2">
-                        Presiona Enter para filtrar la lista
-                      </div>
-                    </>
-                  ) : (
-                    <div className="px-4 py-6 text-center text-xs text-slate-400 font-medium">
-                      Sin sugerencias para "{search}"
-                    </div>
-                  )}
-                </motion.div>
-              )}
-            </AnimatePresence>
+        {/* Header & Controls */}
+        {/* Header & Controls */}
+        <div className="space-y-6 border-b border-slate-200/50 pb-6 mb-2">
+          <div>
+            <h1 className="text-3xl font-bold text-ocular-text-main">Historial de Evaluaciones</h1>
+            <p className="text-ocular-text-muted mt-1">Gestión y consulta de todos los análisis realizados por la plataforma.</p>
           </div>
 
-          {/* Fila inferior de filtros */}
-          <div className="flex flex-wrap items-center justify-between gap-4 w-full">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex bg-white/50 p-1 rounded-xl border border-slate-200/80 shadow-sm shrink-0">
-                {['all', 'high', 'medium', 'low', 'mixed'].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => setRiskFilter(f)}
-                    className={cn(
-                      "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap",
-                      riskFilter === f ? "bg-primary text-white shadow-sm" : "text-ocular-text-muted hover:text-primary"
+          <div className="flex flex-col gap-4 w-full">
+            {/* Fila superior: Buscador escrito */}
+            <div className="relative w-full">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-ocular-text-muted w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Buscar por ID o archivo..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setShowSuggestions(true)}
+                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                className="bg-white/50 border border-slate-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-primary transition-all w-full shadow-md font-medium text-ocular-text-main"
+              />
+              <AnimatePresence>
+                {showSuggestions && search.trim() && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 5 }}
+                    className="absolute left-0 right-0 mt-2 z-[99] rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden py-1.5 max-h-80 overflow-y-auto w-full"
+                  >
+                    {getSuggestions().length > 0 ? (
+                      <>
+                        <div className="px-3 py-1 text-[9px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-100 mb-1">
+                          Sugerencias de búsqueda
+                        </div>
+                        {getSuggestions().map((sug, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onMouseDown={() => {
+                              openHistoryDetail(sug.item, sug.targetIndex);
+                              setShowSuggestions(false);
+                            }}
+                            className="w-full px-4 py-2.5 hover:bg-primary/5 flex items-center justify-between text-left transition-all border-b border-slate-100/50 last:border-none group"
+                          >
+                            <div className="flex items-center gap-3 overflow-hidden">
+                              <div className="p-1.5 bg-sky-50 text-sky-600 rounded-lg shrink-0 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                <FileText size={14} />
+                              </div>
+                              <div className="overflow-hidden">
+                                <p className="text-xs font-bold text-slate-800 truncate group-hover:text-primary transition-colors">
+                                  {sug.title}
+                                </p>
+                                <p className="text-[10px] text-slate-400 font-semibold truncate mt-0.5">
+                                  {sug.subtitle}
+                                </p>
+                              </div>
+                            </div>
+                            <ChevronRight size={14} className="text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                          </button>
+                        ))}
+                        <div className="px-3 py-1.5 text-[9px] font-bold text-primary uppercase tracking-widest text-center mt-1 border-t border-slate-100/80 pt-2">
+                          Presiona Enter para filtrar la lista
+                        </div>
+                      </>
+                    ) : (
+                      <div className="px-4 py-6 text-center text-xs text-slate-400 font-medium">
+                        Sin sugerencias para "{search}"
+                      </div>
                     )}
-                  >
-                    {f === 'all' ? 'Todos' : f === 'high' ? 'Críticos' : f === 'medium' ? 'Medios' : f === 'low' ? 'Bajos' : 'Mixtos'}
-                  </button>
-                ))}
-              </div>
-
-              <div className="relative group shrink-0">
-                <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4 pointer-events-none group-focus-within:scale-110 transition-transform" />
-                <input 
-                  type="date" 
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="bg-white/70 border border-slate-200 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary transition-all w-48 font-bold text-ocular-text-main shadow-sm"
-                />
-                {dateFilter && (
-                  <button 
-                    onClick={(e) => { e.preventDefault(); setDateFilter(""); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-ocular-error uppercase hover:scale-105 transition-transform"
-                  >
-                    ×
-                  </button>
+                  </motion.div>
                 )}
-              </div>
+              </AnimatePresence>
             </div>
 
-            {hasHistoryToClear && (
-              <button
-                type="button"
-                onClick={() => setClearModalOpen(true)}
-                disabled={clearingHistory}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white/80 text-slate-600 font-bold text-xs uppercase tracking-wider hover:border-ocular-error/45 hover:text-ocular-error hover:bg-red-50/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
-              >
-                <Trash2 size={14} />
-                {clearingHistory ? 'Limpiando...' : 'Limpiar historial'}
-              </button>
-            )}
+            {/* Fila inferior de filtros */}
+            <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="flex bg-white/50 p-1 rounded-xl border border-slate-200/80 shadow-sm shrink-0">
+                  {['all', 'high', 'medium', 'low', 'mixed'].map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setRiskFilter(f)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase transition-all whitespace-nowrap",
+                        riskFilter === f ? "bg-primary text-white shadow-sm" : "text-ocular-text-muted hover:text-primary"
+                      )}
+                    >
+                      {f === 'all' ? 'Todos' : f === 'high' ? 'Críticos' : f === 'medium' ? 'Medios' : f === 'low' ? 'Bajos' : 'Mixtos'}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="relative group shrink-0">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-primary w-4 h-4 pointer-events-none group-focus-within:scale-110 transition-transform" />
+                  <input
+                    type="date"
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="bg-white/70 border border-slate-200 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary transition-all w-48 font-bold text-ocular-text-main shadow-sm"
+                  />
+                  {dateFilter && (
+                    <button
+                      onClick={(e) => { e.preventDefault(); setDateFilter(""); }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-ocular-error uppercase hover:scale-105 transition-transform"
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {hasHistoryToClear && (
+                <button
+                  type="button"
+                  onClick={() => setClearModalOpen(true)}
+                  disabled={clearingHistory}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white/80 text-slate-600 font-bold text-xs uppercase tracking-wider hover:border-ocular-error/45 hover:text-ocular-error hover:bg-red-50/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
+                >
+                  <Trash2 size={14} />
+                  {clearingHistory ? 'Limpiando...' : 'Limpiar historial'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* History Grid */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+            <p className="text-sm font-bold text-ocular-text-muted uppercase tracking-widest">Sincronizando con la Base de Datos...</p>
+          </div>
+        ) : paginatedHistory.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <AnimatePresence mode="popLayout">
+              {paginatedHistory.map((item, index) => (
+                <HistoryCard
+                  key={item.inference_id}
+                  item={item}
+                  index={index}
+                  onClick={() => openHistoryDetail(item)}
+                  onDelete={(e) => deleteItem(e, item)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <GlassCard className="py-20 text-center border border-slate-200 shadow-md shadow-slate-200/50">
+            <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
+            <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
+            <button onClick={() => { setSearch(""); setRiskFilter("all"); setDateFilter(""); }} className="mt-4 text-primary font-bold hover:underline">Limpiar búsqueda y filtros</button>
+          </GlassCard>
+        )}
+
+        {filteredHistory.length > 0 && totalPages > 1 && !loading && (
+          <div className="flex items-center justify-center gap-4 py-8">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="px-4 py-2 rounded-xl bg-white/40 text-ocular-text-main font-bold border border-white/60 hover:bg-white hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <span className="text-sm font-bold text-ocular-text-muted">
+              Página {page + 1} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!hasMore}
+              className="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
+
+        <AnimatePresence>
+          {clearModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                className="w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
+              >
+                <div className="w-20 h-20 bg-ocular-error/10 rounded-3xl flex items-center justify-center mx-auto text-ocular-error">
+                  <Trash2 size={40} />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-2xl font-black text-ocular-text-main tracking-tight">¿Limpiar Historial?</h4>
+                  <p className="text-sm text-ocular-text-muted font-medium">
+                    Esta acción eliminará todos los registros de forma permanente. No se puede deshacer.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setClearModalOpen(false)}
+                    className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmClearHistory}
+                    className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
+                  >
+                    Confirmar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {deleteModalOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 20, scale: 0.95 }}
+                className="w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
+              >
+                <div className="w-20 h-20 bg-ocular-error/10 rounded-3xl flex items-center justify-center mx-auto text-ocular-error">
+                  <AlertCircle className="w-10 h-10" />
+                </div>
+                <div className="space-y-2">
+                  <h4 className="text-2xl font-black text-ocular-text-main tracking-tight">¿Eliminar Análisis?</h4>
+                  <p className="text-sm text-ocular-text-muted font-medium">
+                    {itemToDelete?.is_batch
+                      ? `Estás por eliminar un lote de ${itemToDelete.batch_size} imágenes.`
+                      : `Se eliminará el análisis del archivo "${itemToDelete?.summary?.filename || 'Desconocido'}".`}
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setDeleteModalOpen(false); setItemToDelete(null); }}
+                    className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
+                  >
+                    No, volver
+                  </button>
+                  <button
+                    type="button"
+                    onClick={confirmDelete}
+                    className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
+                  >
+                    Sí, eliminar
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* History Grid */}
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-4">
-           <Loader2 className="w-10 h-10 text-primary animate-spin" />
-           <p className="text-sm font-bold text-ocular-text-muted uppercase tracking-widest">Sincronizando con la Base de Datos...</p>
-        </div>
-      ) : paginatedHistory.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          <AnimatePresence mode="popLayout">
-            {paginatedHistory.map((item, index) => (
-              <HistoryCard
-                key={item.inference_id}
-                item={item}
-                index={index}
-                onClick={() => openHistoryDetail(item)}
-                onDelete={(e) => deleteItem(e, item)}
-              />
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : (
-        <GlassCard className="py-20 text-center border border-slate-200 shadow-md shadow-slate-200/50">
-          <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
-          <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
-          <button onClick={() => { setSearch(""); setRiskFilter("all"); setDateFilter(""); }} className="mt-4 text-primary font-bold hover:underline">Limpiar búsqueda y filtros</button>
-        </GlassCard>
-      )}
-
-      {filteredHistory.length > 0 && totalPages > 1 && !loading && (
-        <div className="flex items-center justify-center gap-4 py-8">
-          <button
-            onClick={() => setPage(p => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="px-4 py-2 rounded-xl bg-white/40 text-ocular-text-main font-bold border border-white/60 hover:bg-white hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Anterior
-          </button>
-          <span className="text-sm font-bold text-ocular-text-muted">
-            Página {page + 1} de {totalPages}
-          </span>
-          <button
-            onClick={() => setPage(p => p + 1)}
-            disabled={!hasMore}
-            className="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            Siguiente
-          </button>
-        </div>
-      )}
-
-      <AnimatePresence>
-        {clearModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
-            >
-              <div className="w-20 h-20 bg-ocular-error/10 rounded-3xl flex items-center justify-center mx-auto text-ocular-error">
-                <Trash2 size={40} />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-2xl font-black text-ocular-text-main tracking-tight">¿Limpiar Historial?</h4>
-                <p className="text-sm text-ocular-text-muted font-medium">
-                  Esta acción eliminará todos los registros de forma permanente. No se puede deshacer.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setClearModalOpen(false)}
-                  className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmClearHistory}
-                  className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
-                >
-                  Confirmar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-
-        {deleteModalOpen && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ opacity: 0, y: 20, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 20, scale: 0.95 }}
-              className="w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
-            >
-              <div className="w-20 h-20 bg-ocular-error/10 rounded-3xl flex items-center justify-center mx-auto text-ocular-error">
-                <AlertCircle className="w-10 h-10" />
-              </div>
-              <div className="space-y-2">
-                <h4 className="text-2xl font-black text-ocular-text-main tracking-tight">¿Eliminar Análisis?</h4>
-                <p className="text-sm text-ocular-text-muted font-medium">
-                  {itemToDelete?.is_batch 
-                    ? `Estás por eliminar un lote de ${itemToDelete.batch_size} imágenes.` 
-                    : `Se eliminará el análisis del archivo "${itemToDelete?.summary?.filename || 'Desconocido'}".`}
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4 pt-2">
-                <button
-                  type="button"
-                  onClick={() => { setDeleteModalOpen(false); setItemToDelete(null); }}
-                  className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
-                >
-                  No, volver
-                </button>
-                <button
-                  type="button"
-                  onClick={confirmDelete}
-                  className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
-                >
-                  Sí, eliminar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
     </>
   );
 }
@@ -599,17 +598,17 @@ function HistoryCard({ item, onClick, onDelete, index }) {
       exit={{ opacity: 0, scale: 0.9 }}
       transition={{ delay: index * 0.05 }}
     >
-      <GlassCard 
+      <GlassCard
         className="group hover:border-primary/50 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-0 overflow-hidden h-full flex flex-col bg-gradient-to-br from-white via-white to-slate-50/70 border border-slate-200 shadow-md shadow-slate-200/80"
         onClick={onClick}
       >
         <div className="p-5 flex-1 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className={cn("px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]", getRiskBadgeStyle(riskLevel))}>
-                {riskText}
+            <div className={cn("px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]", getRiskBadgeStyle(riskLevel))}>
+              {riskText}
             </div>
-            <span className="text-xs text-slate-700 font-extrabold flex items-center gap-1">
-                <Calendar size={12} /> {new Date(item.timestamp).toLocaleDateString()}
+            <span className="text-xs text-slate-700 font-medium flex items-center gap-1">
+              <Calendar size={12} /> {new Date(item.timestamp).toLocaleDateString()}
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(e); }}
@@ -621,46 +620,42 @@ function HistoryCard({ item, onClick, onDelete, index }) {
           </div>
 
           <div className="space-y-1">
-             <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
-                <FileText size={16} className="text-primary" /> 
-                {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0,8)}` : `Archivo: ${item.summary?.filename || 'Sin nombre'}`}
-             </h3>
-             {item.is_batch && (
-               <p className="text-xs text-slate-700 font-extrabold truncate uppercase tracking-widest">
-                  Contiene <span className="text-primary">{item.batch_size} imágenes</span>
-               </p>
-             )}
-             <p className="text-xs text-ocular-text-main font-semibold mt-1">{item.summary?.headline || 'Comparación de modelos RD'}</p>
-             {item.summary?.is_mixed_risk && (
-               <p className="text-xs text-slate-700 font-extrabold uppercase tracking-tight">
-                 Altos: {item.summary?.risk_counts?.high ?? 0} | Medios: {item.summary?.risk_counts?.medium ?? 0} | Bajos: {item.summary?.risk_counts?.low ?? 0}
-               </p>
-             )}
+            <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
+              <FileText size={16} className="text-primary" />
+              {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0, 8)}` : `Archivo: ${item.summary?.filename || 'Sin nombre'}`}
+            </h3>
+            {item.is_batch && (
+              <p className="text-xs text-slate-700 font-medium truncate uppercase tracking-widest">
+                Contiene <span className="text-primary">{item.batch_size} imágenes</span>
+              </p>
+            )}
+            <p className="text-xs text-ocular-text-main font-medium mt-1">{item.summary?.headline || 'Comparación de modelos RD'}</p>
+            {item.summary?.is_mixed_risk}
           </div>
 
           {!item.is_batch && (
             <div className="grid grid-cols-2 gap-3 mt-2">
-               <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
-                  <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Modelos Positivos</p>
-                  <p className="text-sm font-black text-ocular-text-main mt-0.5">
-                    {item.summary?.positive_models ?? 0}/{item.summary?.total_models ?? item.models_used?.length ?? 0}
-                  </p>
-               </div>
-               <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
-                  <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Diagnóstico</p>
-                  <p className="text-xs font-black text-primary mt-0.5 truncate uppercase tracking-tight">
-                    {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null 
-                      ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][item.summary.primary_grade] || 'N/A'
-                      : 'N/A'}
-                  </p>
-               </div>
+              <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
+                <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Modelos Positivos</p>
+                <p className="text-sm font-black text-ocular-text-main mt-0.5">
+                  {item.summary?.positive_models ?? 0}/{item.summary?.total_models ?? item.models_used?.length ?? 0}
+                </p>
+              </div>
+              <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
+                <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Diagnóstico</p>
+                <p className="text-xs font-black text-primary mt-0.5 truncate uppercase tracking-tight">
+                  {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null
+                    ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][item.summary.primary_grade] || 'N/A'
+                    : 'N/A'}
+                </p>
+              </div>
             </div>
           )}
         </div>
 
         <div className="bg-primary/5 p-3.5 flex justify-between items-center group-hover:bg-gradient-to-r group-hover:from-sky-500/10 group-hover:to-primary/5 border-t border-slate-100/50 transition-all duration-300">
-            <span className="text-[10px] font-bold text-primary uppercase tracking-wide">Ver Informe Detallado</span>
-            <ChevronRight size={16} className="text-primary group-hover:translate-x-1.5 transition-transform" />
+          <span className="text-[10px] font-bold text-primary uppercase tracking-wide">Ver Informe Detallado</span>
+          <ChevronRight size={16} className="text-primary group-hover:translate-x-1.5 transition-transform" />
         </div>
       </GlassCard>
     </motion.div>

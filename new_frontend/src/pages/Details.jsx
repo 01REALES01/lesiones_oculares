@@ -389,9 +389,6 @@ export default function AnalysisDetail({
                             )}>
                               {item.model_loaded ? 'Modelo real' : 'Fallback'}
                             </span>
-                            <span className="text-xs font-medium text-slate-600">
-                              {item.inference_time_ms.toFixed(2)} ms
-                            </span>
                           </div>
                         </div>
                         <div className={cn(

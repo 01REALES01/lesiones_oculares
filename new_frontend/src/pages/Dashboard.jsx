@@ -645,7 +645,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   <Zap size={20} fill="currentColor" className="opacity-80" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[9px] font-extrabold uppercase tracking-widest text-primary">Referencia reciente</p>
+                  <p className="text-[9px] font-medium uppercase tracking-widest text-primary">Referencia reciente</p>
                   <p className="truncate text-sm font-bold text-slate-800">
                     {recentHistory[0]
                       ? (() => {
@@ -723,11 +723,11 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                                   ? `Lote #${item.batch_id.substring(0, 6)}`
                                   : `Analisis #${item.inference_id.substring(0, 5)}`}
                               </p>
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wide ${isBatchItem ? 'bg-primary/10 text-primary' : 'bg-slate-200/70 text-slate-600'}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide ${isBatchItem ? 'bg-primary/10 text-primary' : 'bg-slate-200/70 text-slate-600'}`}>
                                 {isBatchItem ? `Lote${item.batch_size ? ` (${item.batch_size})` : ''}` : 'Individual'}
                               </span>
                             </div>
-                            <p className="text-[10px] text-ocular-text-muted uppercase font-bold truncate">{item.summary?.headline || new Date(item.timestamp).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-ocular-text-muted uppercase font-medium truncate">{item.summary?.headline || new Date(item.timestamp).toLocaleDateString()}</p>
                           </div>
                           <div
                             role="button"

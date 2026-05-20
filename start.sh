@@ -10,7 +10,7 @@ set -e
 
 OS=$(uname -s)
 REPO_URL="https://github.com/01REALES01/lesiones_oculares.git"
-BRANCH="demo"
+BRANCH="diego"
 
 echo "=========================================="
 echo "       RetinaAI - Setup y arranque        "
