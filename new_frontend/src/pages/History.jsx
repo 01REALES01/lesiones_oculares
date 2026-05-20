@@ -604,7 +604,7 @@ function HistoryCard({ item, onClick, onDelete, index }) {
       >
         <div className="p-5 flex-1 flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className={cn("px-3 py-1 rounded-full text-xs font-medium uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]", getRiskBadgeStyle(riskLevel))}>
+            <div className={cn("px-3 py-1 rounded-full text-xs font-medium tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]", getRiskBadgeStyle(riskLevel))}>
               {riskText}
             </div>
             <span className="text-xs text-slate-700 font-medium flex items-center gap-1">
