@@ -277,8 +277,8 @@ export default function HistoryPage({ onViewDetail }) {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className={`fixed bottom-5 right-5 z-[95] max-w-md rounded-2xl border px-4 py-3 text-sm font-semibold shadow-xl ${historyNotice.type === 'success'
-              ? 'border-ocular-success/30 bg-ocular-success/10 text-ocular-success'
-              : 'border-ocular-error/30 bg-ocular-error/10 text-ocular-error'
+            ? 'border-ocular-success/30 bg-ocular-success/10 text-ocular-success'
+            : 'border-ocular-error/30 bg-ocular-error/10 text-ocular-error'
             }`}
         >
           <div className="flex items-center justify-between gap-3">
