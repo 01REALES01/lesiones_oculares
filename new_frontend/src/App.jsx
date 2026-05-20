@@ -179,7 +179,7 @@ function AppContent() {
       />
       
       <main className="flex-1 overflow-y-auto relative">
-        <div className="max-w-7xl mx-auto p-6 md:p-10">
+        <div className={`mx-auto p-6 md:p-10 transition-all duration-300 ${view === 'detail' ? 'max-w-[1600px] w-full' : 'max-w-7xl'}`}>
           <AnimatePresence mode="wait">
             {view === 'main' ? (
               <motion.div

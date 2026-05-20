@@ -9,7 +9,7 @@
 ### Incluido
 
 1. **Requerimientos** — Levantamiento de requerimientos funcionales y no funcionales (seguridad, usabilidad, rendimiento). Ver `docs/REQUERIMIENTOS.md`.
-2. **Front-end (web)** — Carga de imagen, selección de modelo (A / B / C), visualización de resultados, historial básico. Carpeta `frontend/`.
+2. **Front-end (web)** — Carga de imagen, selección de modelo (A / B / C), visualización de resultados, historial básico. Carpeta `new_frontend/`.
 3. **Back-end / API** — Orquestación de inferencias, trazabilidad (ID, timestamp, modelos usados, tiempos) y registros (historial). Gestión de usuarios opcional.
 4. **Tres modelos** — (i) Segmentación disco/copa + CDR (Modelo A), (ii) Clasificador de severidad/glaucoma (Modelo B), (iii) Detector de lesiones (Modelo C), empaquetados para inferencia (Docker/servicio).
 5. **Postprocesamiento** — Etiquetas, probabilidades y datos para gráficas (barras de probabilidad y tiempos de inferencia).
@@ -99,7 +99,7 @@ Documentación interactiva: **http://127.0.0.1:8000/docs**
 ### Frontend (interfaz web)
 
 ```bash
-cd frontend
+cd new_frontend
 npm install
 npm run dev
 ```
@@ -128,8 +128,6 @@ docker compose up --build
 Variables opcionales: **`ANTHROPIC_API_KEY`** (agente) se puede exportar o pasar en un `.env` (descomentar `env_file` en `docker-compose` si aplica; no subir secretos a git).
 
 La primera build puede ser **lenta** (TensorFlow y dependencias vía `pip`).
-
-**Nota:** el directorio **`frontend/`** es un prototipo anterior; el stack con Compose usa **`new_frontend/`**.
 
 ---
 
@@ -168,7 +166,6 @@ Proyecto_final/
 │   └── 07-stack-tecnologico-api/
 ├── backend/                   # API FastAPI, modelos, preprocesamiento, store
 ├── new_frontend/              # Interfaz web actual (Vite; desplegada con Docker)
-├── frontend/                 # Prototipo React + Vite (legado)
 ├── evaluation/                # Script de evaluación y métricas
 ├── docs/
 │   ├── MANUAL_USUARIO.md      # Manual de usuario

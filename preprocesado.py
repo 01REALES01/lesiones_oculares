@@ -18,14 +18,11 @@ Original file is located at
 """
 
 #IMPORTACIÓN DE LIBRERIAS
-from google.colab import drive    #para poder acceder a Google drive
-drive.mount('/content/drive')
 import cv2
 import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from google.colab.patches import cv2_imshow    #permite ejecutar imshow en colab usando cv2_imshow
 
 """## EJEMPLO 1: CON IMAGENES DE APTOS 2019
 ### Se tienen algunas imagenes de muestra con su tamaño original en /content/drive/MyDrive/NOTEBOOKS_DR/MODELOS_PREENTRENADOS/APTOS_SAMPLES/

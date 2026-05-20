@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Fingerprint, LogIn, AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Fingerprint, LogIn, AlertCircle, Eye, EyeOff, Loader2, X } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 
 export default function Login({ onGoLanding }) {
@@ -61,19 +61,20 @@ export default function Login({ onGoLanding }) {
               initial={{ opacity: 0, height: 0, scale: 0.95 }}
               animate={{ opacity: 1, height: 'auto', scale: 1 }}
               exit={{ opacity: 0, height: 0, scale: 0.95 }}
-              className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 text-amber-700 rounded-2xl text-sm font-semibold mb-6"
+              className="flex items-start gap-3 p-4 bg-amber-500/10 border border-amber-500/20 text-amber-700 rounded-2xl text-sm font-semibold mb-6 relative overflow-hidden shadow-inner"
             >
-              <AlertCircle className="shrink-0 mt-0.5 text-amber-600" size={18} />
-              <div className="flex-1">
+              <AlertCircle className="shrink-0 mt-1 text-amber-600" size={18} />
+              <div className="flex-1 pr-6">
                 <p className="font-bold text-amber-800">Sesión Expirada</p>
-                <p className="text-xs text-amber-700/90 mt-0.5">{expiredNotice}</p>
+                <p className="text-xs text-amber-700/80 mt-1 leading-relaxed">{expiredNotice}</p>
               </div>
               <button 
                 type="button" 
                 onClick={() => setExpiredNotice(null)} 
-                className="text-amber-500 hover:text-amber-700 text-xs font-bold uppercase shrink-0"
+                className="absolute top-2.5 right-2.5 p-1.5 rounded-lg text-amber-500 hover:bg-amber-500/10 hover:text-amber-700 transition-colors shrink-0 outline-none"
+                aria-label="Cerrar"
               >
-                Cerrar
+                <X size={15} />
               </button>
             </motion.div>
           )}
@@ -149,7 +150,7 @@ export default function Login({ onGoLanding }) {
         <div className="mt-8 text-center border-t border-white/20 pt-6 space-y-4">
           <button
             onClick={onGoLanding}
-            className="text-xs font-bold text-primary hover:text-primary-dark transition-colors uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
+            className="text-xs font-bold text-primary hover:text-primary-dark transition-all hover:-translate-y-0.5 uppercase tracking-widest flex items-center justify-center gap-2 mx-auto"
           >
             Volver a la página principal
           </button>

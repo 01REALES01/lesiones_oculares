@@ -397,7 +397,7 @@ export default function EyeScene() {
             />
             <pointLight position={[-5, -5, 5]} intensity={0.6} color="#60a5fa" />
 
-            <RealisticEye scrollProgress={scrollProgress} />
+            {/* <RealisticEye scrollProgress={scrollProgress} /> */}
             <Particles />
 
             <Environment preset="city" />
