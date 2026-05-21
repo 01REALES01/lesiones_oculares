@@ -25,7 +25,6 @@ Para ejecutar el proyecto, el entorno debe contar con:
 
 ### 2.2 Variables de entorno
 Es fundamental configurar las siguientes variables de entorno para la integración institucional y la funcionalidad de IA:
-- `ANTHROPIC_API_KEY`: Requerida para las funciones del Agente Inteligente.
 - `PYTHONPATH`: Debe apuntar a la raíz del proyecto si se ejecuta sin Docker.
 
 ## 3. Instalación para ambiente de desarrollo
@@ -41,24 +40,20 @@ cd lesiones_oculares
 ```
 
 #### 3.1.2 Instalar dependencias
+Se debe iniciar el archivo **start**. Este instala todo lo necesario para la aplicación, tanto en el backend como en el frontend. Se inicia de esta forma:
 
-**Para el Backend (Python):**
-Se recomienda crear un entorno virtual previamente.
+**En Linux/Mac:**
 ```bash
-python -m venv venv
-source venv/bin/activate  # En Windows: venv\Scripts\activate
-pip install -r backend/requirements.txt
+./start.sh
 ```
 
-**Para el Frontend (Node.js):**
-```bash
-cd new_frontend
-npm install
-cd ..
+**En Windows:**
+```cmd
+.\start.ps1
 ```
 
 #### 3.1.3 Configurar variables de entorno
-Crea un archivo `.env` en la raíz del proyecto (basándote en `.env.example` si existe) e incluye tu `ANTHROPIC_API_KEY` y cualquier configuración de ROBLE necesaria.
+Crea un archivo `.env` en la raíz del proyecto (basándote en `.env.example` si existe) y cualquier configuración de ROBLE necesaria.
 
 #### 3.1.4 Iniciar la aplicación
 Puedes iniciar ambos servicios simultáneamente si has configurado el script en tu `package.json` raíz, o correr el script de inicio proporcionado:
@@ -70,7 +65,7 @@ Puedes iniciar ambos servicios simultáneamente si has configurado el script en 
 
 **En Windows:**
 ```cmd
-start.bat
+.\start.ps1
 ```
 
 De forma manual:
