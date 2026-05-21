@@ -4,9 +4,7 @@ Este directorio contiene el script para evaluar los modelos con un dataset públ
 
 ## Métricas
 
-- **Modelo A (segmentación):** IoU/Dice si se dispone de máscaras de referencia; tiempo de inferencia.
-- **Modelo B (clasificación):** Accuracy, F1, AUC-ROC, sensibilidad, especificidad; tiempo de inferencia.
-- **Modelo C (detección):** mAP o precisión/recall por clase si se dispone de anotaciones; tiempo de inferencia.
+- **Modelo A, B y C:** Retinopatia Diabética; tiempo de inferencia.
 
 ## Uso
 
