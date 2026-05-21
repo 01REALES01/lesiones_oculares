@@ -1,6 +1,6 @@
 # Plataforma para la Identificación de Retinopatía Diabética en Imágenes de Fondo de Ojo con Modelos de Inteligencia Artificial
 
-**Universidad Del Norte — Ingeniería en Sistemas y Computación — Proyecto Final — Informe 2**
+**Universidad Del Norte — Ingeniería en Sistemas y Computación — Proyecto Final — Informe Final**
 
 **Autores:** Reales Jean, Angarita Diego, Guzmán Aura, Rodríguez Julio
 
@@ -12,7 +12,7 @@
 
 El presente proyecto nace de la necesidad de integrar la Inteligencia Artificial (IA) en el sector de la Salud Digital para cerrar las brechas de atención médica actuales. Hoy en día, el diagnóstico de patologías retinianas depende de la inspección manual de retinografías, un proceso lento que se ve agravado por la crítica escasez de especialistas en oftalmología, especialmente en zonas geográficamente remotas y rurales. Esta limitación en el acceso a centros especializados impide realizar un tamizaje preventivo oportuno, generando cuellos de botella en el sistema de salud y dejando a gran parte de la población vulnerable ante enfermedades que causan ceguera evitable.
 
-Ante esta situación, se desarrollará una plataforma web diseñada para optimizar y agilizar este proceso, siendo una herramienta de uso exclusivo para el personal médico. El sistema integrará tres modelos de inteligencia artificial para asegurar la confiabilidad de los resultados, permitiendo detectar lesiones asociadas a retinopatía diabética. Esta solución no solo busca descentralizar el análisis médico, sino también mejorar la trazabilidad y la gestión de la información mediante un historial de análisis y métricas claras.
+Ante esta situación, se desarrollará una plataforma web diseñada para optimizar y agilizar este proceso, siendo una herramienta de uso exclusivo para el personal médico. El sistema integrará tres modelos de inteligencia artificial para asegurar la confiabilidad de los resultados, permitiendo detectar el grado de retinopatía diabética, según la escala ICDR. Esta solución no solo busca descentralizar el análisis médico, sino también mejorar la trazabilidad y la gestión de la información mediante un historial de análisis y métricas claras.
 
 Es fundamental enfatizar que esta plataforma se propone como un avance tecnológico de apoyo clínico y educativo para facilitar la labor del profesional de la salud, y bajo ningún concepto busca reemplazar el juicio médico o el diagnóstico definitivo del experto. El objetivo final es proporcionar una herramienta que permita al personal médico priorizar la atención de pacientes y mejorar la capacidad de respuesta en regiones donde el recurso humano especializado es insuficiente o inexistente.
 
@@ -24,7 +24,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **Retinopatía Diabética (RD):** Es una complicación ocular de la diabetes causada por el daño a los vasos sanguíneos del tejido sensible a la luz en el fondo del ojo (retina). Es una de las principales causas de ceguera en adultos.
 
-**Escala APTOS:** El conjunto de datos APTOS 2019 Blindness Detection provee una escala estandarizada para clasificar la severidad de la retinopatía diabética en cinco grados: 0 (Sin RD), 1 (RD Leve), 2 (RD Moderada), 3 (RD Severa) y 4 (RD Proliferativa). Esta es la métrica clínica base que la plataforma busca detectar.
+**Escala APTOS o ICDR:** El conjunto de datos APTOS 2019 Blindness Detection provee una escala estandarizada para clasificar la severidad de la retinopatía diabética en cinco grados: 0 (Sin RD), 1 (RD Leve), 2 (RD Moderada), 3 (RD Severa) y 4 (RD Proliferativa). Esta es la métrica clínica base que la plataforma busca detectar.
 
 **Redes Neuronales Convolucionales (CNN):** Son una clase de redes neuronales artificiales profundas, aplicadas principalmente al análisis de imágenes visuales. Emplean una operación matemática llamada convolución en lugar de la multiplicación general de matrices, lo que les permite identificar patrones jerárquicos (bordes, texturas, lesiones) en las imágenes.
 
@@ -54,7 +54,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 **El proyecto incluye:**
 
 1. **Levantamiento de Requerimientos:** Definición de las necesidades técnicas, funcionales y de seguridad para el manejo de imágenes médicas.
-2. **Desarrollo de Plataforma Web (Front-end):** Una interfaz intuitiva que permita al personal médico cargar retinografías, visualizar los resultados del análisis y consultar un historial básico de pacientes.
+2. **Desarrollo de Plataforma Web (Front-end):** Una interfaz intuitiva que permita al personal médico cargar retinografías, visualizar los resultados del análisis y consultar un historial de lotes de inferencias.
 3. **Arquitectura de Procesamiento Local:** Implementación de un entorno de ejecución local que permita procesar las imágenes utilizando los recursos del hardware disponible en el sitio.
 4. **Integración de Tres Modelos de Inteligencia Artificial:** Implementación de tres arquitecturas diferentes para realizar validación cruzada.
 5. **Módulo de Resultados y Métricas:** Entrega de indicadores técnicos y visualizaciones gráficas de los hallazgos realizados por la IA.
@@ -62,7 +62,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **El proyecto no incluye:**
 
-1. **Certificación Médica:** El software no se entregará como un dispositivo médico certificado ante entidades regulatorias (ej. INVIMA).
+1. **Certificación Médica:** El software no se entregará como un dispositivo médico certificado ante entidades regulatorias.
 2. **Diagnóstico Autónomo:** El sistema no reemplaza la firma de un especialista; es estrictamente una herramienta de apoyo.
 3. **Integración con Historias Clínicas Reales:** No se conectará con bases de datos hospitalarias externas en esta fase del proyecto.
 4. **Uso en Entornos Clínicos Reales:** El prototipo se limitará a entornos de prueba y experimentación educativa.
@@ -120,7 +120,7 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 | RF03 | Visualización comparativa de resultados: el sistema mostrará las salidas de los tres modelos de forma simultánea para permitir la validación cruzada por parte del médico | Alta |
 | RF04 | Historial básico: listado de análisis recientes con posibilidad de ver detalle de cada uno | Alta |
 | RF05 | Trazabilidad: cada inferencia con ID único, timestamp, modelos usados y tiempos de ejecución | Alta |
-| RF06 | Postprocesamiento: etiquetas legibles, probabilidades y datos para gráficas (barras de probabilidad y tiempos) | Media |
+| RF06 | Postprocesamiento: etiquetas legibles, probabilidades y datos cuantitativos| Media |
 | RF07 | Evaluación con dataset: script que calcule métricas (accuracy, F1, AUC, sensibilidad, especificidad) y tiempos de inferencia; comparación entre modelos | Media |
 | RF08 | Gestión de usuarios (opcional): registro/login para asociar análisis a usuario | Baja |
 
@@ -132,8 +132,8 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 - Aviso visible de que el sistema es de apoyo clínico/educativo y no diagnóstico.
 
 **Rendimiento**
-- Tiempos de inferencia razonables; posibilidad de usar GPU para reducir latencia.
-- Historial acotado en memoria (p. ej. últimos N registros) para no degradar el servicio.
+- Tiempos de inferencia razonables.
+- Historial acotado en páginas (p. ej. últimos N registros) para no degradar el servicio.
 
 **Seguridad y privacidad**
 - Seguridad de acceso local y cifrado de base de datos interna.
@@ -153,7 +153,7 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 | Calidad variable de imágenes | Se implementa preprocesamiento; se documentan limitaciones |
 | Desbalance/sesgos en datos | Se realiza evaluación con dataset público o provisto; se reportan métricas en script de evaluación |
 | Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, ResNet, Xception) para validación cruzada |
-| Latencia y recursos | Se ofrece opción GPU; batch en evaluación; historial acotado |
+| Latencia y recursos | Se cargan los modelos ya preentrenados; se muestra un historial acotado |
 | Privacidad de imágenes médicas | Se implementa cifrado, control de acceso, retención mínima, anonimización donde aplique |
 | Uso indebido como diagnóstico | Disclaimers en API e interfaz; enfoque "apoyo/tamizaje"; trazabilidad |
 | Alcance excesivo | Se definen claramente salidas por modelo y lesiones consideradas |
@@ -176,7 +176,7 @@ Para el diseño de la solución se evaluaron alternativas tecnológicas y de enf
 
 - **Autenticación y persistencia:** Se definió una estrategia de integración directa con los servicios institucionales: autenticación mediante **ROBLE Auth** (con validación de tokens JWT) y almacenamiento de trazabilidad de inferencias en **ROBLE Database**. Esto garantiza centralización y seguridad acorde a los estándares del entorno operativo.
 
-- **Exportación de resultados:** Se implementó inicialmente salida estructurada para análisis técnico y validación interna, dejando como evolución futura formatos adicionales (CSV/Excel/PDF) según necesidades del entorno de uso.
+- **Exportación de resultados:** Se implementó una exportación de datos estructurados para análisis técnico y validación interna en formato CSV/Excel.
 
 Como resultado de esta evaluación, se seleccionó una arquitectura modular con frontend comparativo, backend orquestador y tres modelos enfocados exclusivamente en retinopatía diabética.
 
@@ -188,10 +188,10 @@ La solución se orienta exclusivamente a la detección de retinopatía diabétic
 
 La plataforma adopta una arquitectura **cliente-servidor** con los siguientes niveles:
 
-- **Capa de Aplicación (Frontend):** interfaz web React que permite al usuario cargar imágenes, seleccionar modelos y visualizar resultados.
-- **Lógica de Negocio (Backend API):** API principal en FastAPI que orquesta la inferencia, gestiona autenticación y centraliza la trazabilidad.
-- **Pipeline de IA:** tres modelos de clasificación de RD que operan sobre la misma retinografía de forma paralela.
-- **Persistencia y Autenticación:** Integración con **ROBLE Database** para registrar resultados de inferencia, tiempos y timestamps, y **ROBLE Auth** para la validación y gestión de acceso seguro.
+- **Capa de Aplicación (Frontend)**
+- **Lógica de Negocio (Backend API)** 
+- **Pipeline de IA** 
+- **Persistencia y Autenticación**
 
 #### 7.2.2 Componentes del Sistema e Interacción
 
@@ -241,6 +241,8 @@ El flujo de comunicación entre componentes es el siguiente:
 6. Frontend muestra comparación: presencia/ausencia de RD, severidad y confianza por modelo.
 
 Los módulos se comunican mediante HTTP (multipart para envío de imágenes). El backend actúa como orquestador central, reduciendo el acoplamiento entre el frontend y los modelos de IA.
+<img width="856" height="620" alt="image" src="https://github.com/user-attachments/assets/5dbf4073-6192-478d-8216-b65382166d98" />
+
 
 ##### 7.2.2.3 Comportamiento
 
@@ -248,7 +250,7 @@ La arquitectura responde favorablemente a las siguientes preguntas de diseño:
 
 - **¿El flujo es eficiente?** Sí. La ejecución de modelos es paralela dentro del backend orquestador, reduciendo el tiempo total de inferencia respecto a un enfoque secuencial.
 - **¿Existen pasos innecesarios?** No. El pipeline sigue directamente: carga → preprocesamiento → inferencia → postprocesamiento → respuesta.
-- **¿Hay problemas de latencia?** Se mitigan con soporte GPU opcional y restricción del historial en memoria.
+- **¿Hay problemas de latencia?** Se mitigan con carga de modelos preentrenados y restricción del historial en memoria.
 - **¿Existen cuellos de botella?** El modelo más lento en una ejecución paralela define el tiempo total; se documenta en métricas de trazabilidad.
 - **¿La interacción refleja un buen desacoplamiento?** Sí. Frontend y modelos de IA no se conocen directamente; toda comunicación pasa por la API orquestadora.
 
@@ -361,7 +363,7 @@ La plataforma está diseñada para ejecutarse en entorno local mediante contened
 
 **Infraestructura y dependencias**
 - Docker y Docker Compose para orquestar los servicios de frontend y backend.
-- Scripts de arranque disponibles para Windows (`.bat`) y sistemas Unix/Bash, que automatizan la instalación de dependencias y el levantamiento de los servicios.
+- Scripts de arranque disponibles para Windows (`.ps1`) y sistemas Unix/Bash, que automatizan la instalación de dependencias y el levantamiento de los servicios.
 - El backend requiere Python con las librerías especificadas en el stack tecnológico; el frontend se construye con Node.js/Vite dentro del contenedor.
 
 **Puesta en marcha**
