@@ -18,6 +18,26 @@ Es fundamental enfatizar que esta plataforma se propone como un avance tecnológ
 
 ---
 
+## 2. Marco conceptual
+
+Para comprender adecuadamente la solución desarrollada en este proyecto, es fundamental definir los conceptos clínicos y tecnológicos que fundamentan la plataforma:
+
+**Retinopatía Diabética (RD):** Es una complicación ocular de la diabetes causada por el daño a los vasos sanguíneos del tejido sensible a la luz en el fondo del ojo (retina). Es una de las principales causas de ceguera en adultos.
+
+**Escala APTOS:** El conjunto de datos APTOS 2019 Blindness Detection provee una escala estandarizada para clasificar la severidad de la retinopatía diabética en cinco grados: 0 (Sin RD), 1 (RD Leve), 2 (RD Moderada), 3 (RD Severa) y 4 (RD Proliferativa). Esta es la métrica clínica base que la plataforma busca detectar.
+
+**Redes Neuronales Convolucionales (CNN):** Son una clase de redes neuronales artificiales profundas, aplicadas principalmente al análisis de imágenes visuales. Emplean una operación matemática llamada convolución en lugar de la multiplicación general de matrices, lo que les permite identificar patrones jerárquicos (bordes, texturas, lesiones) en las imágenes.
+
+**DenseNet169:** (Densely Connected Convolutional Networks). Es una arquitectura donde cada capa está conectada a todas las demás capas posteriores. Esta estructura mejora significativamente la propagación del flujo de información y gradientes a lo largo de la red, mitigando el problema del desvanecimiento del gradiente y logrando alta precisión con menos parámetros.
+
+**ResNet50:** (Residual Networks). Se caracteriza por el uso de "conexiones de salto" o "bloques residuales" que permiten el entrenamiento efectivo de redes neuronales extremadamente profundas (en este caso, de 50 capas). ResNet aprende funciones residuales con referencia a las entradas de capa, facilitando la optimización.
+
+**Xception:** (Extreme Inception). Es una arquitectura que reemplaza los módulos Inception estándar por convoluciones separables en profundidad (depthwise separable convolutions). Esto desacopla el mapeo de correlaciones cruzadas espaciales y de canales, haciendo el modelo estadísticamente más eficiente.
+
+**Validación Cruzada por Conjunto (Ensemble/Concurrent Validation):** En lugar de depender de un solo modelo, la plataforma ejecuta inferencias en paralelo utilizando las tres arquitecturas mencionadas. Contrastar las salidas de modelos con diferentes aproximaciones matemáticas (densidad, residualidad y separabilidad) sobre la misma imagen médica aumenta la confianza clínica al buscar consensos y reducir falsos positivos.
+
+---
+
 ## 3. Planteamiento del Problema
 
 ### 3.2 Restricciones y Supuestos de Diseño
@@ -71,13 +91,13 @@ El diagnóstico de patologías oculares mediante inteligencia artificial ha expe
 
 La tendencia predominante en el estado del arte no es el entrenamiento de modelos desde cero, sino el uso de arquitecturas pre-entrenadas en bases de datos masivas (como ImageNet). Modelos como ResNet introdujeron las "conexiones de salto" para resolver el problema del desvanecimiento del gradiente, permitiendo redes mucho más profundas. Arquitecturas más recientes como Xception y EfficientNet han optimizado la relación entre el número de parámetros y la precisión, permitiendo que modelos de alta fidelidad operen en dispositivos con recursos limitados.
 
-**2. Inteligencia Artificial Explicable**
+**2. Validación por Ensamble de Modelos**
 
-Uno de los mayores retos en la medicina actual es la naturaleza de "caja negra" de las redes neuronales. El estado del arte ha respondido con técnicas de Visualización de Mapas de Activación, como Grad-CAM. Estas técnicas permiten generar mapas de calor que resaltan las regiones de la imagen que más influyeron en la decisión del modelo. Esto es vital en oftalmología, donde la identificación de microaneurismas o exudados valida el criterio del modelo ante el especialista humano.
+Uno de los mayores retos en la medicina actual es la confiabilidad de los sistemas automatizados. El estado del arte aborda este problema mediante el uso de ensambles (ensembles) o la ejecución concurrente de diferentes arquitecturas neuronales. Al contrastar resultados de modelos matemáticamente diferentes (como DenseNet y ResNet), se reduce la incertidumbre propia de un solo modelo ("caja negra"), validando el criterio ante el especialista humano.
 
-**3. Clasificación Multietapa y Multitarea**
+**3. Especialización y Profundidad en la Clasificación**
 
-La investigación actual se desplaza hacia sistemas que no solo clasifican una enfermedad, sino que realizan tareas simultáneas. Esto incluye la segmentación semántica para delimitar el disco óptico combinada con la clasificación multiclase para determinar el grado de severidad de la Retinopatía Diabética (escala ICDR). El uso de modelos especializados que trabajan en conjunto mejora la robustez del diagnóstico integral.
+La investigación actual se ha desplazado hacia redes extremadamente profundas y eficientes para tareas clínicas de alta complejidad, como determinar el grado de severidad de la Retinopatía Diabética (escala ICDR o APTOS). Las arquitecturas modernas priorizan una clasificación robusta y precisa, optimizando el entrenamiento con técnicas de preprocesamiento avanzadas específicas para fondos de ojo.
 
 **4. Bibliotecas y Frameworks de Alto Rendimiento**
 
@@ -132,7 +152,7 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 |--------|------------|
 | Calidad variable de imágenes | Se implementa preprocesamiento; se documentan limitaciones |
 | Desbalance/sesgos en datos | Se realiza evaluación con dataset público o provisto; se reportan métricas en script de evaluación |
-| Explicabilidad limitada | Se incluye heatmap/mapa de relevancia en resultados; objetivo es Grad-CAM con modelo real |
+| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, ResNet, Xception) para validación cruzada |
 | Latencia y recursos | Se ofrece opción GPU; batch en evaluación; historial acotado |
 | Privacidad de imágenes médicas | Se implementa cifrado, control de acceso, retención mínima, anonimización donde aplique |
 | Uso indebido como diagnóstico | Disclaimers en API e interfaz; enfoque "apoyo/tamizaje"; trazabilidad |

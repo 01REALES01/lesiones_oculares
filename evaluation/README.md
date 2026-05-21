@@ -12,7 +12,7 @@ Este directorio contiene el script para evaluar los modelos con un dataset públ
 
 1. Colocar imágenes de fondo de ojo en una carpeta (ej. `evaluation/data/images/`).
 2. (Opcional) Archivo CSV con etiquetas para ground truth:
-   - Columnas sugeridas: `image_name`, `glaucoma` (0/1) para el clasificador.
+   - Columnas sugeridas: `image_name`, `diabetic_retinopathy` (0-4) para el clasificador.
    - Con datos reales se calculan accuracy, F1, AUC, sensibilidad, especificidad.
 3. Ejecutar:
 

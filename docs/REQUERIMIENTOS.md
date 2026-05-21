@@ -5,9 +5,9 @@
 | Id | Descripción | Prioridad |
 |----|-------------|-----------|
 | RF01 | Carga de imagen de retinografía (formatos habituales: jpg, png) | Alta |
-| RF02 | Selección de uno o más modelos de IA (A: segmentación, B: clasificación, C: detección) antes de ejecutar el análisis | Alta |
-| RF03 | Ejecución de inferencia solo con los modelos seleccionados | Alta |
-| RF04 | Visualización de resultados: CDR, probabilidad de glaucoma, número de lesiones, recomendación y mapa de relevancia (explicabilidad) | Alta |
+| RF02 | Selección de los modelos de IA (DenseNet169, ResNet50, Xception) antes de ejecutar el análisis | Alta |
+| RF03 | Ejecución de inferencia concurrente con los modelos seleccionados | Alta |
+| RF04 | Visualización de resultados: Diagnóstico de Retinopatía Diabética, severidad (APTOS) y confianza del modelo | Alta |
 | RF05 | Historial básico: listado de análisis recientes con posibilidad de ver detalle de cada uno | Alta |
 | RF06 | Trazabilidad: cada inferencia con ID único, timestamp, modelos usados y tiempos de ejecución | Alta |
 | RF07 | Postprocesamiento: etiquetas legibles, probabilidades y datos para gráficas (barras de probabilidad y tiempos) | Media |
@@ -46,8 +46,8 @@
 |--------|-------------|
 | Calidad variable de imágenes | Implementamos preprocesamiento (canal verde, CLAHE, Ben Graham); documentamos limitaciones. |
 | Desbalance/sesgos en datos | Realizamos evaluación con dataset público o provisto; reportamos métricas en script de evaluación. |
-| Explicabilidad limitada | Incluimos heatmap/mapa de relevancia en resultados; nuestro objetivo es Grad-CAM con modelo real. |
+| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes para validación cruzada |
 | Latencia y recursos | Ofrecemos opción GPU; batch en evaluación; historial acotado. |
 | Privacidad de imágenes médicas | Implementamos cifrado, control de acceso, retención mínima, anonimización donde aplique. |
 | Uso indebido como diagnóstico | Disclaimers en API e interfaz; enfoque “apoyo/tamizaje”; trazabilidad. |
-| Alcance excesivo | Definimos claramente salidas por modelo (A: CDR; B: probabilidad; C: bboxes) y lesiones consideradas. |
+| Alcance excesivo | Definimos claramente salidas por modelo (clasificación RD y grados APTOS). |
