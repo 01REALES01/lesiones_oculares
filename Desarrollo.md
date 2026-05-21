@@ -15,13 +15,11 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 - **IA/ML:** TensorFlow, Keras, OpenCV, scikit-image.
 - **Persistencia y Autenticación:** Integración directa con los servicios institucionales **ROBLE Auth** y **ROBLE Database**.
 - **Contenedores:** Docker, Docker Compose.
-- **Infraestructura adicional:** Anthropic API (Agente inteligente).
 
 ### 2.2 Componentes principales
 
-- **Cliente web:** Interfaz interactiva para la carga de imágenes, selección de modelos y visualización de resultados (heatmaps y métricas).
+- **Cliente web:** Interfaz interactiva para la carga de imágenes, selección de modelos y visualización de resultados (barras de propabilidades y métricas).
 - **Servidor/API:** Orquestador de inferencias que maneja la lógica de preprocesamiento, trazabilidad y comunicación con los modelos.
-- **Módulo de Evaluación:** Herramientas para validar el desempeño de los modelos contra datasets de referencia.
 
 ## 3. Estructura del repositorio
 
@@ -31,8 +29,8 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 /
 ├── backend/            # API FastAPI, modelos y lógica de IA
 ├── new_frontend/       # Aplicación React + Vite (Producción)
-├── data/               # Persistencia e imágenes procesadas
-├── evaluation/         # Scripts de métricas y validación
+├── data/               # Persistencia
+├── tests/              # Pruebas del sistema (componente, integración, etc)
 ├── docs/               # Manual de usuario y requerimientos
 ├── diseno/             # Documentación técnica por áreas
 ├── README.md           # Guía rápida
@@ -46,7 +44,6 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 - **backend/**: Contiene los servicios de inferencia y las rutas de la API.
 - **new_frontend/**: Contiene el código fuente de la interfaz.
 - **data/**: Almacena `inferences.json`, un JSON con todas las predicciones del usuario.
-- **evaluation/**: Contiene scripts como `run_evaluation.py` para métricas de IA.
 - **docs/**: Archivos Markdown con la documentación funcional.
 
 ## 4. Organización de la solución a nivel de código
@@ -95,12 +92,23 @@ Evite cambiar la base de las imágenes (Python 3.12 y Node 20) sin verificar la 
 
 ### 6.1 Scripts principales
 
-- `npm run dev`: Inicia tanto el backend como el frontend en modo desarrollo (Hot Reload).
-- `npm run build`: Genera el build optimizado de la interfaz en `new_frontend/dist/`.
+Se debe iniciar el archivo **start**. Este instala todo lo necesario para la aplicación, tanto en el backend como en el frontend. Se inicia de esta forma:
+
+**En Linux/Mac:**
+```bash
+./start.sh
+```
+
+**En Windows:**
+```cmd
+.\start.ps1
+```
 
 ### 6.2 Ubicación de scripts auxiliares
+Si quiere hacerlo de fomra manual:
 
-Los scripts de evaluación se encuentran en `evaluation/`, y pueden ejecutarse con `python evaluation/run_evaluation.py`.
+- Backend: `uvicorn backend.main:app --reload`
+- Frontend: `cd new_frontend && npm run dev`
 
 ### 6.3 Consideraciones para su uso
 
@@ -110,7 +118,6 @@ Asegúrese de tener instalado `requirements.txt` y los módulos de Node antes de
 
 ### 7.1 Variables requeridas
 
-- `ANTHROPIC_API_KEY`: Necesaria para las funciones de análisis del agente inteligente.
 - `PYTHONPATH`: Debe incluir la raíz del proyecto para la resolución de módulos.
 
 ### 7.2 Variables por ambiente
@@ -133,7 +140,7 @@ No suba el archivo `.env` al repositorio. Las claves deben gestionarse como secr
 1. Clonar el repositorio.
 2. Instalar dependencias de Python y Node.
 3. Configurar variables de entorno.
-4. Ejecutar `npm run dev` para iniciar el desarrollo local.
+4. Ejecutar `.\start.ps1` para iniciar el desarrollo local en **Windows**, o `./start.sh` en **Mac/Linux**.
 
 ### 8.2 Desarrollo de nuevas funcionalidades
 
@@ -141,7 +148,7 @@ Se recomienda trabajar en ramas descriptivas. Los cambios en el modelo de datos 
 
 ### 8.3 Ejecución de pruebas y validaciones
 
-Use los scripts de `evaluation/` para validar que los cambios en los modelos no degraden las métricas de precisión y F1-score.
+Ejecute los archivos del directorio pruebas, ya sea por componente o el flujo completo.
 
 ### 8.4 Integración de cambios
 
@@ -151,12 +158,9 @@ Los cambios se integran tras verificar el correcto funcionamiento del build de p
 
 ### 9.1 Servicios externos integrados
 
-- **Anthropic API:** Proporciona la inteligencia para el "Agente Cerebro" que interpreta los hallazgos médicos.
 - **Modelos de IA:** Archivos `.h5` o `SavedModel` cargados localmente en el backend.
 
 ### 9.2 Requisitos de acceso
-
-Es obligatorio contar con una API Key de Anthropic válida para que las funciones de explicabilidad avanzada funcionen.
 
 ### 9.3 Consideraciones de desarrollo y pruebas
 
@@ -190,7 +194,7 @@ Toda nueva funcionalidad técnica debe verse reflejada en este `Manual de desarr
 ### 11.2 Deuda técnica conocida
 
 - Migración completa de los estilos legacy a TailwindCSS en todos los componentes.
-- Implementación de una base de datos relacional si el volumen de datos JSON crece excesivamente.
+- Implementación a una base de datos relacional más potente si el volumen de datos crece excesivamente.
 
 ### 11.3 Recomendaciones para continuidad
 
