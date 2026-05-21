@@ -16,23 +16,23 @@ import TechEyeScene from '../components/landing/EyeScene';
 
 const featureCards = [
   {
-    title: 'Comparación de Modelos',
-    description: 'Contrasta varias arquitecturas sobre la misma retinografía para validar consistencia clínica antes de revisar el detalle.',
+    title: 'Clasificación Multimodelo',
+    description: 'Ejecución paralela de tres arquitecturas de Deep Learning (DenseNet169, ResNet50 y Xception) para validación cruzada.',
     icon: Layers,
   },
   {
-    title: 'Carga por Lotes',
-    description: 'Sube carpetas completas y procesa múltiples estudios sin perder trazabilidad ni vista previa de cada caso.',
-    icon: CloudUpload,
+    title: 'Detección de la Severidad',
+    description: 'Clasificación automatizada del grado de Retinopatía Diabética en la escala APTOS (desde Grado 0 sin RD hasta Grado 4 Proliferativa).',
+    icon: BrainCircuit,
   },
   {
-    title: 'Informe Asistido',
-    description: 'Resume grado, confianza, prioridad y tiempos de inferencia en un formato rápido para el especialista.',
-    icon: FileText,
+    title: 'Optimización de Imagen',
+    description: 'Aplicación de filtros avanzados (Canal Verde, CLAHE y Ben Graham) para maximizar el contraste de lesiones y vasos sanguíneos.',
+    icon: Eye,
   },
   {
-    title: 'Uso Seguro',
-    description: 'La plataforma está pensada para apoyo clínico y educativo, con foco en auditoría de resultados e historial.',
+    title: 'Trazabilidad y Auditoría',
+    description: 'Registro histórico detallado de cada análisis con identificador único, metadatos del usuario, tiempos de inferencia y confianza.',
     icon: ShieldCheck,
   },
 ];
@@ -40,20 +40,20 @@ const featureCards = [
 const processSteps = [
   {
     number: '01',
-    title: 'Carga de Retinografías',
-    description: 'Selecciona imágenes individuales o lotes completos desde el panel principal.',
+    title: 'Carga y Preprocesamiento',
+    description: 'Carga de retinografías en formato JPG/PNG y aplicación automática de ecualización adaptativa (CLAHE) y filtrado de Ben Graham.',
     icon: CloudUpload,
   },
   {
     number: '02',
-    title: 'Inferencia Multimodelo',
-    description: 'La API ejecuta los modelos disponibles y prioriza el mejor candidato compatible en tiempo real.',
+    title: 'Inferencia Concurrente',
+    description: 'Procesamiento en paralelo con los tres modelos entrenados para clasificar el nivel de severidad de Retinopatía Diabética.',
     icon: BrainCircuit,
   },
   {
     number: '03',
-    title: 'Revisión Clínica',
-    description: 'Consulta el detalle, compara probabilidades y revisa el historial consolidado por estudio o lote.',
+    title: 'Validación Cruzada',
+    description: 'Comparación simultánea de las predicciones, porcentajes de confianza y tiempos de respuesta de cada arquitectura de red.',
     icon: Stethoscope,
   },
 ];
@@ -170,11 +170,11 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
               </div>
 
               <h1 className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight text-slate-950 md:text-7xl">
-                Inteligencia artificial ocular lista para triage, comparación y auditoría.
+                Tamizaje inteligente de Retinopatía Diabética asistido por IA.
               </h1>
 
               <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
-                Esta landing es la entrada al sistema. Desde aquí el usuario entiende el flujo y luego pasa a la aplicación operativa con login, dashboard, historial y detalle clínico.
+                Plataforma web de apoyo clínico y educativo para la clasificación multimodelo de severidad de Retinopatía Diabética a partir de retinografías de fondo de ojo.
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
@@ -197,9 +197,9 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
 
               <div className="mt-10 grid max-w-2xl grid-cols-1 gap-4 sm:grid-cols-3">
                 {[
-                  ['3', 'rutas principales'],
-                  ['100+', 'estudios por lote'],
-                  ['1', 'historial consolidado'],
+                  ['3', 'Modelos IA especializados'],
+                  ['3', 'Etapas de preprocesamiento'],
+                  ['100%', 'Trazabilidad y auditoría'],
                 ].map(([value, label]) => (
                   <div key={label} className="glass-panel px-5 py-4">
                     <p className="text-2xl font-black text-slate-900">{value}</p>
@@ -232,22 +232,22 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
 
                   <div className="grid gap-4 sm:grid-cols-2">
                     <div className="rounded-3xl border border-white/70 bg-white/70 p-5 shadow-sm">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Dashboard</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">Carga, selección de modelos, cancelación de ejecución y vista de resultados recientes.</p>
+                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Panel Operativo</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">Carga de retinografías, ejecución de inferencias en paralelo y comparación detallada de resultados.</p>
                     </div>
                     <div className="rounded-3xl border border-white/70 bg-white/70 p-5 shadow-sm">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Historial</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">Consulta paginada, filtros por riesgo y acceso al detalle por análisis o lote.</p>
+                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Historial Clínico</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">Consulta y filtrado rápido por nivel de riesgo, con auditoría completa de cada análisis realizado.</p>
                     </div>
                   </div>
 
                   <div className="rounded-[2rem] border border-primary/15 bg-slate-950 px-6 py-5 text-white shadow-xl">
-                    <p className="text-xs font-black uppercase tracking-[0.24em] text-sky-200">Estado del stack</p>
+                    <p className="text-xs font-black uppercase tracking-[0.24em] text-sky-200">Preprocesamiento Activo</p>
                     <div className="mt-3 flex flex-wrap gap-3 text-sm font-semibold text-slate-200">
-                      <span className="rounded-full bg-white/10 px-3 py-1">FastAPI</span>
-                      <span className="rounded-full bg-white/10 px-3 py-1">React + Vite</span>
-                      <span className="rounded-full bg-white/10 px-3 py-1">Modelos RD</span>
-                      <span className="rounded-full bg-white/10 px-3 py-1">Historial traceable</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1">Canal Verde</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1">CLAHE</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1">Filtro Ben Graham</span>
+                      <span className="rounded-full bg-white/10 px-3 py-1">Optimización de Contraste</span>
                     </div>
                   </div>
                 </div>
@@ -258,8 +258,8 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
           <section id="capacidades" className="scroll-mt-24 mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24">
             <SectionTitle
               eyebrow="Capacidades"
-              title="La landing prepara al usuario antes de entrar al panel operativo."
-              description="Se conservaron la narrativa y la intención de la landing original, pero adaptadas al stack actual para que cargue estable dentro de la aplicación principal."
+              title="Tres modelos entrenados para evaluar la severidad."
+              description="Ejecución paralela de tres arquitecturas optimizadas para clasificar retinografías según la escala de severidad de Retinopatía Diabética (RD)."
             />
 
             <div className="mt-10 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
@@ -288,9 +288,9 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
           <section id="flujo" className="scroll-mt-24 mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24">
             <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
               <SectionTitle
-                eyebrow="Flujo"
-                title="De la landing a la aplicación importante, sin romper el recorrido."
-                description="El usuario aterriza aquí, comprende la propuesta y luego entra al login o directamente al dashboard si ya tiene sesión iniciada."
+                eyebrow="Flujo de Trabajo"
+                title="Procesamiento y análisis de retinografías en tres fases críticas."
+                description="El sistema orquesta la preparación de la imagen, la inferencia paralela de la tríada de modelos y la comparación de las predicciones de severidad."
               />
 
               <div className="space-y-5">
@@ -309,7 +309,7 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                         <Icon size={22} />
                       </div>
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">Paso {step.number}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">Fase {step.number}</p>
                         <h3 className="mt-2 text-xl font-black text-slate-900">{step.title}</h3>
                         <p className="mt-2 text-sm leading-7 text-slate-600">{step.description}</p>
                       </div>
@@ -321,12 +321,12 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
           </section>
 
           <section className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-24">
-            <div className="glass-panel overflow-hidden rounded-[2rem] border border-primary/20 bg-[linear-gradient(135deg,_rgba(59,130,246,0.95),_rgba(96,165,250,0.78))] px-8 py-10 text-white md:px-12 md:py-14">
+            <div className="glass-panel overflow-hidden rounded-[2rem] border border-primary/20 bg-gradient-to-r from-primary-dark to-primary px-8 py-10 text-white md:px-12 md:py-14">
               <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
                 <div className="max-w-2xl">
-                  <p className="text-xs font-black uppercase tracking-[0.3em] text-sky-100">Acceso</p>
-                  <h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">Cuando quieras, pasas de esta landing al sistema operativo real.</h2>
-                  <p className="mt-4 text-base leading-7 text-sky-50/90 md:text-lg">La integración queda dentro de la misma SPA, sin saltos raros entre proyectos ni rutas rotas.</p>
+                  <p className="text-xs font-black uppercase tracking-[0.3em] text-sky-100">Acceso Seguro</p>
+                  <h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">Comience el análisis de retinografías hoy mismo.</h2>
+                  <p className="mt-4 text-base leading-7 text-sky-50/90 md:text-lg">Inicie sesión de manera segura con sus credenciales autorizadas de la Universidad del Norte para acceder al panel médico y consultar el historial.</p>
                 </div>
 
                 <button
