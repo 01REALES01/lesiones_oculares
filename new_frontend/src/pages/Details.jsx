@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search } from 'lucide-react';
@@ -233,6 +233,54 @@ export default function AnalysisDetail({
     anchor.remove();
   };
 
+  // NUEVO PONDERADO: Aplica un método de ponderación simple basado en la confianza de cada modelo para generar un consenso más equilibrado.
+  const aplicarPonderado = (itemPosibilities, pesos) => {
+    const weighted_pos = [];
+    if (!itemPosibilities || itemPosibilities.length === 0) return [0, 0, 0, 0, 0];
+
+    const n = itemPosibilities[0].length ?? 5;
+    for (let i = 0; i < n; i++) {
+      let suma = 0;
+      let sumaPesos = 0;
+
+      for (let j = 0; j < itemPosibilities.length; j++) {
+        const val = Number(itemPosibilities[j][i]) || 0;
+        const w = Number(pesos[j]) || 0;
+        suma += val;
+        sumaPesos += w;
+      }
+
+      const pos = sumaPesos > 0 ? suma / sumaPesos : 0;
+      weighted_pos.push(pos);
+    }
+
+    return weighted_pos;
+};
+
+const calculo_ponderado = () => {
+  const itemPosibilities = [];
+  const pesos = [];
+
+  Object.values(comparisonModels).forEach((item) => {
+    const mainPercent = Number(item.confidence_percent) || 0;
+    pesos.push(mainPercent);
+
+    // Compatibilidad: preferir `raw_probabilities`, fallback si existe typo
+    const raw = Array.isArray(item.raw_probabilities)
+      ? item.raw_probabilities
+      : Array.isArray(item.raw_posibilities)
+      ? item.raw_posibilities
+      : [];
+
+    const weightedRaw = raw.map((value) => (Number(value) || 0) * mainPercent);
+    itemPosibilities.push(weightedRaw);
+  });
+
+  const resultado = aplicarPonderado(itemPosibilities, pesos);
+  return resultado;
+};
+const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado() : null), [comparisonModels, hasComparison]);
+// HASTA AQUÍ NUEVO PONDERADO
   const handleExportExcel = async () => {
     if (!isBatch || !batch[0]?.batch_id) return;
     try {
@@ -535,7 +583,35 @@ export default function AnalysisDetail({
                       </div>
                     )}
 
-                    {/* Columnas de los Modelos */}
+                    {/* CARTA PONDERADO */}
+                    {hasComparison && consensusProbabilities && (
+                    <div className="p-6 border bg-white rounded-3xl shadow space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase">Consenso Ponderado</p>
+                          <p className="text-lg font-bold">Distribución conjunta por grado</p>
+                        </div>
+                        <div className="px-3 py-1 rounded-full text-xs font-semibold uppercase border">Consenso</div>
+                      </div>
+
+                      <div className="space-y-2">
+                        {probabilityLabels.map((label, idx) => {
+                          const value = normalizeProbability(consensusProbabilities[idx] ?? 0);
+                          return (
+                            <div key={`consensus-${idx}`} className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-slate-750">{label}</span>
+                                <span className="text-slate-700 font-semibold">{value.toFixed(1)}%</span>
+                              </div>
+                              <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border">
+                                <div className="h-full rounded-full bg-gradient-to-r from-sky-400 to-primary" style={{ width: `${value}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {comparisonModels.map((item) => {
                         const itemProbabilities = probabilityLabels.map((label, index) => ({
