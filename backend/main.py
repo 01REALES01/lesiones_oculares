@@ -1059,9 +1059,15 @@ async def _analyze_rd_comparison_impl(
             import base64
             # Mostramos la versión display_rgb (sin Ben Graham) pero recortada/redimensionada
             display_bgr = cv2.cvtColor(display_rgb, cv2.COLOR_RGB2BGR)
-            _, buffer = cv2.imencode(".jpg", display_bgr)
+            # se guarda la imagen original,sin ningun cambio
+            _, buffer = cv2.imencode(".jpg", img)
             img_base64 = base64.b64encode(buffer).decode("utf-8")
             result["uploaded_image_preview"] = f"data:image/jpeg;base64,{img_base64}"
+            # se guarda la imagen filtrada con ben graham
+            display_bgr_b = cv2.cvtColor(ben_graham_only_rgb, cv2.COLOR_RGB2BGR)
+            _, buffer = cv2.imencode(".jpg", display_bgr_b)
+            img_base642 = base64.b64encode(buffer).decode("utf-8")
+            result["uploaded_image_braham"] = f"data:image/jpeg;base64,{img_base642}"
 
             if await request.is_disconnected():
                 cancelled = True

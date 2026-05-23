@@ -6,9 +6,10 @@ import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import api, { analysisService } from '../services/api';
+import { SwitchToggle } from '../components/ui/SwitchToggle';
 
 const probabilityLabels = ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'];
-
+// Función para obtener la URL de la imagen original, ya sea desde el preview en base64 o construyendo la URL estática
 function getImageUrl(result) {
   if (!result) return null;
   if (result.uploaded_image_preview) return result.uploaded_image_preview;
@@ -30,6 +31,29 @@ function getImageUrl(result) {
   }
   
   return `${baseUrl}/images/${filename}`;
+}
+// Función similar para la imagen con filtro Ben-Graham, asumiendo que el backend la devuelve como uploaded_image_braham o tiene una ruta similar
+function getImageUrl_filtro(result) {
+  if (!result) return null;
+  if (result.uploaded_image_braham) return result.uploaded_image_braham;
+  
+  // Si no hay preview en base64, intentar construir la URL estática de la imagen
+  const filename = result.filename || result.summary?.filename;
+  if (!filename) return null;
+  
+  // Obtener URL base de la API
+  let baseUrl = 'http://127.0.0.1:8000';
+  try {
+    const apiBase = api?.defaults?.baseURL;
+    if (apiBase) {
+      // Si termina en /api, el mount está en el host base
+      baseUrl = apiBase.endsWith('/api') ? apiBase.substring(0, apiBase.length - 4) : apiBase;
+    }
+  } catch (e) {
+    console.error("Error getting baseURL:", e);
+  }
+  
+  return `${baseUrl}/images_braham/${filename}`;
 }
 
 function normalizeProbability(value) {
@@ -160,6 +184,15 @@ export default function AnalysisDetail({
 }) {
   const reportRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  // hooks para controlar que foto se muestra
+  const [usarOriginal, setUsarOriginal] = useState(true);
+  const [foto, setFoto] = useState(null);
+  // función para el botón, para que cambie de estado y muestre la imagen filtrada o la original
+  const handleToggle = (file) => {
+    const nuevoEstado = !usarOriginal;
+    setUsarOriginal(nuevoEstado);
+    setFoto(nuevoEstado?0:1);
+  };
 
   if (!result) return null;
 
@@ -259,23 +292,15 @@ export default function AnalysisDetail({
 
     let suma = 0;
     let sumaPesos = 0;
-
     for (let j = 0; j < itemPosibilities.length; j++) {
-
       const raw =
         Number(itemPosibilities[j][i]) || 0;
-
       let peso =
         Number(pesos[j]) || 0;
-
       // BOOST POR CONSENSO
-
       if (predictedClasses[j] === i) {
-
         const rep = repetitions[i] || 0;
-
         if (rep > 1) {
-
           // boost
           peso *= 1 + ((rep - 1) * 0.1);
         }
@@ -618,12 +643,18 @@ const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado(
                     {!hideImage && getImageUrl(result) && (
                       <div className="p-4 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
                         <div className="space-y-3">
+                          <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Retinografía analizada</p>
+                          <div className="flex items-center gap-2">
+                            {"div para los elementos del texto y el switch para mostrar foto original o filtrada"}
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
+                          <SwitchToggle active={usarOriginal} onToggle={handleToggle}/></div>
+                          </div>
                           <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center min-h-[220px]">
                             <ZoomableImage
-                              src={getImageUrl(result)}
+                              src={foto ? getImageUrl(result) : getImageUrl_filtro(result)}
                               alt="Retinografia analizada"
-                              className="max-h-[300px]"
+                              className="max-h-[900px]"
                             />
                           </div>
                         </div>
