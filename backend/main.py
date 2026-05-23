@@ -24,6 +24,10 @@ from fastapi.staticfiles import StaticFiles
 from backend.roble_db import roble_insert
 from backend.roble_db import ensure_user_exists
 from backend.roble_db import save_analysis_to_roble
+from backend.roble_db import roble_delete_record
+from backend.roble_db import list_user_analyses_from_roble
+from backend.roble_db import roble_delete_batch
+from backend.roble_db import roble_delete_all_user_history
 
 try:
     import anthropic as anthropic_sdk
@@ -66,7 +70,6 @@ from backend.auth import (
     get_user, verify_password, oauth2_scheme, ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
-from backend.roble_db import list_user_analyses_from_roble
 
 import httpx
 
@@ -507,33 +510,92 @@ async def history(
 
 
 @app.delete("/history")
-async def reset_history(current_user: User = Depends(get_current_user)):
-    """Elimina historial completo y reinicia métricas globales del dashboard."""
-    result = clear_history(delete_images=True)
-    return {
-        "ok": True,
-        "message": "Historial reiniciado correctamente.",
-        **result,
-    }
+async def reset_history(
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    """Elimina historial completo del usuario autenticado."""
+    try:
+        result = await roble_delete_all_user_history(
+            token=token,
+            user_email=current_user.email,
+        )
+
+        return {
+            "ok": True,
+            "message": "Historial reiniciado correctamente.",
+            **result,
+        }
+
+    except Exception as e:
+        print("ERROR ELIMINANDO HISTORIAL:", str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo limpiar el historial.",
+        )
 
 
 @app.delete("/history/{inference_id}")
-async def delete_single_inference(inference_id: str, current_user: User = Depends(get_current_user)):
-    """Elimina un análisis específico del historial."""
-    from backend.store import delete_inference
-    success = delete_inference(inference_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Análisis no encontrado")
-    return {"ok": True, "message": "Análisis eliminado correctamente."}
+async def delete_single_inference(
+    inference_id: str,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    try:
+        result = await roble_delete_record(
+            token=token,
+            table_name="analisis_retina",
+            id_column="inference_id",
+            id_value=inference_id,
+        )
+
+        return {
+            "ok": True,
+            "message": "Análisis eliminado correctamente.",
+            "deleted": result,
+        }
+
+    except Exception as e:
+        print("ERROR ELIMINANDO ANALISIS EN ROBLE:", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo eliminar el análisis en la base de datos.",
+        )
 
 
 @app.delete("/batches/{batch_id}")
-async def delete_entire_batch(batch_id: str, current_user: User = Depends(get_current_user)):
-    """Elimina todas las inferencias asociadas a un lote."""
-    count = delete_batch(batch_id)
-    if count == 0:
-        raise HTTPException(status_code=404, detail="Lote no encontrado o vacío")
-    return {"ok": True, "message": f"Lote eliminado correctamente ({count} análisis)."}
+async def delete_entire_batch(
+    batch_id: str,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    """Elimina todas las inferencias asociadas a un lote en ROBLE DB."""
+    try:
+        result = await roble_delete_batch(
+            token=token,
+            batch_id=batch_id,
+            user_email=current_user.email,
+        )
+
+        if result["deleted_count"] == 0:
+            raise HTTPException(status_code=404, detail="Lote no encontrado o vacío")
+
+        return {
+            "ok": True,
+            "message": f"Lote eliminado correctamente ({result['deleted_count']} análisis).",
+            "deleted": result,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print("ERROR ELIMINANDO LOTE EN ROBLE:", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo eliminar el lote en la base de datos.",
+        )
 
 
 @app.get("/batches/{batch_id}")

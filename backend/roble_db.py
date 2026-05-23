@@ -253,3 +253,97 @@ async def list_user_analyses_from_roble(
         )
 
     return final_items[offset: offset + limit]
+
+async def roble_delete_record(
+    token: str,
+    table_name: str,
+    id_column: str,
+    id_value: str,
+) -> Dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            "DELETE",
+            f"{ROBLE_DATABASE_BASE}/{settings.roble_db_name}/delete",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "tableName": table_name,
+                "idColumn": id_column,
+                "idValue": id_value,
+            },
+            timeout=15.0,
+        )
+
+    if response.status_code not in (200, 201):
+        raise Exception(f"Error eliminando en ROBLE DB: {response.text}")
+
+    return response.json()
+
+async def roble_delete_batch(
+    token: str,
+    batch_id: str,
+    user_email: str,
+) -> Dict[str, Any]:
+    rows = await roble_read_records(
+        token=token,
+        table_name="analisis_retina",
+        filters={
+            "batch_id": batch_id,
+            "usuario_email": user_email,
+        },
+    )
+
+    deleted = []
+
+    for row in rows:
+        inference_id = row.get("inference_id")
+
+        if not inference_id:
+            continue
+
+        result = await roble_delete_record(
+            token=token,
+            table_name="analisis_retina",
+            id_column="inference_id",
+            id_value=inference_id,
+        )
+
+        deleted.append(result)
+
+    return {
+        "batch_id": batch_id,
+        "deleted_count": len(deleted),
+        "deleted": deleted,
+    }
+    
+async def roble_delete_all_user_history(
+    token: str,
+    user_email: str,
+) -> Dict[str, Any]:
+    rows = await roble_read_records(
+        token=token,
+        table_name="analisis_retina",
+        filters={
+            "usuario_email": user_email,
+        },
+    )
+
+    deleted = []
+
+    for row in rows:
+        inference_id = row.get("inference_id")
+
+        if not inference_id:
+            continue
+
+        result = await roble_delete_record(
+            token=token,
+            table_name="analisis_retina",
+            id_column="inference_id",
+            id_value=inference_id,
+        )
+
+        deleted.append(result)
+
+    return {
+        "deleted_count": len(deleted),
+    }
