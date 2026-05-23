@@ -35,13 +35,46 @@ api.interceptors.request.use((config) => {
 // Interceptor de respuesta: Manejo de errores globales (ej: 401)
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401 && !error.config.url.includes('/token')) {
-      // Token expirado o inválido: Limpiar y redirigir
+  async (error) => {
+    const originalRequest = error.config;
+
+    const isUnauthorized = error.response && error.response.status === 401;
+    const isAuthEndpoint =
+      originalRequest?.url?.includes('/token') ||
+      originalRequest?.url?.includes('/refresh-token') ||
+      originalRequest?.url?.includes('/logout');
+
+    if (isUnauthorized && !isAuthEndpoint && !originalRequest._retry) {
+      originalRequest._retry = true;
+
+      const refreshToken = localStorage.getItem('refreshToken');
+
+      if (refreshToken) {
+        try {
+          const refreshResponse = await axios.post(
+            `${getApiBaseURL()}/refresh-token`,
+            { refresh_token: refreshToken },
+            { headers: { 'Content-Type': 'application/json' } }
+          );
+
+          const newAccessToken = refreshResponse.data.access_token;
+
+          localStorage.setItem('token', newAccessToken);
+
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+          return api(originalRequest);
+        } catch (refreshError) {
+          console.error('No se pudo renovar el token:', refreshError);
+        }
+      }
+
       localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
       sessionStorage.setItem('session_expired', 'true');
-      window.location.reload(); // Esto forzará al App.jsx a mostrar el Login
+      window.location.reload();
     }
+
     return Promise.reject(error);
   }
 );
@@ -55,10 +88,18 @@ export const authService = {
     const response = await api.post('/token', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
-    return response.data;
-  },
+    if (response.data.refresh_token) {
+      localStorage.setItem('refreshToken', response.data.refresh_token);
+    }
+
+    return response.data;  },
   logout: async () => {
-    return await api.post('/logout');
+    try {
+      return await api.post('/logout');
+    } finally {
+      localStorage.removeItem('token');
+      localStorage.removeItem('refreshToken');
+    }
   }
 };
 

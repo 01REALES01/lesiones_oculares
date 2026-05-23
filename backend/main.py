@@ -32,6 +32,11 @@ from backend.roble_db import roble_delete_all_user_history
 from backend.roble_db import get_user_stats_from_roble
 from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
 
+from pydantic import BaseModel
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
+    
 try:
     import anthropic as anthropic_sdk
 except ImportError:
@@ -1674,3 +1679,34 @@ async def test_roble_db(
         "insert_result": result,
         "record": record,
     }
+    
+@app.post("/refresh-token")
+async def refresh_token(payload: RefreshTokenRequest):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.roble_auth_base}/{settings.roble_db_name}/refresh-token",
+                json={
+                    "refreshToken": payload.refresh_token,
+                },
+                timeout=10.0,
+            )
+
+        if response.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token inválido o expirado",
+            )
+
+        data = response.json()
+
+        return {
+            "access_token": data["accessToken"],
+            "token_type": "bearer",
+        }
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="No se pudo conectar con ROBLE.",
+        )
