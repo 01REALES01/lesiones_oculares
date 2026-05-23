@@ -12,6 +12,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+import shutil
 
 # En memoria; clave = inference_id, valor = registro completo
 _inference_store: Dict[str, Dict[str, Any]] = {}
@@ -19,7 +20,7 @@ _inference_store: Dict[str, Dict[str, Any]] = {}
 _inference_ids_order: List[str] = []
 _MAX_IN_MEMORY = 500  # límite de registros en memoria
 _DATA_FILE = Path(__file__).resolve().parent.parent / "data" / "inferences.json"
-_IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "images"
+_IMAGES_DIR = Path(__file__).resolve().parent.parent / "data" / "images_braham"
 # Misma ruta que usa save_image_to_disk; expuesta para StaticFiles en main
 IMAGES_DIR = _IMAGES_DIR
 
@@ -27,12 +28,27 @@ IMAGES_DIR = _IMAGES_DIR
 def _ensure_data_dir() -> None:
     _DATA_FILE.parent.mkdir(parents=True, exist_ok=True)
     _IMAGES_DIR.mkdir(parents=True, exist_ok=True)
-
-
+    
 def save_image_to_disk(img_bytes: bytes, filename: str) -> str:
     """Simula guardado (deshabilitado por petición del usuario)."""
     file_id = f"no_save_{uuid.uuid4().hex}"
+
+def save_image_to_disk2(img_bytes: bytes, filename: str) -> str:
+    _ensure_data_dir()
+    safe_name = Path(filename).name
+    file_id = f"{uuid.uuid4().hex}_{safe_name}"
+    file_path = _IMAGES_DIR / file_id
+    file_path.write_bytes(img_bytes)
     return file_id
+
+
+def clear_images_dir() -> None:
+    _ensure_data_dir()
+    for item in _IMAGES_DIR.iterdir():
+        if item.is_file():
+            item.unlink()
+        elif item.is_dir():
+            shutil.rmtree(item)
 
 
 def _load_from_file() -> None:
