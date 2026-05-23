@@ -660,6 +660,7 @@ const calculatedConsensusGrade = useMemo(() => {
                           <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center min-h-[220px]">
                             <ZoomableImage
                               src={foto ? getImageUrl(result) : getImageUrl_filtro(result)}
+                              src={foto ? getImageUrl(result) : getImageUrl_filtro(result)}
                               alt="Retinografia analizada"
                               className="max-h-[900px]"
                             />
