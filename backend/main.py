@@ -66,6 +66,8 @@ from backend.auth import (
     get_user, verify_password, oauth2_scheme, ACCESS_TOKEN_EXPIRE_MINUTES
 )
 
+from backend.roble_db import list_user_analyses_from_roble
+
 import httpx
 
 MODEL_RUNTIME_METADATA = {}
@@ -478,14 +480,30 @@ async def history(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
 ):
-    return {
-        "inferences": list_inferences(
+    try:
+        inferences = await list_user_analyses_from_roble(
+            token=token,
+            user_email=current_user.email,
             limit=limit,
             offset=offset,
-            user_email=current_user.email,
         )
-    }
+        
+        print("PRIMERA INFERENCIA HISTORY:", inferences[0] if inferences else "VACIO")
+        return {"inferences": inferences}
+        
+
+    except Exception as e:
+        print("ERROR LEYENDO HISTORIAL DESDE ROBLE:", str(e))
+        return {
+            "inferences": list_inferences(
+                limit=limit,
+                offset=offset,
+                user_email=current_user.email,
+            ),
+            "source": "local_fallback",
+        }
 
 
 @app.delete("/history")
