@@ -347,3 +347,65 @@ async def roble_delete_all_user_history(
     return {
         "deleted_count": len(deleted),
     }
+    
+async def get_user_stats_from_roble(
+    token: str,
+    user_email: str,
+) -> Dict[str, Any]:
+    rows = await roble_read_records(
+        token=token,
+        table_name="analisis_retina",
+        filters={"usuario_email": user_email},
+    )
+
+    total = len(rows)
+
+    if total == 0:
+        return {
+            "total_analyses": 0,
+            "rd_detected_percent": 0,
+            "avg_confidence": 0,
+            "avg_latency_ms": 0,
+        }
+
+    rd_detected = 0
+    confidence_sum = 0
+    confidence_count = 0
+    latency_sum = 0
+    latency_count = 0
+
+    for row in rows:
+        result = row.get("result_json") or {}
+
+        if isinstance(result, str):
+            import json
+            result = json.loads(result)
+
+        predicted_class = result.get("predicted_class")
+        if predicted_class is not None and int(predicted_class) > 0:
+            rd_detected += 1
+
+        confidence = row.get("confidence_percent") or result.get("confidence_percent")
+        if confidence is not None:
+            confidence_sum += float(confidence)
+            confidence_count += 1
+
+        comparisons = result.get("model_comparisons", [])
+        for comp in comparisons:
+            latency = comp.get("inference_time_ms")
+            if latency is not None:
+                latency_sum += float(latency)
+                latency_count += 1
+    
+    if total > 0:
+        rd_percent = round((rd_detected / total) * 100, 1)
+    else:
+        rd_percent = 0
+
+    return {
+        "total_analyses": total,
+        "rd_detected_percent": rd_percent,
+        "rd_detected_rate": rd_percent,
+        "avg_confidence": round(confidence_sum / confidence_count, 1) if confidence_count else 0,
+        "avg_latency_ms": round(latency_sum / latency_count, 1) if latency_count else 0,
+    }
