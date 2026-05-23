@@ -999,7 +999,8 @@ async def _analyze_rd_comparison_impl(
     inferences_to_save = []
     batch_id = str(uuid.uuid4())
     cancelled = False
-    clear_images_dir()  # Limpiar imágenes temporales antes de procesar el nuevo lote
+    # No limpiar imágenes para que no desaparezca el historial al recargar
+    # clear_images_dir()
 
     for file in files:
         if await request.is_disconnected():
@@ -1077,19 +1078,12 @@ async def _analyze_rd_comparison_impl(
 
             result = _build_rd_comparison_result(file.filename, selected_models, model_results, analysis_timestamp)
             
-            # Devolver Base64 para previsualización inmediata sin guardar en disco
-            import base64
-            # Mostramos la versión display_rgb (sin Ben Graham) pero recortada/redimensionada
-            display_bgr = cv2.cvtColor(display_rgb, cv2.COLOR_RGB2BGR)
-            # se guarda la imagen original,sin ningun cambio
+            # Enviar solo las rutas relativas para evitar problemas de memoria en el frontend
             _, buffer = cv2.imencode(".jpg", img)
-            img_base64 = base64.b64encode(buffer).decode("utf-8")
-            result["uploaded_image_preview"] = f"data:image/jpeg;base64,{img_base64}"
-            # se guarda la imagen filtrada con ben graham
-            display_bgr_b = cv2.cvtColor(ben_graham_only_rgb, cv2.COLOR_RGB2BGR)
-            _, buffer = cv2.imencode(".jpg", display_bgr_b)
-            img_base642 = base64.b64encode(buffer).decode("utf-8")
-            result["uploaded_image_braham"] = f"data:image/jpeg;base64,{img_base642}"
+            original_img_id = save_image_to_disk(buffer.tobytes(), f"orig_{file.filename}")
+            
+            result["uploaded_image_preview"] = f"/images/{original_img_id}"
+            result["uploaded_image_braham"] = f"/images/{ben_graham_only_image_id}"
 
             if await request.is_disconnected():
                 cancelled = True

@@ -30,8 +30,12 @@ def _ensure_data_dir() -> None:
     _IMAGES_DIR.mkdir(parents=True, exist_ok=True)
     
 def save_image_to_disk(img_bytes: bytes, filename: str) -> str:
-    """Simula guardado (deshabilitado por petición del usuario)."""
-    file_id = f"no_save_{uuid.uuid4().hex}"
+    _ensure_data_dir()
+    safe_name = Path(filename).name
+    file_id = f"{uuid.uuid4().hex}_original_{safe_name}"
+    file_path = _IMAGES_DIR / file_id
+    file_path.write_bytes(img_bytes)
+    return file_id
 
 def save_image_to_disk2(img_bytes: bytes, filename: str) -> str:
     _ensure_data_dir()

@@ -38,7 +38,15 @@ function AppContent() {
   const [view, setView] = useState(() => {
     return sessionStorage.getItem('view') || 'main'; // main | detail
   });
+  const [forceHideImage, setForceHideImage] = useState(false);
   const analysisState = useAnalysis();
+
+  // Reset to dashboard if reloaded while viewing recent analysis detail
+  useEffect(() => {
+    if (activeTab === 'dashboard' && view === 'detail') {
+      setView('main');
+    }
+  }, []);
   useEffect(() => {
     if (!token) {
       analysisState.setResults(null);
@@ -108,12 +116,13 @@ function AppContent() {
     return <Login onGoLanding={() => { sessionStorage.setItem('screen', 'landing'); setShowLanding(true); }} />;
   }
 
-  const navigateToDetail = (results, index = 0) => {
+  const navigateToDetail = (results, index = 0, options = {}) => {
     // Si viene de un solo resultado (como Historial), lo envolvemos en un array
     const batch = Array.isArray(results) ? results : [results];
     setResultBatch(batch);
     setCurrentIndex(index);
     setView('detail');
+    setForceHideImage(!!options.hideImage);
   };
 
   const nextResult = () => {
@@ -215,7 +224,7 @@ function AppContent() {
                   onPrev={prevResult}
                   onBack={() => setView('main')} 
                   onDelete={handleDeleteDetail}
-                  hideImage={activeTab === 'history'}
+                  hideImage={activeTab === 'history' || forceHideImage}
                 />
               </motion.div>
             )}

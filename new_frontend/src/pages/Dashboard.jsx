@@ -183,7 +183,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     },
   });
 
-  const openHistoryItem = async (historyItem, forceBatch = false) => {
+  const openHistoryItem = async (historyItem, forceBatch = false, hideImage = true) => {
     try {
       const isBatchByFlags = Boolean(
         historyItem.is_batch ||
@@ -196,7 +196,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         const mappedBatch = (fullBatch || []).map(mapRecordToDetail);
 
         if (mappedBatch.length > 0) {
-          onViewDetail(mappedBatch, 0);
+          onViewDetail(mappedBatch, 0, { hideImage });
         }
         return;
       }
@@ -208,12 +208,12 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         const fullBatch = await analysisService.getBatch(fullRecord.batch_id || historyItem.batch_id);
         const mappedBatch = (fullBatch || []).map(mapRecordToDetail);
         if (mappedBatch.length > 0) {
-          onViewDetail(mappedBatch, 0);
+          onViewDetail(mappedBatch, 0, { hideImage });
           return;
         }
       }
 
-      onViewDetail(mapRecordToDetail(fullRecord));
+      onViewDetail(mapRecordToDetail(fullRecord), 0, { hideImage });
     } catch (fetchError) {
       console.error(fetchError);
     }
@@ -330,6 +330,20 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           <div className="space-y-6 lg:col-span-7 xl:col-span-8">
             <GlassCard className="border border-slate-200/60 bg-white/85 p-0 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
               <div className="space-y-0 p-6 sm:p-8">
+                {/* Tip de uso clínico reubicado */}
+                <GlassCard className="bg-slate-900 border border-slate-800 p-5 shadow-xl rounded-3xl relative overflow-hidden mb-6">
+                  <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
+                    <Info size={120} className="text-white" />
+                  </div>
+                  <div className="flex items-center gap-2 mb-2 text-primary">
+                    <Info size={16} />
+                    <h4 className="font-extrabold text-[10px] uppercase tracking-widest text-primary">Tip de Uso Clínico</h4>
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                    Use imágenes nítidas, retinocentradas e iluminación homogénea. Active varios modelos para comparar la señal de riesgo de retinopatía diabética.
+                  </p>
+                </GlassCard>
+
                 {files.length > 0 && (
                   <div className="mb-4 flex justify-end">
                     <button
@@ -612,24 +626,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               </div>
             </GlassCard>
 
-            {/* Tip de uso clínico reubicado */}
-            <GlassCard className="bg-slate-900 border border-slate-800 p-5 shadow-xl rounded-3xl relative overflow-hidden">
-              <div className="absolute top-0 right-0 p-4 opacity-5 pointer-events-none">
-                <Info size={120} className="text-white" />
-              </div>
-              <div className="flex items-center gap-2 mb-2 text-primary">
-                <Info size={16} />
-                <h4 className="font-extrabold text-[10px] uppercase tracking-widest text-primary">Tip de Uso Clínico</h4>
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                Use imágenes nítidas, retinocentradas e iluminación homogénea. Active varios modelos para comparar la señal de riesgo de retinopatía diabética.
-              </p>
-            </GlassCard>
-
             <button
               type="button"
               onClick={() => {
-                if (recentHistory[0]) openHistoryItem(recentHistory[0]);
+                if (recentHistory[0]) openHistoryItem(recentHistory[0], false, false);
               }}
               disabled={!recentHistory[0]}
               className="w-full text-left"
@@ -702,7 +702,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                       <div key={i} className="space-y-2">
                         <div
                           role="button"
-                          onClick={() => openHistoryItem(item)}
+                          onClick={() => openHistoryItem(item, false, true)}
                           className="w-full group p-3 rounded-2xl border border-transparent hover:border-primary/20 hover:bg-primary/5 transition-all text-left flex items-center gap-3 cursor-pointer"
                         >
                           <div

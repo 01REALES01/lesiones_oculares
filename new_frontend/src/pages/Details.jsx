@@ -9,49 +9,53 @@ import api, { analysisService } from '../services/api';
 import { SwitchToggle } from '../components/ui/SwitchToggle';
 
 const probabilityLabels = ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'];
-// Función para obtener la URL de la imagen original, ya sea desde el preview en base64 o construyendo la URL estática
 function getImageUrl(result) {
   if (!result) return null;
-  if (result.uploaded_image_preview) return result.uploaded_image_preview;
   
-  // Si no hay preview en base64, intentar construir la URL estática de la imagen
-  const filename = result.filename || result.summary?.filename;
-  if (!filename) return null;
-  
-  // Obtener URL base de la API
   let baseUrl = 'http://127.0.0.1:8000';
   try {
     const apiBase = api?.defaults?.baseURL;
     if (apiBase) {
-      // Si termina en /api, el mount está en el host base
       baseUrl = apiBase.endsWith('/api') ? apiBase.substring(0, apiBase.length - 4) : apiBase;
     }
   } catch (e) {
     console.error("Error getting baseURL:", e);
   }
+
+  let preview = result.uploaded_image_preview;
+  if (preview) {
+    if (preview.startsWith('/')) return `${baseUrl}${preview}`;
+    return preview;
+  }
+  
+  const filename = result.filename || result.summary?.filename;
+  if (!filename) return null;
   
   return `${baseUrl}/images/${filename}`;
 }
+
 // Función similar para la imagen con filtro Ben-Graham, asumiendo que el backend la devuelve como uploaded_image_braham o tiene una ruta similar
 function getImageUrl_filtro(result) {
   if (!result) return null;
-  if (result.uploaded_image_braham) return result.uploaded_image_braham;
-  
-  // Si no hay preview en base64, intentar construir la URL estática de la imagen
-  const filename = result.filename || result.summary?.filename;
-  if (!filename) return null;
-  
-  // Obtener URL base de la API
+
   let baseUrl = 'http://127.0.0.1:8000';
   try {
     const apiBase = api?.defaults?.baseURL;
     if (apiBase) {
-      // Si termina en /api, el mount está en el host base
       baseUrl = apiBase.endsWith('/api') ? apiBase.substring(0, apiBase.length - 4) : apiBase;
     }
   } catch (e) {
     console.error("Error getting baseURL:", e);
   }
+
+  let preview = result.uploaded_image_braham;
+  if (preview) {
+    if (preview.startsWith('/')) return `${baseUrl}${preview}`;
+    return preview;
+  }
+  
+  const filename = result.filename || result.summary?.filename;
+  if (!filename) return null;
   
   return `${baseUrl}/images_braham/${filename}`;
 }
