@@ -10,6 +10,7 @@ API principal: plataforma de análisis de retinografías.
 import asyncio
 import time
 import uuid
+import copy
 from typing import Any, List, Optional
 from datetime import timedelta, datetime, timezone
 
@@ -605,9 +606,18 @@ async def get_batch_by_id(
     return records
 
 @app.get("/export/batch/{batch_id}/excel")
-async def export_batch_to_excel(batch_id: str, current_user: User = Depends(get_current_user)):
+async def export_batch_to_excel(
+    batch_id: str,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
     """Exporta los datos de un lote a un archivo Excel."""
-    records = get_batch(batch_id)
+    records = await get_batch_from_roble(
+        token=token,
+        batch_id=batch_id,
+        user_email=current_user.email,
+    )
+
     if not records:
         raise HTTPException(status_code=404, detail="Batch not found")
     
@@ -708,12 +718,21 @@ async def export_batch_to_excel(batch_id: str, current_user: User = Depends(get_
 
 
 @app.get("/export-pdf/{inference_id}")
-async def export_pdf(inference_id: str, current_user: User = Depends(get_current_user)):
+async def export_pdf(
+    inference_id: str,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
     from fpdf import FPDF
     import base64
     from io import BytesIO
 
-    record = get_inference(inference_id)
+    record = await get_analysis_from_roble(
+        token=token,
+        inference_id=inference_id,
+        user_email=current_user.email,
+    )
+
     if not record:
         raise HTTPException(status_code=404, detail="Inference not found")
 
@@ -1193,6 +1212,9 @@ async def _analyze_rd_comparison_impl(
                 "roble_user_id": current_user.roble_user_id,
             })
             
+            result_for_db = copy.deepcopy(result)
+            result_for_db.pop("uploaded_image_preview", None)
+
             roble_record = {
                 "inference_id": inference_id,
                 "roble_user_id": current_user.roble_user_id,
@@ -1208,7 +1230,7 @@ async def _analyze_rd_comparison_impl(
                 "diagnosis": result.get("diagnosis"),
                 "confidence_percent": result.get("confidence_percent"),
                 "recommendation_short": result.get("recommendation_short"),
-                "result_json": result,
+                "result_json": result_for_db,
             }
 
             roble_response = await save_analysis_to_roble(
