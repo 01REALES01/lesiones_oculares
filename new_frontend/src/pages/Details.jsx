@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search } from 'lucide-react';
@@ -86,6 +86,23 @@ function getGradeStyle(grade) {
       return 'border-rose-500/45 bg-rose-500/10 text-rose-700 shadow-rose-500/5';
     default:
       return 'border-slate-300/45 bg-slate-100/10 text-slate-700';
+  }
+}
+
+function getGradeGradient(grade) {
+  switch (grade) {
+    case 0:
+      return 'from-emerald-600 to-emerald-500 shadow-emerald-500/25 hover:shadow-emerald-500/45';
+    case 1:
+      return 'from-primary-dark to-primary shadow-primary/25 hover:shadow-primary/45';
+    case 2:
+      return 'from-amber-500 to-amber-400 shadow-amber-500/25 hover:shadow-amber-500/45';
+    case 3:
+      return 'from-orange-500 to-orange-400 shadow-orange-500/25 hover:shadow-orange-500/45';
+    case 4:
+      return 'from-rose-600 to-rose-500 shadow-rose-500/25 hover:shadow-rose-500/45';
+    default:
+      return 'from-slate-600 to-slate-500 shadow-slate-500/25 hover:shadow-slate-500/45';
   }
 }
 
@@ -187,6 +204,61 @@ export default function AnalysisDetail({
     value: normalizeProbability(primaryResult.raw_probabilities?.[index] ?? result.raw_probabilities?.[index] ?? 0),
   }));
   const singleHasProbabilityData = singleProbabilities.some((item) => item.value > 0);
+
+  // PONDERADO:
+  const aplicarPonderado = (itemPosibilities, pesos, predictedClasses) => {
+    if (!itemPosibilities || itemPosibilities.length === 0) return [0, 0, 0, 0, 0];
+    const weighted_pos = [];
+    const repetitions = {};
+    predictedClasses.forEach((cls) => {
+      repetitions[cls] = (repetitions[cls] || 0) + 1;
+    });
+    const n = itemPosibilities[0].length ?? 5;
+    for (let i = 0; i < n; i++) {
+      let suma = 0;
+      let sumaPesos = 0;
+      for (let j = 0; j < itemPosibilities.length; j++) {
+        const raw = Number(itemPosibilities[j][i]) || 0;
+        let peso = Number(pesos[j]) || 0;
+        if (predictedClasses[j] === i) {
+          const rep = repetitions[i] || 0;
+          if (rep > 1) peso *= 1 + ((rep - 1) * 0.1);
+        }
+        suma += raw * peso;
+        sumaPesos += peso;
+      }
+      const pos = sumaPesos > 0 ? suma / sumaPesos : 0;
+      weighted_pos.push(pos);
+    }
+    return weighted_pos;
+  };
+
+  const calculo_ponderado = () => {
+    const itemPosibilities = [];
+    const pesos = [];
+    const predictedClasses = [];
+    Object.values(comparisonModels).forEach((item) => {
+      const confidence = Number(item.confidence_percent) || 0;
+      pesos.push(confidence);
+      predictedClasses.push(Number(item.predicted_class));
+      const raw = Array.isArray(item.raw_probabilities)
+        ? item.raw_probabilities
+        : Array.isArray(item.raw_posibilities)
+        ? item.raw_posibilities
+        : [];
+      itemPosibilities.push(raw);
+    });
+    return aplicarPonderado(itemPosibilities, pesos, predictedClasses);
+  };
+  const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado() : null), [comparisonModels, hasComparison]);
+
+  const calculatedConsensusGrade = useMemo(() => {
+    if (hasComparison && consensusProbabilities) {
+      const maxVal = Math.max(...consensusProbabilities);
+      if (maxVal > 0) return consensusProbabilities.indexOf(maxVal);
+    }
+    return summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
+  }, [hasComparison, consensusProbabilities, primaryResult, result, summary]);
 
   const handlePrint = async () => {
     setIsGeneratingPdf(true);
@@ -325,7 +397,7 @@ export default function AnalysisDetail({
             {/* PANEL IZQUIERDO */}
             <div className="xl:col-span-4 space-y-6">
               <div className="space-y-1">
-                <h2 className="text-3xl font-black text-slate-955">Veredicto Clinico</h2>
+                <h2 className="text-3xl font-black text-slate-955">Diagnóstico de Soporte</h2>
                 {showReportId && (
                   <p className="text-sm text-slate-900 font-semibold uppercase tracking-widest">
                     Nombre del archivo: <span className="text-primary-dark font-bold">{result.filename || result.summary?.filename || 'Sin nombre'}</span>
@@ -335,22 +407,18 @@ export default function AnalysisDetail({
                   <span className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
                     Fecha: {formatTimestamp(timestamp)}
                   </span>
-                  <span className="text-slate-500 font-normal">|</span>
-                  <span className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
-                    Latencia media: {Number.isFinite(averageLatency) ? `${averageLatency.toFixed(2)} ms` : 'N/A'}
-                  </span>
                 </div>
               </div>
 
               {/* Tarjeta de Riesgo Principal */}
-              <div className="relative overflow-hidden border-none text-white bg-gradient-to-r from-primary-dark to-primary shadow-xl shadow-primary/25 hover:shadow-primary/45 hover:-translate-y-0.5 transition-all duration-300 rounded-3xl p-6">
+              <div className={cn("relative overflow-hidden border-none text-white bg-gradient-to-r shadow-xl hover:-translate-y-0.5 transition-all duration-300 rounded-3xl p-6", getGradeGradient(calculatedConsensusGrade))}>
                 <div className="relative z-10 space-y-4">
                   <div className="flex items-center gap-2 opacity-95">
                     <ShieldCheck size={18} />
                     <span className="text-xs font-semibold uppercase tracking-widest">Resumen de Riesgo RD</span>
                   </div>
                   <div>
-                    <h3 className="text-4xl font-black uppercase tracking-tight">{riskLabel(activeRisk)}</h3>
+                    <h3 className="text-4xl font-black uppercase tracking-tight">{gradeToLabel(calculatedConsensusGrade)}</h3>
                     <p className="text-sm font-medium text-white/95 mt-1 leading-relaxed">
                       {hasComparison
                         ? `${summary.positive_models ?? 0} de ${summary.total_models ?? comparisonModels.length} modelos detectan retinopatia diabetica.`
@@ -373,46 +441,33 @@ export default function AnalysisDetail({
                     </div>
                   </div>
 
-                  {/* Lista de Modelos Comparados (Panel Izquierdo) */}
-                  {comparisonModels.map((item) => (
-                    <div key={item.model_id} className="p-6 bg-white border border-slate-300 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/45 hover:-translate-y-0.5 transition-all duration-300 rounded-3xl space-y-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-1">
-                          <span className="text-sm font-semibold text-slate-700 uppercase tracking-widest">{item.model_name}</span>
-                          <p className="text-xl font-bold text-slate-900">{item.diagnosis}</p>
-                          <div className="flex items-center gap-2 pt-0.5">
-                            <span className={cn(
-                              'w-fit px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider border backdrop-blur-xs',
-                              item.model_loaded 
-                                ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/30' 
-                                : 'bg-amber-500/10 text-amber-700 border-amber-500/30'
-                            )}>
-                              {item.model_loaded ? 'Modelo real' : 'Fallback'}
-                            </span>
-                          </div>
-                        </div>
-                        <div className={cn(
-                          'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]',
-                          getGradeStyle(item.predicted_class)
-                        )}>
-                          {gradeToLabel(item.predicted_class)}
-                        </div>
-                      </div>
-
-                      <div className="space-y-1.5 pt-1">
-                        <div className="flex items-center justify-between text-sm font-semibold text-slate-800">
-                          <span>Confianza</span>
-                          <span className="text-base font-bold text-primary-dark">{Number(item.confidence_percent).toFixed(1)}%</span>
-                        </div>
-                        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/30">
-                          <div 
-                            className="h-full rounded-full bg-gradient-to-r from-sky-400 to-primary transition-all duration-500 shadow-sm shadow-primary/10" 
-                            style={{ width: `${normalizeProbability(item.confidence_percent)}%` }} 
-                          />
-                        </div>
-                      </div>
+                  {/* Lista de Modelos Comparados (Panel Izquierdo) - REPLACED WITH VERTICAL TABLE */}
+                  <div className="p-5 bg-white border border-slate-300 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl overflow-hidden">
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left border-collapse">
+                        <thead>
+                          <tr className="border-b border-slate-200">
+                            <th className="py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Modelo</th>
+                            <th className="py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Diagnóstico</th>
+                            <th className="py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Confianza</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {comparisonModels.map((item, idx) => (
+                            <tr key={item.model_id} className={cn("border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors")}>
+                              <td className="py-3 px-3 text-[11px] font-black text-slate-900 uppercase">{item.model_name}</td>
+                              <td className="py-3 px-3">
+                                <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border whitespace-nowrap', getGradeStyle(item.predicted_class))}>
+                                  {gradeToLabel(item.predicted_class)}
+                                </span>
+                              </td>
+                              <td className="py-3 px-3 text-[11px] font-bold text-primary-dark">{Number(item.confidence_percent).toFixed(1)}%</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
-                  ))}
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -472,7 +527,7 @@ export default function AnalysisDetail({
                                     'h-full rounded-full transition-all duration-500',
                                     isActive
                                       ? 'bg-gradient-to-r from-sky-400 to-primary shadow-sm shadow-primary/10'
-                                      : 'bg-slate-200/60'
+                                      : 'bg-slate-300'
                                   )}
                                   style={{ width: `${item.value}%` }}
                                 />
@@ -535,69 +590,49 @@ export default function AnalysisDetail({
                       </div>
                     )}
 
-                    {/* Columnas de los Modelos */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {comparisonModels.map((item) => {
-                        const itemProbabilities = probabilityLabels.map((label, index) => ({
-                          label,
-                          value: normalizeProbability(item.raw_probabilities?.[index] ?? 0),
-                        }));
-                        return (
-                          <div key={item.model_id} className="p-6 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/45 hover:-translate-y-0.5 transition-all duration-300 rounded-3xl space-y-4">
-                            <div className="flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-sm font-semibold text-slate-700 uppercase tracking-widest">{item.model_name}</p>
-                                <p className="text-xl font-bold text-slate-900">{item.diagnosis}</p>
-                              </div>
-                              <span className={cn(
-                                'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]',
-                                getGradeStyle(item.predicted_class)
-                              )}>
-                                {gradeToLabel(item.predicted_class)}
-                              </span>
-                            </div>
 
-                            {/* Cajas de Confianza y Latencia */}
-                            <div className="grid grid-cols-2 gap-3">
-                              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 shadow-inner">
-                                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Confianza</p>
-                                <p className="text-xl font-bold text-slate-900 mt-0.5">{Number(item.confidence_percent).toFixed(1)}%</p>
-                              </div>
-                              <div className="rounded-2xl bg-slate-50 border border-slate-200 p-3 shadow-inner">
-                                <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">Latencia</p>
-                                <p className="text-xl font-bold text-slate-900 mt-0.5">{item.inference_time_ms.toFixed(2)} ms</p>
-                              </div>
-                            </div>
 
-                            {/* Distribución de Probabilidades */}
-                            <div className="space-y-2 pt-1">
-                              {itemProbabilities.map((probability) => {
-                                const isActive = probability.label === gradeToLabel(item.predicted_class);
-                                return (
-                                  <div key={`${item.model_id}-${probability.label}`} className="space-y-1">
-                                    <div className="flex items-center justify-between text-sm font-medium">
-                                      <span className={isActive ? 'text-slate-950 font-semibold' : 'text-slate-750 font-normal'}>{probability.label}</span>
-                                      <span className={isActive ? 'text-primary-dark font-semibold' : 'text-slate-700 font-normal'}>{probability.value.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/30">
-                                      <div
-                                        className={cn(
-                                          'h-full rounded-full transition-all duration-500',
-                                          isActive
-                                            ? 'bg-gradient-to-r from-sky-400 to-primary shadow-sm shadow-primary/10'
-                                            : 'bg-slate-200/60'
-                                        )}
-                                        style={{ width: `${probability.value}%` }}
-                                      />
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                    {/* CARTA PONDERADO */}
+                    {hasComparison && consensusProbabilities && (
+                      <div className="p-6 border bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:-translate-y-0.5 transition-all duration-300 rounded-3xl space-y-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-xl font-bold text-slate-900 uppercase">Consenso Ponderado</p>
+                            <p className="text-xs font-light text-slate-900">Distribución conjunta por grado</p>
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className={cn(
+                            'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]',
+                            getGradeStyle(calculatedConsensusGrade)
+                          )}>
+                            Consenso
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 pt-1">
+                          {probabilityLabels.map((label, idx) => {
+                            const value = normalizeProbability(consensusProbabilities[idx] ?? 0);
+                            const maxVal = Math.max(...consensusProbabilities);
+                            const isMax = consensusProbabilities[idx] === maxVal && maxVal > 0;
+                            return (
+                              <div key={`consensus-${idx}`} className="space-y-1">
+                                <div className="flex items-center justify-between text-sm font-medium">
+                                  <span className={isMax ? 'text-slate-950 font-semibold' : 'text-slate-750 font-normal'}>{label}</span>
+                                  <span className={isMax ? 'text-primary-dark font-semibold' : 'text-slate-700 font-normal'}>{value.toFixed(1)}%</span>
+                                </div>
+                                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/30">
+                                  <div className={cn(
+                                      'h-full rounded-full transition-all duration-500',
+                                      isMax
+                                        ? 'bg-gradient-to-r from-sky-400 to-primary shadow-sm shadow-primary/10'
+                                        : 'bg-slate-300'
+                                    )} style={{ width: `${value}%` }} />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className={cn(

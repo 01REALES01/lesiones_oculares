@@ -320,11 +320,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <StatsCard title="Analisis totales" value={globalStats.total_analyses.toString()} icon={Activity} />
           <StatsCard title="RD detectada" value={`${globalStats.rd_detected_rate}%`} icon={AlertCircle} delay={0.1} />
           <StatsCard title="Confianza" value={`${globalStats.avg_confidence}%`} icon={CheckCircle2} delay={0.2} />
-          <StatsCard title="Latencia" value={`${globalStats.avg_latency_ms}ms`} icon={Clock} delay={0.3} />
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
@@ -544,15 +543,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   onToggle={() => toggleModel('densenet169', !models.densenet169)}
                 />
                 <ModelRow
-                  id="resnet"
-                  labelId="lbl-resnet"
-                  icon={ScanEye}
-                  title="ResNet50"
-                  sub="Balance residuo y velocidad"
-                  active={models.resnet50}
-                  onToggle={() => toggleModel('resnet50', !models.resnet50)}
-                />
-                <ModelRow
                   id="xception"
                   labelId="lbl-xception"
                   icon={Radio}
@@ -560,6 +550,15 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   sub="Convoluciones separables en profundidad"
                   active={models.xception}
                   onToggle={() => toggleModel('xception', !models.xception)}
+                />
+                <ModelRow
+                  id="mobilenetv3"
+                  labelId="lbl-mobilenetv3"
+                  icon={Activity}
+                  title="MobileNetV3"
+                  sub="Arquitectura optimizada y ligera"
+                  active={models.mobilenetv3}
+                  onToggle={() => toggleModel('mobilenetv3', !models.mobilenetv3)}
                 />
               </ul>
 
