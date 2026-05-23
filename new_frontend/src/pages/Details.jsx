@@ -233,51 +233,98 @@ export default function AnalysisDetail({
     anchor.remove();
   };
 
-  // NUEVO PONDERADO: Aplica un método de ponderación simple basado en la confianza de cada modelo para generar un consenso más equilibrado.
-  const aplicarPonderado = (itemPosibilities, pesos) => {
-    const weighted_pos = [];
-    if (!itemPosibilities || itemPosibilities.length === 0) return [0, 0, 0, 0, 0];
+  // PONDERADO:
 
-    const n = itemPosibilities[0].length ?? 5;
-    for (let i = 0; i < n; i++) {
-      let suma = 0;
-      let sumaPesos = 0;
+  const aplicarPonderado = (
+  itemPosibilities,
+  pesos,
+  predictedClasses
+) => {
 
-      for (let j = 0; j < itemPosibilities.length; j++) {
-        const val = Number(itemPosibilities[j][i]) || 0;
-        const w = Number(pesos[j]) || 0;
-        suma += val;
-        sumaPesos += w;
+  if (!itemPosibilities || itemPosibilities.length === 0) {
+    return [0, 0, 0, 0, 0];
+  }
+
+  const weighted_pos = [];
+  // CONTAR REPETICIONES
+  const repetitions = {};
+
+  predictedClasses.forEach((cls) => {
+    repetitions[cls] = (repetitions[cls] || 0) + 1;
+  });
+
+  const n = itemPosibilities[0].length ?? 5;
+
+  for (let i = 0; i < n; i++) {
+
+    let suma = 0;
+    let sumaPesos = 0;
+
+    for (let j = 0; j < itemPosibilities.length; j++) {
+
+      const raw =
+        Number(itemPosibilities[j][i]) || 0;
+
+      let peso =
+        Number(pesos[j]) || 0;
+
+      // BOOST POR CONSENSO
+
+      if (predictedClasses[j] === i) {
+
+        const rep = repetitions[i] || 0;
+
+        if (rep > 1) {
+
+          // boost
+          peso *= 1 + ((rep - 1) * 0.1);
+        }
       }
-
-      const pos = sumaPesos > 0 ? suma / sumaPesos : 0;
-      weighted_pos.push(pos);
+      suma += raw * peso;
+      sumaPesos += peso;
     }
 
-    return weighted_pos;
+    const pos =
+      sumaPesos > 0
+        ? suma / sumaPesos
+        : 0;
+
+    weighted_pos.push(pos);
+  }
+
+  return weighted_pos;
 };
 
 const calculo_ponderado = () => {
+
   const itemPosibilities = [];
   const pesos = [];
+  const predictedClasses = [];
 
   Object.values(comparisonModels).forEach((item) => {
-    const mainPercent = Number(item.confidence_percent) || 0;
-    pesos.push(mainPercent);
 
-    // Compatibilidad: preferir `raw_probabilities`, fallback si existe typo
+    const confidence =
+      Number(item.confidence_percent) || 0;
+
+    pesos.push(confidence);
+
+    predictedClasses.push(
+      Number(item.predicted_class)
+    );
+
     const raw = Array.isArray(item.raw_probabilities)
       ? item.raw_probabilities
       : Array.isArray(item.raw_posibilities)
       ? item.raw_posibilities
       : [];
-
-    const weightedRaw = raw.map((value) => (Number(value) || 0) * mainPercent);
-    itemPosibilities.push(weightedRaw);
+    itemPosibilities.push(raw);
   });
 
-  const resultado = aplicarPonderado(itemPosibilities, pesos);
-  return resultado;
+  return aplicarPonderado(
+    itemPosibilities,
+    pesos,
+    predictedClasses
+  );
 };
 const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado() : null), [comparisonModels, hasComparison]);
 // HASTA AQUÍ NUEVO PONDERADO
