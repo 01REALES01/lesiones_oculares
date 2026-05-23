@@ -688,28 +688,59 @@ const calculatedConsensusGrade = useMemo(() => {
                         </div>
 
                         <div className="space-y-2 pt-1">
-                          {probabilityLabels.map((label, idx) => {
-                            const value = normalizeProbability(consensusProbabilities[idx] ?? 0);
-                            const maxVal = Math.max(...consensusProbabilities);
-                            const isMax = consensusProbabilities[idx] === maxVal && maxVal > 0;
-                            return (
-                              <div key={`consensus-${idx}`} className="space-y-1">
-                                <div className="flex items-center justify-between text-sm font-medium">
-                                  <span className={isMax ? 'text-slate-950 font-semibold' : 'text-slate-750 font-normal'}>{label}</span>
-                                  <span className={isMax ? 'text-primary-dark font-semibold' : 'text-slate-700 font-normal'}>{value.toFixed(1)}%</span>
-                                </div>
-                                <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/30">
-                                  <div className={cn(
-                                      'h-full rounded-full transition-all duration-500',
-                                      isMax
-                                        ? 'bg-gradient-to-r from-sky-400 to-primary shadow-sm shadow-primary/10'
-                                        : 'bg-slate-300'
-                                    )} style={{ width: `${value}%` }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+  {probabilityLabels.map((label, idx) => {
+    const value = normalizeProbability(consensusProbabilities[idx] ?? 0);
+    const maxVal = Math.max(...consensusProbabilities);
+    const isMax = consensusProbabilities[idx] === maxVal && maxVal > 0;
+    
+    // Mapeamos dinámicamente cada etiqueta a su degradado de Tailwind exacto
+    // Esto asegura que cada fila mantenga la identidad de su color de riesgo correspondiente
+    const getRowGradientClass = (rowLabel) => {
+      switch (rowLabel?.toLowerCase()) {
+        case 'proliferativo':
+          return 'from-rose-500 to-red-600 shadow-rose-500/20';
+        case 'severo':
+          return 'from-orange-400 to-amber-500 shadow-orange-500/20';
+        case 'moderado':
+          return 'from-yellow-400 to-yellow-500 shadow-yellow-500/20';
+        case 'leve':
+          return 'from-sky-400 to-blue-500 shadow-blue-500/20';
+        default: // 'no r.d.' o estados por defecto
+          return 'from-emerald-400 to-teal-500 shadow-emerald-500/20';
+      }
+    };
+
+    return (
+      <div key={`consensus-${idx}`} className="space-y-1">
+        <div className="flex items-center justify-between text-sm font-medium">
+          <span className={isMax ? 'text-slate-950 font-semibold' : 'text-slate-750 font-normal'}>
+            {label}
+          </span>
+          <span className={isMax ? 'text-primary-dark font-semibold' : 'text-slate-700 font-normal'}>
+            {value.toFixed(1)}%
+          </span>
+        </div>
+        
+        {/* Contenedor de la barra */}
+        <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/30">
+          <div
+            className={cn(
+              // Clases base esenciales y animación fluida de ancho
+              'relative h-full rounded-full bg-slate-300 transition-all duration-500',
+              // Inicialización del pseudo-elemento para lograr la transición suave de color
+              'after:absolute after:inset-0 after:rounded-full after:bg-gradient-to-r after:transition-opacity after:duration-500',
+              // Inyectamos las clases de Tailwind reales según la fila actual
+              isMax 
+                ? `after:opacity-100 shadow-sm ${getRowGradientClass(label)}` 
+                : 'after:opacity-0 shadow-none'
+            )}
+            style={{ width: `${value}%` }}
+          />
+        </div>
+      </div>
+    );
+  })}
+</div>
                       </div>
                     )}
                   </div>
