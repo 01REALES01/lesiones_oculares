@@ -646,7 +646,7 @@ const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado(
                           <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Retinografía analizada</p>
                           <div className="flex items-center gap-2">
-                            {"div para los elementos del texto y el switch para mostrar foto original o filtrada"}
+                            {/*div para los elementos del texto y el switch para mostrar foto original o filtrada*/}
                           <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
                           <SwitchToggle active={usarOriginal} onToggle={handleToggle}/></div>
                           </div>
