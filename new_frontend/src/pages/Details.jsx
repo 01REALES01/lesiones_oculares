@@ -6,9 +6,10 @@ import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import api, { analysisService } from '../services/api';
+import { SwitchToggle } from '../components/ui/SwitchToggle';
 
 const probabilityLabels = ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'];
-
+// Función para obtener la URL de la imagen original, ya sea desde el preview en base64 o construyendo la URL estática
 function getImageUrl(result) {
   if (!result) return null;
   if (result.uploaded_image_preview) return result.uploaded_image_preview;
@@ -30,6 +31,29 @@ function getImageUrl(result) {
   }
   
   return `${baseUrl}/images/${filename}`;
+}
+// Función similar para la imagen con filtro Ben-Graham, asumiendo que el backend la devuelve como uploaded_image_braham o tiene una ruta similar
+function getImageUrl_filtro(result) {
+  if (!result) return null;
+  if (result.uploaded_image_braham) return result.uploaded_image_braham;
+  
+  // Si no hay preview en base64, intentar construir la URL estática de la imagen
+  const filename = result.filename || result.summary?.filename;
+  if (!filename) return null;
+  
+  // Obtener URL base de la API
+  let baseUrl = 'http://127.0.0.1:8000';
+  try {
+    const apiBase = api?.defaults?.baseURL;
+    if (apiBase) {
+      // Si termina en /api, el mount está en el host base
+      baseUrl = apiBase.endsWith('/api') ? apiBase.substring(0, apiBase.length - 4) : apiBase;
+    }
+  } catch (e) {
+    console.error("Error getting baseURL:", e);
+  }
+  
+  return `${baseUrl}/images_braham/${filename}`;
 }
 
 function normalizeProbability(value) {
@@ -177,6 +201,15 @@ export default function AnalysisDetail({
 }) {
   const reportRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  // hooks para controlar que foto se muestra
+  const [usarOriginal, setUsarOriginal] = useState(true);
+  const [foto, setFoto] = useState(null);
+  // función para el botón, para que cambie de estado y muestre la imagen filtrada o la original
+  const handleToggle = (file) => {
+    const nuevoEstado = !usarOriginal;
+    setUsarOriginal(nuevoEstado);
+    setFoto(nuevoEstado?0:1);
+  };
 
   if (!result) return null;
 
@@ -205,60 +238,6 @@ export default function AnalysisDetail({
   }));
   const singleHasProbabilityData = singleProbabilities.some((item) => item.value > 0);
 
-  // PONDERADO:
-  const aplicarPonderado = (itemPosibilities, pesos, predictedClasses) => {
-    if (!itemPosibilities || itemPosibilities.length === 0) return [0, 0, 0, 0, 0];
-    const weighted_pos = [];
-    const repetitions = {};
-    predictedClasses.forEach((cls) => {
-      repetitions[cls] = (repetitions[cls] || 0) + 1;
-    });
-    const n = itemPosibilities[0].length ?? 5;
-    for (let i = 0; i < n; i++) {
-      let suma = 0;
-      let sumaPesos = 0;
-      for (let j = 0; j < itemPosibilities.length; j++) {
-        const raw = Number(itemPosibilities[j][i]) || 0;
-        let peso = Number(pesos[j]) || 0;
-        if (predictedClasses[j] === i) {
-          const rep = repetitions[i] || 0;
-          if (rep > 1) peso *= 1 + ((rep - 1) * 0.1);
-        }
-        suma += raw * peso;
-        sumaPesos += peso;
-      }
-      const pos = sumaPesos > 0 ? suma / sumaPesos : 0;
-      weighted_pos.push(pos);
-    }
-    return weighted_pos;
-  };
-
-  const calculo_ponderado = () => {
-    const itemPosibilities = [];
-    const pesos = [];
-    const predictedClasses = [];
-    Object.values(comparisonModels).forEach((item) => {
-      const confidence = Number(item.confidence_percent) || 0;
-      pesos.push(confidence);
-      predictedClasses.push(Number(item.predicted_class));
-      const raw = Array.isArray(item.raw_probabilities)
-        ? item.raw_probabilities
-        : Array.isArray(item.raw_posibilities)
-        ? item.raw_posibilities
-        : [];
-      itemPosibilities.push(raw);
-    });
-    return aplicarPonderado(itemPosibilities, pesos, predictedClasses);
-  };
-  const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado() : null), [comparisonModels, hasComparison]);
-
-  const calculatedConsensusGrade = useMemo(() => {
-    if (hasComparison && consensusProbabilities) {
-      const maxVal = Math.max(...consensusProbabilities);
-      if (maxVal > 0) return consensusProbabilities.indexOf(maxVal);
-    }
-    return summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
-  }, [hasComparison, consensusProbabilities, primaryResult, result, summary]);
 
   const handlePrint = async () => {
     setIsGeneratingPdf(true);
@@ -305,6 +284,100 @@ export default function AnalysisDetail({
     anchor.remove();
   };
 
+  // PONDERADO:
+
+  const aplicarPonderado = (
+  itemPosibilities,
+  pesos,
+  predictedClasses
+) => {
+
+  if (!itemPosibilities || itemPosibilities.length === 0) {
+    return [0, 0, 0, 0, 0];
+  }
+
+  const weighted_pos = [];
+  // CONTAR REPETICIONES
+  const repetitions = {};
+
+  predictedClasses.forEach((cls) => {
+    repetitions[cls] = (repetitions[cls] || 0) + 1;
+  });
+
+  const n = itemPosibilities[0].length ?? 5;
+
+  for (let i = 0; i < n; i++) {
+
+    let suma = 0;
+    let sumaPesos = 0;
+    for (let j = 0; j < itemPosibilities.length; j++) {
+      const raw =
+        Number(itemPosibilities[j][i]) || 0;
+      let peso =
+        Number(pesos[j]) || 0;
+      // BOOST POR CONSENSO
+      if (predictedClasses[j] === i) {
+        const rep = repetitions[i] || 0;
+        if (rep > 1) {
+          // boost
+          peso *= 1 + ((rep - 1) * 0.1);
+        }
+      }
+      suma += raw * peso;
+      sumaPesos += peso;
+    }
+
+    const pos =
+      sumaPesos > 0
+        ? suma / sumaPesos
+        : 0;
+
+    weighted_pos.push(pos);
+  }
+
+  return weighted_pos;
+};
+
+const calculo_ponderado = () => {
+
+  const itemPosibilities = [];
+  const pesos = [];
+  const predictedClasses = [];
+
+  Object.values(comparisonModels).forEach((item) => {
+
+    const confidence =
+      Number(item.confidence_percent) || 0;
+
+    pesos.push(confidence);
+
+    predictedClasses.push(
+      Number(item.predicted_class)
+    );
+
+    const raw = Array.isArray(item.raw_probabilities)
+      ? item.raw_probabilities
+      : Array.isArray(item.raw_posibilities)
+      ? item.raw_posibilities
+      : [];
+    itemPosibilities.push(raw);
+  });
+
+  return aplicarPonderado(
+    itemPosibilities,
+    pesos,
+    predictedClasses
+  );
+};
+const consensusProbabilities = useMemo(() => (hasComparison ? calculo_ponderado() : null), [comparisonModels, hasComparison]);
+const calculatedConsensusGrade = useMemo(() => {
+    if (hasComparison && consensusProbabilities) {
+      const maxVal = Math.max(...consensusProbabilities);
+      if (maxVal > 0) return consensusProbabilities.indexOf(maxVal);
+    }
+    return summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
+  }, [hasComparison, consensusProbabilities, primaryResult, result, summary]);
+// HASTA AQUÍ NUEVO PONDERADO
   const handleExportExcel = async () => {
     if (!isBatch || !batch[0]?.batch_id) return;
     try {
@@ -578,12 +651,18 @@ export default function AnalysisDetail({
                     {!hideImage && getImageUrl(result) && (
                       <div className="p-4 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
                         <div className="space-y-3">
+                          <div className="flex items-center justify-between">
                           <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Retinografía analizada</p>
+                          <div className="flex items-center gap-2">
+                            {/*div para los elementos del texto y el switch para mostrar foto original o filtrada*/}
+                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
+                          <SwitchToggle active={usarOriginal} onToggle={handleToggle}/></div>
+                          </div>
                           <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center min-h-[220px]">
                             <ZoomableImage
-                              src={getImageUrl(result)}
+                              src={foto ? getImageUrl(result) : getImageUrl_filtro(result)}
                               alt="Retinografia analizada"
-                              className="max-h-[300px]"
+                              className="max-h-[00px]"
                             />
                           </div>
                         </div>

@@ -37,18 +37,20 @@ from openpyxl import styles
 from datetime import datetime
 
 from backend.config import settings
-from backend.preprocessing.fundus import preprocess_fundus
+from backend.preprocessing.fundus import crop_img, preprocess_fundus
 from backend.models.segmentation_vnet import segment_optic_disc
 from backend.models.glaucoma_classifier import predict_glaucoma
 from backend.models.lesion_detector import detect_hemorrhages
 from backend.postprocessing.report import build_report, graph_data_for_frontend
 from backend.store import (
+    save_image_to_disk2,
     save_inference,
     save_inferences_batch,
     get_inference,
     list_inferences,
     get_global_stats,
     save_image_to_disk,
+    clear_images_dir,
     get_batch,
     clear_history,
     delete_batch,
@@ -997,6 +999,7 @@ async def _analyze_rd_comparison_impl(
     inferences_to_save = []
     batch_id = str(uuid.uuid4())
     cancelled = False
+    clear_images_dir()  # Limpiar imágenes temporales antes de procesar el nuevo lote
 
     for file in files:
         if await request.is_disconnected():
@@ -1004,13 +1007,23 @@ async def _analyze_rd_comparison_impl(
             break
 
         try:
+            from backend.preprocessing.fundus import crop_img, apply_ben_graham_rgb
             img = _read_image_from_upload(file)
             # 1. Pasar de BGR a RGB
             img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            
             # 2. Cropping (Recorte de bordes negros)
-            from backend.preprocessing.fundus import crop_img, apply_ben_graham_rgb
             img_cropped = crop_img(img_rgb)
+
+            # Guardar solo la imagen Ben Graham original, para mostrar en el frontend
+            ben_graham_only_rgb = apply_ben_graham_rgb(img_cropped)
+            ben_graham_only_bytes = _encode_image_to_bytes(ben_graham_only_rgb)
+            ben_graham_only_image_id = save_image_to_disk2(
+                ben_graham_only_bytes,
+                f"ben_graham_{file.filename}"
+            )
+            
+            
+            #img_cropped = crop_img(img_rgb)
             
             # 3. Resize (Esta es la versión que mostramos al usuario)
             display_rgb = cv2.resize(img_cropped, (224, 224), interpolation=cv2.INTER_CUBIC)
@@ -1068,9 +1081,15 @@ async def _analyze_rd_comparison_impl(
             import base64
             # Mostramos la versión display_rgb (sin Ben Graham) pero recortada/redimensionada
             display_bgr = cv2.cvtColor(display_rgb, cv2.COLOR_RGB2BGR)
-            _, buffer = cv2.imencode(".jpg", display_bgr)
+            # se guarda la imagen original,sin ningun cambio
+            _, buffer = cv2.imencode(".jpg", img)
             img_base64 = base64.b64encode(buffer).decode("utf-8")
             result["uploaded_image_preview"] = f"data:image/jpeg;base64,{img_base64}"
+            # se guarda la imagen filtrada con ben graham
+            display_bgr_b = cv2.cvtColor(ben_graham_only_rgb, cv2.COLOR_RGB2BGR)
+            _, buffer = cv2.imencode(".jpg", display_bgr_b)
+            img_base642 = base64.b64encode(buffer).decode("utf-8")
+            result["uploaded_image_braham"] = f"data:image/jpeg;base64,{img_base642}"
 
             if await request.is_disconnected():
                 cancelled = True
