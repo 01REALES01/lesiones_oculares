@@ -79,3 +79,13 @@ async def ensure_user_exists(
     )
 
     return record
+
+async def save_analysis_to_roble(
+    token: str,
+    record: Dict[str, Any],
+) -> Dict[str, Any]:
+    return await roble_insert(
+        token=token,
+        table_name="analisis_retina",
+        records=[record],
+    )
