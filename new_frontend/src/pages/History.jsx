@@ -583,12 +583,12 @@ function HistoryCard({ item, onClick, onDelete, index }) {
   };
 
   const riskText = riskLevel === 'mixed'
-    ? `Mixto (${riskMaxLevel === 'high' ? 'incluye críticos' : riskMaxLevel === 'medium' ? 'incluye medios' : 'estable'})`
+    ? `Mixto (${riskMaxLevel === 'high' ? 'incluye críticos' : riskMaxLevel === 'medium' ? 'incluye medios' : 'sano'})`
     : riskLevel === 'high'
       ? 'Prioridad Alta'
       : riskLevel === 'medium'
         ? 'Monitoreo'
-        : 'Estable';
+        : 'Sano';
 
   return (
     <motion.div
