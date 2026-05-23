@@ -28,6 +28,7 @@ from backend.roble_db import roble_delete_record
 from backend.roble_db import list_user_analyses_from_roble
 from backend.roble_db import roble_delete_batch
 from backend.roble_db import roble_delete_all_user_history
+from backend.roble_db import get_user_stats_from_roble
 
 try:
     import anthropic as anthropic_sdk
@@ -450,8 +451,18 @@ async def health():
 
 
 @app.get("/stats")
-async def stats(current_user: User = Depends(get_current_user)):
-    return get_global_stats()
+async def stats(
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    try:
+        return await get_user_stats_from_roble(
+            token=token,
+            user_email=current_user.email,
+        )
+    except Exception as e:
+        print("ERROR CARGANDO STATS DESDE ROBLE:", str(e))
+        return get_global_stats()
 
 
 @app.get("/history")
