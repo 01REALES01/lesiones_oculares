@@ -441,8 +441,17 @@ export default function HistoryPage({ onViewDetail }) {
 }
 
 function HistoryCard({ item, onClick, onDelete, index }) {
-  const riskLevel = item.summary?.risk_level || 'low';
-  const riskMaxLevel = item.summary?.risk_max_level || riskLevel;
+  const summary = item.summary || {
+    filename: item.filename,
+    risk_level: item.risk_level,
+    positive_models: item.positive_models,
+    total_models: item.total_models,
+    headline: item.result?.comparison_summary?.headline,
+    primary_grade: item.result?.primary_result?.predicted_class,
+  };
+
+  const riskLevel = summary.risk_level || 'low';
+  const riskMaxLevel = summary?.risk_max_level || riskLevel;
   const color = riskLevel === 'mixed'
     ? 'bg-sky-500'
     : riskLevel === 'high'
@@ -490,17 +499,17 @@ function HistoryCard({ item, onClick, onDelete, index }) {
           <div className="space-y-1">
              <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
                 <FileText size={16} className="text-primary" /> 
-                {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0,8)}` : `Archivo: ${item.summary?.filename || 'Sin nombre'}`}
+                {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0,8)}` : `Archivo: ${summary?.filename || 'Sin nombre'}`}
              </h3>
              {item.is_batch && (
                <p className="text-[10px] text-ocular-text-muted font-bold truncate uppercase tracking-widest">
                   Contiene <span className="text-primary">{item.batch_size} imágenes</span>
                </p>
              )}
-             <p className="text-xs text-ocular-text-main font-semibold mt-1">{item.summary?.headline || 'Comparación de modelos RD'}</p>
-             {item.summary?.is_mixed_risk && (
+             <p className="text-xs text-ocular-text-main font-semibold mt-1">{summary?.headline || 'Comparación de modelos RD'}</p>
+             {summary?.is_mixed_risk && (
               <p className="text-[10px] text-ocular-text-muted font-semibold uppercase tracking-tight">
-                Altos: {item.summary?.risk_counts?.high ?? 0} | Medios: {item.summary?.risk_counts?.medium ?? 0} | Bajos: {item.summary?.risk_counts?.low ?? 0}
+                Altos: {summary?.risk_counts?.high ?? 0} | Medios: {summary?.risk_counts?.medium ?? 0} | Bajos: {summary?.risk_counts?.low ?? 0}
               </p>
              )}
           </div>
@@ -509,14 +518,14 @@ function HistoryCard({ item, onClick, onDelete, index }) {
              <div className="bg-white/40 p-2 rounded-xl border border-white/60">
                <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Modelos Positivos</p>
                 <p className="text-xs font-extrabold text-ocular-text-main">
-                  {item.summary?.positive_models ?? 0}/{item.summary?.total_models ?? item.models_used?.length ?? 0}
+                  {summary?.positive_models ?? 0}/{summary?.total_models ?? item.models_used?.length ?? 0}
                 </p>
              </div>
              <div className="bg-white/40 p-2 rounded-xl border border-white/60">
                <p className="text-[8px] font-bold text-ocular-text-muted uppercase">Diagnóstico</p>
                 <p className="text-[10px] font-extrabold text-ocular-text-main truncate uppercase">
-                  {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null 
-                    ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][item.summary.primary_grade] || 'N/A'
+                  {summary?.primary_grade !== undefined && summary?.primary_grade !== null 
+                    ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][summary.primary_grade] || 'N/A'
                     : 'N/A'}
                 </p>
              </div>
