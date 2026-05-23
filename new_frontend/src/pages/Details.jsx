@@ -578,7 +578,10 @@ export default function AnalysisDetail({
                     {!hideImage && getImageUrl(result) && (
                       <div className="p-4 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
                         <div className="space-y-3">
-                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Retinografía analizada</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
+                            <SwitchToggle active={usarOriginal} onToggle={handleToggle} />
+                          </div>
                           <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center min-h-[220px]">
                             <ZoomableImage
                               src={getImageUrl(result)}
