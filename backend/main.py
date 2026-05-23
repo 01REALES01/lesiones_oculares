@@ -23,6 +23,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.roble_db import roble_insert
 from backend.roble_db import ensure_user_exists
+from backend.roble_db import save_analysis_to_roble
 
 try:
     import anthropic as anthropic_sdk
@@ -937,12 +938,13 @@ async def analyze_rd_comparison(
         description="Modelos RD a ejecutar: densenet169, resnet50, xception.",
     ),
     current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
 ):
     """
     Analiza una o más retinografías comparando 1, 2 o 3 modelos de retinopatía diabética.
     """
     try:
-        return await _analyze_rd_comparison_impl(request, files, models, current_user)
+        return await _analyze_rd_comparison_impl(request, files, models, current_user, token)
     except Exception as e:
         import traceback
         tb = traceback.format_exc()
@@ -958,6 +960,7 @@ async def _analyze_rd_comparison_impl(
     files: List[UploadFile],
     models: str,
     current_user: User,
+    token: str,
 ):
     selected_models = [model.strip().lower() for model in models.split(",") if model.strip()]
     if not selected_models:
@@ -1078,6 +1081,32 @@ async def _analyze_rd_comparison_impl(
                 "user_email": current_user.email,
                 "roble_user_id": current_user.roble_user_id,
             })
+            
+            roble_record = {
+                "inference_id": inference_id,
+                "roble_user_id": current_user.roble_user_id,
+                "usuario_email": current_user.email,
+                "batch_id": batch_id,
+                "filename": file.filename,
+                "timestamp": analysis_timestamp,
+                "image_size": {
+                    "width": img.shape[1],
+                    "height": img.shape[0],
+                },
+                "risk_level": result.get("risk_level"),
+                "diagnosis": result.get("diagnosis"),
+                "confidence_percent": result.get("confidence_percent"),
+                "recommendation_short": result.get("recommendation_short"),
+                "result_json": result,
+            }
+
+            roble_response = await save_analysis_to_roble(
+                token=token,
+                record=roble_record,
+            )
+
+            print("RESPUESTA ROBLE INSERT:", roble_response)
+            print("ANALISIS GUARDADO EN ROBLE OK")
 
         except Exception as e:
             final_results.append({
