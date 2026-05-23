@@ -364,6 +364,7 @@ async def get_user_stats_from_roble(
         return {
             "total_analyses": 0,
             "rd_detected_percent": 0,
+            "rd_detected_rate": 0,
             "avg_confidence": 0,
             "avg_latency_ms": 0,
         }
@@ -397,11 +398,8 @@ async def get_user_stats_from_roble(
                 latency_sum += float(latency)
                 latency_count += 1
     
-    if total > 0:
         rd_percent = round((rd_detected / total) * 100, 1)
-    else:
-        rd_percent = 0
-
+        
     return {
         "total_analyses": total,
         "rd_detected_percent": rd_percent,
@@ -409,3 +407,85 @@ async def get_user_stats_from_roble(
         "avg_confidence": round(confidence_sum / confidence_count, 1) if confidence_count else 0,
         "avg_latency_ms": round(latency_sum / latency_count, 1) if latency_count else 0,
     }
+    
+async def get_analysis_from_roble(
+    token: str,
+    inference_id: str,
+    user_email: str,
+) -> Optional[Dict[str, Any]]:
+    rows = await roble_read_records(
+        token=token,
+        table_name="analisis_retina",
+        filters={
+            "inference_id": inference_id,
+            "usuario_email": user_email,
+        },
+    )
+
+    if not rows:
+        return None
+
+    row = rows[0]
+    result = row.get("result_json") or {}
+
+    if isinstance(result, str):
+        import json
+        result = json.loads(result)
+
+    return {
+        "inference_id": row.get("inference_id"),
+        "timestamp": row.get("timestamp"),
+        "models_used": result.get("selected_models") or [],
+        "inference_times_ms": {
+            item.get("model_id"): item.get("inference_time_ms")
+            for item in result.get("model_comparisons", [])
+        },
+        "result": result,
+        "image_size": row.get("image_size"),
+        "batch_id": row.get("batch_id"),
+        "user_email": row.get("usuario_email"),
+        "roble_user_id": row.get("roble_user_id"),
+    }
+
+
+async def get_batch_from_roble(
+    token: str,
+    batch_id: str,
+    user_email: str,
+) -> List[Dict[str, Any]]:
+    rows = await roble_read_records(
+        token=token,
+        table_name="analisis_retina",
+        filters={
+            "batch_id": batch_id,
+            "usuario_email": user_email,
+        },
+    )
+
+    records = []
+
+    for row in rows:
+        result = row.get("result_json") or {}
+
+        if isinstance(result, str):
+            import json
+            result = json.loads(result)
+
+        records.append({
+            "inference_id": row.get("inference_id"),
+            "timestamp": row.get("timestamp"),
+            "models_used": result.get("selected_models") or [],
+            "inference_times_ms": {
+                item.get("model_id"): item.get("inference_time_ms")
+                for item in result.get("model_comparisons", [])
+            },
+            "result": result,
+            "image_size": row.get("image_size"),
+            "batch_id": row.get("batch_id"),
+            "user_email": row.get("usuario_email"),
+            "roble_user_id": row.get("roble_user_id"),
+        })
+
+    records.sort(key=lambda x: x.get("timestamp") or "")
+
+    return records

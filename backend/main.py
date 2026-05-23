@@ -29,6 +29,7 @@ from backend.roble_db import list_user_analyses_from_roble
 from backend.roble_db import roble_delete_batch
 from backend.roble_db import roble_delete_all_user_history
 from backend.roble_db import get_user_stats_from_roble
+from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
 
 try:
     import anthropic as anthropic_sdk
@@ -610,13 +611,22 @@ async def delete_entire_batch(
 
 
 @app.get("/batches/{batch_id}")
-async def get_batch_by_id(batch_id: str, current_user: User = Depends(get_current_user)):
-    """Obtiene todas las inferencias correspondientes a un mismo lote."""
-    records = get_batch(batch_id)
+async def get_batch_by_id(
+    batch_id: str,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    """Obtiene todas las inferencias de un lote desde ROBLE DB."""
+    records = await get_batch_from_roble(
+        token=token,
+        batch_id=batch_id,
+        user_email=current_user.email,
+    )
+
     if not records:
         return JSONResponse(status_code=404, content={"detail": "Batch not found"})
-    return records
 
+    return records
 
 @app.get("/export/batch/{batch_id}/excel")
 async def export_batch_to_excel(batch_id: str, current_user: User = Depends(get_current_user)):
@@ -869,11 +879,21 @@ async def export_pdf(inference_id: str, current_user: User = Depends(get_current
 
 
 @app.get("/inferences/{inference_id}")
-async def get_inference_by_id(inference_id: str, current_user: User = Depends(get_current_user)):
-    """Obtiene el registro completo de una inferencia por ID (trazabilidad)."""
-    record = get_inference(inference_id)
+async def get_inference_by_id(
+    inference_id: str,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    """Obtiene el registro completo de una inferencia desde ROBLE DB."""
+    record = await get_analysis_from_roble(
+        token=token,
+        inference_id=inference_id,
+        user_email=current_user.email,
+    )
+
     if not record:
         return JSONResponse(status_code=404, content={"detail": "Inference not found"})
+
     return record
 
 
