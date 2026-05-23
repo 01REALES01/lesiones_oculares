@@ -5,7 +5,7 @@
 # =============================================================
 
 $REPO_URL = "https://github.com/01REALES01/lesiones_oculares.git"
-$BRANCH   = "demo"
+$BRANCH   = "reciente"
 
 Write-Host "==========================================" -ForegroundColor Cyan
 Write-Host "      RetinaAI - Setup y arranque         " -ForegroundColor Cyan

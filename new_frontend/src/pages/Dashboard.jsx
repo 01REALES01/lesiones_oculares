@@ -344,17 +344,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   </p>
                 </GlassCard>
 
-                {files.length > 0 && (
-                  <div className="mb-4 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={clearFiles}
-                      className="text-[10px] font-bold text-ocular-error hover:underline uppercase tracking-widest"
-                    >
-                      Vaciar lote
-                    </button>
-                  </div>
-                )}
 
                 <div
                   onDragOver={(e) => {
@@ -459,6 +448,16 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                         ? `${files.length} archivo(s) cargado(s)`
                         : 'esperando imágenes de retinografía'}
                   </span>
+
+                  {files.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={clearFiles}
+                      className="text-xs font-bold text-ocular-error hover:underline lowercase normal-case visual-fix" // Hereda el tamaño y tracking del padre
+                    >
+                      Vaciar lote
+                    </button>
+                  )}
                 </div>
               </div>
             </GlassCard>

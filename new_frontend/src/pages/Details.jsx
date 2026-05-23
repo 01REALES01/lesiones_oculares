@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search, X } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import api, { analysisService } from '../services/api';
@@ -134,16 +134,24 @@ function getGradeGradient(grade) {
   }
 }
 
-function ZoomableImage({ src, alt, className }) {
+function ZoomableImage({ src, alt, className, onClick, initialZoom = 2.5, minZoom = 1.5, maxZoom = 4, zoomStep = 0.25 }) {
   const [showMagnifier, setShowMagnifier] = useState(false);
   const [[x, y], setXY] = useState([0, 0]);
   const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
+  const [zoomLevel, setZoomLevel] = useState(initialZoom);
   const magnifierSize = 200;
-  const zoomLevel = 2.5;
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
+    setZoomLevel((prev) => Math.max(minZoom, Math.min(maxZoom, prev + delta)));
+  };
 
   return (
-    <div 
-      className={cn("relative overflow-hidden cursor-crosshair", className)}
+    <div
+      className={cn("relative overflow-hidden cursor-zoom-in", className)}
+      onClick={onClick}
+      onWheel={handleWheel}
       onMouseEnter={(e) => {
         const elem = e.currentTarget;
         const { width, height } = elem.getBoundingClientRect();
@@ -158,32 +166,38 @@ function ZoomableImage({ src, alt, className }) {
         setXY([x, y]);
       }}
       onMouseLeave={() => setShowMagnifier(false)}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
       <img src={src} alt={alt} className="w-full h-full object-contain" />
-      
-      <div data-html2canvas-ignore="true" className="absolute top-4 right-4 bg-primary text-white p-2 rounded-full shadow-lg no-print animate-pulse">
+
+      <div data-html2canvas-ignore="true" className="absolute top-4 right-4 z-10 bg-primary text-white p-2 rounded-full shadow-lg no-print animate-pulse">
         <Search size={18} />
       </div>
-      
+
+      <div className="absolute bottom-4 left-4 bg-slate-950/70 text-white px-3 py-1 rounded-full text-[11px] font-semibold shadow-lg">
+        Zoom {zoomLevel.toFixed(1)}x
+      </div>
+
       {showMagnifier && (
         <div
           style={{
-            position: "absolute",
-            pointerEvents: "none",
+            position: 'absolute',
+            pointerEvents: 'none',
             height: `${magnifierSize}px`,
             width: `${magnifierSize}px`,
             top: `${y - magnifierSize / 2}px`,
             left: `${x - magnifierSize / 2}px`,
-            opacity: "1",
-            border: "2px solid rgba(255, 255, 255, 0.5)",
-            borderRadius: "50%",
-            backgroundColor: "white",
+            opacity: '1',
+            border: '2px solid rgba(255, 255, 255, 0.5)',
+            borderRadius: '50%',
+            backgroundColor: 'white',
             backgroundImage: `url('${src}')`,
-            backgroundRepeat: "no-repeat",
+            backgroundRepeat: 'no-repeat',
             backgroundSize: `${imgWidth * zoomLevel}px ${imgHeight * zoomLevel}px`,
             backgroundPosition: `${-x * zoomLevel + magnifierSize / 2}px ${-y * zoomLevel + magnifierSize / 2}px`,
-            boxShadow: "0 10px 30px rgba(0,0,0,0.3)",
-            zIndex: 50
+            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+            zIndex: 50,
           }}
         />
       )}
@@ -207,12 +221,25 @@ export default function AnalysisDetail({
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   // hooks para controlar que foto se muestra
   const [usarOriginal, setUsarOriginal] = useState(true);
-  const [foto, setFoto] = useState(null);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupSrc, setPopupSrc] = useState(null);
+
+  const openImagePopup = (src) => {
+    if (!src) return;
+    setPopupSrc(src);
+    setPopupOpen(true);
+  };
+
+  const closeImagePopup = () => {
+    setPopupOpen(false);
+    setPopupSrc(null);
+  };
+
+  const imageUrl = usarOriginal ? getImageUrl(result) : getImageUrl_filtro(result);
+
   // función para el botón, para que cambie de estado y muestre la imagen filtrada o la original
-  const handleToggle = (file) => {
-    const nuevoEstado = !usarOriginal;
-    setUsarOriginal(nuevoEstado);
-    setFoto(nuevoEstado?0:1);
+  const handleToggle = () => {
+    setUsarOriginal((prev) => !prev);
   };
 
   if (!result) return null;
@@ -398,7 +425,43 @@ const calculatedConsensusGrade = useMemo(() => {
       // Optionally show a toast or alert
     }
   };  return (
-    <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-500 pb-12 print:p-0">
+    <>
+      <AnimatePresence>
+        {popupOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div className="absolute inset-0" onClick={closeImagePopup} />
+            <motion.div
+              className="relative z-10 w-full max-w-[1100px] max-h-[90vh] rounded-[2rem] overflow-hidden bg-slate-950/95 border border-white/10 shadow-2xl"
+              initial={{ scale: 0.96, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.96, opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={closeImagePopup}
+                className="absolute right-4 top-4 z-30 rounded-full bg-white/95 text-slate-950 p-2 shadow-2xl hover:bg-white transition"
+              >
+                <X size={18} />
+              </button>
+              <div className="h-[85vh] w-full bg-slate-950">
+                <ZoomableImage
+                  src={popupSrc}
+                  alt="Imagen ampliada"
+                  className="h-full w-full"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-500 pb-12 print:p-0">
       <div className="flex items-center justify-between print:hidden">
         <div className="flex items-center gap-4">
           <button
@@ -435,11 +498,11 @@ const calculatedConsensusGrade = useMemo(() => {
           <div className="flex gap-3">
             <button 
               onClick={handlePrint} 
-              className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide"
-            >
+              className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase"
+            >           
               <Printer size={18} /> Imprimir / Guardar PDF
             </button>
-            <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase">
+            <button onClick={handleExportExcel} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide">
               {isBatch ? <FileSpreadsheet size={18} /> : <FileDown size={18} />}
               {isBatch ? 'Exportar Excel' : 'Exportar Datos'}
             </button>
@@ -518,7 +581,7 @@ const calculatedConsensusGrade = useMemo(() => {
                   </div>
 
                   {/* Lista de Modelos Comparados (Panel Izquierdo) - REPLACED WITH VERTICAL TABLE */}
-                  <div className="p-5 bg-white border border-slate-300 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl overflow-hidden">
+                  <div className="p-5 bg-white border border-slate-300 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
                     <div className="overflow-x-auto">
                       <table className="w-full text-left border-collapse">
                         <thead>
@@ -616,11 +679,9 @@ const calculatedConsensusGrade = useMemo(() => {
                   )}
                 </div>
               )}
-
-              {/* Sugerencia Médica */}
               <div className="p-6 bg-primary/10 border border-primary/35 rounded-3xl space-y-2.5 shadow-xl shadow-primary/10 hover:shadow-primary/25 hover:-translate-y-0.5 transition-all duration-300">
                 <div className="flex items-center gap-2 text-primary-dark font-bold text-sm uppercase tracking-wider">
-                  <ClipboardList size={16} /> Sugerencia Médica
+                  <ClipboardList size={16} /> Sugerencia
                 </div>
                 <p className="text-sm text-slate-950 leading-relaxed font-semibold italic">
                   "{summary.recommendation_short || primaryResult.recommendation_short || suggestionByGrade(consensusGrade)}"
@@ -651,23 +712,29 @@ const calculatedConsensusGrade = useMemo(() => {
                 {hasComparison ? (
                   <div className="p-5 space-y-6">
                     {/* Tarjeta Retina Analizada */}
-                    {!hideImage && getImageUrl(result) && (
+                    {!hideImage && imageUrl && (
                       <div className="p-4 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Retinografía analizada</p>
-                          <div className="flex items-center gap-2">
-                            {/*div para los elementos del texto y el switch para mostrar foto original o filtrada*/}
-                          <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
-                          <SwitchToggle active={usarOriginal} onToggle={handleToggle}/></div>
+                          <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-bold text-slate-800 uppercase">Retinografía analizada</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-xs font-semibold text-slate-600 uppercase">Aplicar Filtro Ben-Graham</p>
+                                <SwitchToggle active={!usarOriginal} onToggle={handleToggle} />
+                              </div>
+                            </div>
+                            <p className="text-xs font-light text-slate-900">Haz clic en la imagen para ampliarla. Usa scroll dentro del visor para ajustar el zoom.</p>
                           </div>
-                          <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center min-h-[220px]">
+                          <div className="relative rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center w-full h-[260px] max-h-[280px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
                             <ZoomableImage
-                              src={foto ? getImageUrl(result) : getImageUrl_filtro(result)}
-                              src={foto ? getImageUrl(result) : getImageUrl_filtro(result)}
+                              src={imageUrl}
                               alt="Retinografia analizada"
-                              className="max-h-[900px]"
+                              className="h-full w-full"
+                              onClick={() => openImagePopup(imageUrl)}
                             />
+                            <div className="absolute bottom-4 left-4 rounded-full bg-slate-950 px-3 py-1 text-[11px] text-white uppercase tracking-[0.12em] shadow-lg">
+                              Clic para ampliar
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -750,14 +817,15 @@ const calculatedConsensusGrade = useMemo(() => {
                   </div>
                 ) : (
                   <div className={cn(
-                    "flex-1 relative bg-slate-900 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[500px]",
+                    "flex-1 relative bg-slate-900 m-2 rounded-2xl overflow-hidden flex items-center justify-center min-h-[360px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(0,0,0,0.2)]",
                     hideImage && "print:hidden"
                   )}>
-                    {!hideImage && getImageUrl(result) ? (
+                    {!hideImage && imageUrl ? (
                       <ZoomableImage
-                        src={getImageUrl(result)}
+                        src={imageUrl}
                         alt="Retinografia analizada"
-                        className="max-h-[70vh] w-full"
+                        className="min-h-[260px] max-h-[360px] w-full"
+                        onClick={() => openImagePopup(imageUrl)}
                       />
                     ) : (
                       <div className="text-center space-y-4">
@@ -785,5 +853,6 @@ const calculatedConsensusGrade = useMemo(() => {
         </motion.div>
       </AnimatePresence>
     </div>
+  </>
   );
 }
