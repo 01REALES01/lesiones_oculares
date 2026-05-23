@@ -30,6 +30,25 @@ export default function HistoryPage({ onViewDetail }) {
     if (page !== 0) setPage(0);
   }, [riskFilter, search, dateFilter]);
 
+  const getItemSummary = (item) => item.summary || {
+    filename: item.filename,
+    risk_level: item.risk_level,
+    risk_max_level: item.risk_level,
+    positive_models: item.positive_models,
+    total_models: item.total_models,
+    headline: item.result?.comparison_summary?.headline,
+    primary_grade: item.result?.primary_result?.predicted_class,
+    batch_filenames: item.items?.map(i => i.filename || i.result?.filename).filter(Boolean) || [],
+    risk_counts: item.summary?.risk_counts || {},
+  };
+
+  const getBatchFilenames = (item) => {
+    const summary = getItemSummary(item);
+    return summary.batch_filenames?.length
+      ? summary.batch_filenames
+      : item.items?.map(i => i.filename || i.result?.filename).filter(Boolean) || [];
+  };
+
   const getSuggestions = () => {
     if (!search.trim()) return [];
     const query = search.toLowerCase();
@@ -37,24 +56,26 @@ export default function HistoryPage({ onViewDetail }) {
 
     for (const item of history) {
       // 1. Coincidencia por ID de lote/análisis
+      const summary = getItemSummary(item);
+      const batchFilenames = getBatchFilenames(item);
       const bId = item.batch_id || "";
       const infId = item.inference_id || "";
       if (bId.toLowerCase().includes(query) || infId.toLowerCase().includes(query)) {
         list.push({
           type: item.is_batch ? 'batch' : 'individual',
           title: item.is_batch ? `Lote # ${bId.substring(0, 8)}` : `Análisis # ${infId.substring(0, 8)}`,
-          subtitle: item.is_batch ? `Lote de ${item.batch_size} imágenes` : `Archivo: ${item.summary?.filename}`,
+          subtitle: item.is_batch ? `Lote de ${item.batch_size} imágenes` : `Archivo: ${summary?.filename}`,
           item,
           targetIndex: 0
         });
       }
 
       // 2. Coincidencia por nombre de archivo individual
-      if (!item.is_batch && item.summary?.filename && item.summary.filename.toLowerCase().includes(query)) {
+      if (!item.is_batch && summary?.filename && summary.filename.toLowerCase().includes(query)) {
         if (!list.some(s => s.item.inference_id === item.inference_id)) {
           list.push({
             type: 'individual',
-            title: item.summary.filename,
+            title: summary.filename,
             subtitle: `Análisis individual - ID: ${infId.substring(0, 8)}`,
             item,
             targetIndex: 0
@@ -63,8 +84,8 @@ export default function HistoryPage({ onViewDetail }) {
       }
 
       // 3. Coincidencia por nombre de archivo dentro de un lote
-      if (item.is_batch && item.summary?.batch_filenames) {
-        item.summary.batch_filenames.forEach((fn, idx) => {
+      if (item.is_batch && batchFilenames.length) {
+        batchFilenames.forEach((fn, idx) => {
           if (fn && fn.toLowerCase().includes(query)) {
             list.push({
               type: 'batch_image',
@@ -118,13 +139,20 @@ export default function HistoryPage({ onViewDetail }) {
   };
 
   const filteredHistory = history.filter(item => {
-    const matchesSearch = (item.batch_id || "").toLowerCase().includes(search.toLowerCase()) ||
-      (item.summary?.filename || "").toLowerCase().includes(search.toLowerCase()) ||
-      (item.summary?.batch_filenames || []).some(fn => fn.toLowerCase().includes(search.toLowerCase()));
+    const query = search.toLowerCase();
+    const summary = getItemSummary(item);
+    const batchFilenames = getBatchFilenames(item);
 
-    const itemLevel = item.summary?.risk_level || 'low';
-    const itemMaxLevel = item.summary?.risk_max_level || itemLevel;
-    const riskCounts = item.summary?.risk_counts || {};
+    const matchesSearch =
+      (item.batch_id || "").toLowerCase().includes(query) ||
+      (item.inference_id || "").toLowerCase().includes(query) ||
+      (summary?.filename || "").toLowerCase().includes(query) ||
+      (summary?.headline || "").toLowerCase().includes(query) ||
+      batchFilenames.some(fn => (fn || "").toLowerCase().includes(query));
+
+    const itemLevel = summary?.risk_level || 'low';
+    const itemMaxLevel = summary?.risk_max_level || itemLevel;
+    const riskCounts = summary?.risk_counts || {};
     const mixedHasRisk = (level) => Number(riskCounts[level] || 0) > 0;
     const matchesDate = !dateFilter || new Date(item.timestamp).toISOString().split('T')[0] === dateFilter;
 
@@ -432,7 +460,7 @@ export default function HistoryPage({ onViewDetail }) {
             <AnimatePresence mode="popLayout">
               {paginatedHistory.map((item, index) => (
                 <HistoryCard
-                  key={item.inference_id}
+                  key={item.inference_id || item.batch_id}
                   item={item}
                   index={index}
                   onClick={() => openHistoryDetail(item)}
@@ -536,7 +564,7 @@ export default function HistoryPage({ onViewDetail }) {
                   <p className="text-sm text-ocular-text-muted font-medium">
                     {itemToDelete?.is_batch
                       ? `Estás por eliminar un lote de ${itemToDelete.batch_size} imágenes.`
-                      : `Se eliminará el análisis del archivo "${itemToDelete?.summary?.filename || 'Desconocido'}".`}
+                      : `Se eliminará el análisis del archivo "${(itemToDelete?.summary?.filename || itemToDelete?.filename) || 'Desconocido'}".`}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-2">

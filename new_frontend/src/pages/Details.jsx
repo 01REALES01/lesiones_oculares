@@ -175,6 +175,12 @@ export default function AnalysisDetail({
   onDelete,
   hideImage = false,
 }) {
+
+  const [usarOriginal, setUsarOriginal] = useState(false);
+
+  const handleToggle = () => {
+    setUsarOriginal(prev => !prev);
+  };
   const reportRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -580,7 +586,18 @@ export default function AnalysisDetail({
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
                             <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
-                            <SwitchToggle active={usarOriginal} onToggle={handleToggle} />
+                            <button
+                              onClick={handleToggle}
+                              className={`w-12 h-6 rounded-full transition-all duration-300 relative ${
+                                usarOriginal ? 'bg-primary' : 'bg-slate-300'
+                              }`}
+                            >
+                              <span
+                                className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all duration-300 ${
+                                  usarOriginal ? 'left-7' : 'left-1'
+                                }`}
+                              />
+                            </button>
                           </div>
                           <div className="rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center min-h-[220px]">
                             <ZoomableImage
