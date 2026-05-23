@@ -91,7 +91,7 @@ export default function DemoPage({ onGoLanding }) {
           {/* Volver */}
           <button
             onClick={onGoLanding}
-            className="flex items-center gap-2 rounded-full border border-white/60 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:border-primary/40 hover:text-primary group"
+            className="flex items-center gap-2 rounded-full border border-white/60 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-600 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md hover:border-primary/40 hover:text-primary group"
           >
             <ArrowLeft size={15} className="transition-transform group-hover:-translate-x-0.5" />
             Volver a la landing
@@ -137,19 +137,21 @@ export default function DemoPage({ onGoLanding }) {
             </div>
 
             {/* Selector de modelo */}
-            <GlassCard className="w-full p-5 border-white/40">
-              <p className="mb-3 text-xs font-black uppercase tracking-[0.25em] text-slate-400">Modelo de IA</p>
-              <div className="flex flex-wrap gap-3">
+            <GlassCard className="w-full p-5 border-white/40 flex flex-col items-center gap-y-4">
+              <div className="hidden items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-2 text-xs font-black uppercase tracking-[0.22em] text-primary shadow-sm sm:flex">
+                Modelos de IA
+              </div>
+
+              <div className="flex flex-wrap justify-center gap-3">
                 {MODEL_OPTIONS.map((m) => (
                   <button
                     key={m.key}
                     type="button"
-                    onClick={() => setSelectedModel(m.key)}
-                    className={`rounded-xl border px-4 py-2 text-sm font-bold transition-all ${
-                      selectedModel === m.key
-                        ? 'border-primary bg-primary text-white shadow-md shadow-primary/20'
-                        : 'border-white/60 bg-white/70 text-slate-700 hover:border-primary/40 hover:text-primary'
-                    }`}
+                    onClick={() => setSelectedModel(m.key)} // Nota: corregido el espacio en setSelectedModel
+                    className={`rounded-xl border px-4 py-2 text-sm font-bold transition-all hover:-translate-y-0.5 hover:shadow-md ${selectedModel === m.key
+                      ? 'border-primary bg-primary text-white shadow-md shadow-primary/20'
+                      : 'border-gray-400/60 bg-white/70 text-slate-700 hover:border-primary/40 hover:text-primary'
+                      }`}
                   >
                     {m.label}
                   </button>
@@ -160,9 +162,8 @@ export default function DemoPage({ onGoLanding }) {
             {/* Zona de carga / preview */}
             {!selectedFile ? (
               <GlassCard
-                className={`w-full cursor-pointer border-2 border-dashed p-14 transition-all ${
-                  isDragging ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary/50'
-                }`}
+                className={`w-full cursor-pointer border-2 border-dashed p-14 transition-all ${isDragging ? 'border-primary bg-primary/5' : 'border-slate-200 hover:border-primary/50'
+                  }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -215,7 +216,7 @@ export default function DemoPage({ onGoLanding }) {
                 whileTap={{ scale: 0.98 }}
                 onClick={handleAnalyze}
                 disabled={loading}
-                className="w-full rounded-2xl bg-gradient-to-r from-primary to-indigo-600 py-4 text-sm font-bold text-white shadow-lg shadow-primary/30 transition hover:shadow-primary/50 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-3"
+                className="w-full rounded-2xl bg-gradient-to-r from-primary to-primary-dark py-4 text-sm font-bold text-white shadow-lg shadow-primary/20 transition hover:shadow-primary/40 disabled:cursor-not-allowed disabled:opacity-60 flex items-center justify-center gap-3"
               >
                 {loading ? (
                   <><Loader2 size={18} className="animate-spin" />Analizando imagen...</>

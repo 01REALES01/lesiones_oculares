@@ -4,15 +4,13 @@ Este directorio contiene el script para evaluar los modelos con un dataset públ
 
 ## Métricas
 
-- **Modelo A (segmentación):** IoU/Dice si se dispone de máscaras de referencia; tiempo de inferencia.
-- **Modelo B (clasificación):** Accuracy, F1, AUC-ROC, sensibilidad, especificidad; tiempo de inferencia.
-- **Modelo C (detección):** mAP o precisión/recall por clase si se dispone de anotaciones; tiempo de inferencia.
+- **Modelo A, B y C:** Retinopatia Diabética; tiempo de inferencia.
 
 ## Uso
 
 1. Colocar imágenes de fondo de ojo en una carpeta (ej. `evaluation/data/images/`).
 2. (Opcional) Archivo CSV con etiquetas para ground truth:
-   - Columnas sugeridas: `image_name`, `glaucoma` (0/1) para el clasificador.
+   - Columnas sugeridas: `image_name`, `diabetic_retinopathy` (0-4) para el clasificador.
    - Con datos reales se calculan accuracy, F1, AUC, sensibilidad, especificidad.
 3. Ejecutar:
 

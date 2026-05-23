@@ -95,14 +95,24 @@ RD_MODEL_SPECS = {
         "label": "DenseNet169",
     },
     "resnet50": {
-        "model_key": "lesiones_priority",
+        "model_key": "lesiones_resnet",
         "model_type": "resnet50",
-        "label": "Modelo Nuevo",
+        "label": "ResNet50",
     },
     "xception": {
         "model_key": "lesiones_xception",
         "model_type": "xception",
         "label": "Xception",
+    },
+    "efficientnet": {
+        "model_key": "lesiones_efficientnet",
+        "model_type": "efficientnet",
+        "label": "EfficientNet",
+    },
+    "mobilenetv3": {
+        "model_key": "lesiones_mobilenet",
+        "model_type": "mobilenetv3",
+        "label": "MobileNetV3",
     },
 }
 
@@ -130,19 +140,31 @@ async def lifespan(app: FastAPI):
     _load_first_available_model("lesiones_densenet", [
         {"filename": "densenet_169_aptos_fine.h5", "model_type": "densenet169", "label": "DenseNet169"},
     ])
+    _load_first_available_model("lesiones_resnet", [
+        {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50 Fine"},
+        {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
+    ])
+    _load_first_available_model("lesiones_xception", [
+        {"filename": "xception_aptos_fine2.h5", "model_type": "xception", "label": "Xception"},
+        {"filename": "xception_model.keras", "model_type": "xception", "label": "Xception"},
+    ])
+    _load_first_available_model("lesiones_efficientnet", [
+        {"filename": "efficientnetB0_weights.h5", "model_type": "efficientnet", "label": "EfficientNetB0"},
+        {"filename": "efficientnet_model.h5", "model_type": "efficientnet", "label": "EfficientNet"},
+        {"filename": "efficientnet_weights.h5", "model_type": "efficientnet", "label": "EfficientNet"},
+        {"filename": "efficientnetB0.keras", "model_type": "efficientnet", "label": "EfficientNetB0"},
+    ])
+    _load_first_available_model("lesiones_mobilenet", [
+        {"filename": "mobilenetv3_model_fine.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Fine"},
+        {"filename": "mobilenetv3_model_fino.keras", "model_type": "mobilenetv3", "label": "MobileNetV3"},
+    ])
+    # Keep priority loaded for generic usages
     _load_first_available_model("lesiones_priority", [
         {"filename": "efficientnetB0.keras", "model_type": "efficientnet", "label": "EfficientNetB0"},
         {"filename": "efficientnet_model.keras", "model_type": "efficientnet", "label": "EfficientNet"},
         {"filename": "efficientnetB0.h5", "model_type": "efficientnet", "label": "EfficientNetB0"},
         {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50 Fine"},
         {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
-        {"filename": "mobilenetv3_model_fine.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Fine"},
-        {"filename": "mobilenetv3_model_fino.keras", "model_type": "mobilenetv3", "label": "MobileNetV3"},
-        {"filename": "mobilenetv3_model.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Legacy"},
-    ])
-    _load_first_available_model("lesiones_xception", [
-        {"filename": "xception_aptos_fine2.h5", "model_type": "xception", "label": "Xception"},
-        {"filename": "xception_model.keras", "model_type": "xception", "label": "Xception"},
     ])
     yield
 
@@ -1069,8 +1091,8 @@ async def analyze_rd_comparison(
     request: Request,
     files: List[UploadFile] = File(...),
     models: str = Query(
-        "densenet169,resnet50,xception",
-        description="Modelos RD a ejecutar: densenet169, resnet50, xception.",
+        "densenet169,resnet50,xception,efficientnet,mobilenetv3",
+        description="Modelos RD a ejecutar.",
     ),
     current_user: User = Depends(get_current_user),
     token: str = Depends(oauth2_scheme),
@@ -1105,7 +1127,7 @@ async def _analyze_rd_comparison_impl(
         if model_id not in RD_MODEL_SPECS:
             return JSONResponse(
                 status_code=400,
-                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50 y/o xception."},
+                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50, xception, efficientnet y/o mobilenetv3."},
             )
 
     loop = asyncio.get_running_loop()

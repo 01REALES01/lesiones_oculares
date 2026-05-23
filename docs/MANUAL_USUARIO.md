@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-Nuestra plataforma permite **cargar retinografías** (imágenes de fondo de ojo), **seleccionar uno o más modelos de IA** (A: segmentación, B: clasificación, C: detección de lesiones) y **obtener resultados** con métricas, trazabilidad e interpretación orientada a **apoyo clínico y educativo**. **No sustituye el diagnóstico médico.**
+Nuestra plataforma permite **cargar retinografías** (imágenes de fondo de ojo), **ejecutar inferencias concurrentes** utilizando tres modelos de IA (DenseNet169, ResNet50, Xception) y **obtener resultados** con métricas, trazabilidad e interpretación orientada a **apoyo clínico y educativo para Retinopatía Diabética (RD)**. **No sustituye el diagnóstico médico.**
 
 ## 2. Requisitos previos
 
@@ -20,13 +20,13 @@ Nuestra plataforma permite **cargar retinografías** (imágenes de fondo de ojo)
 
 ### 3.2 Seleccionar modelos
 
-En **“2. Seleccionar modelos”** puedes activar o desactivar:
+En **“2. Seleccionar modelos”** la plataforma ejecuta por defecto una inferencia en paralelo utilizando:
 
-- **Modelo A:** segmentación del disco y la copa óptica; calcula el **CDR** (Cup-to-Disc Ratio).
-- **Modelo B:** clasificación de probabilidad de **glaucoma**.
-- **Modelo C:** detección de **lesiones** (microaneurismas, hemorragias, exudados) con cajas en la imagen.
+- **DenseNet169**
+- **ResNet50**
+- **Xception**
 
-Puedes elegir **uno, dos o los tres**. Debe haber al menos uno seleccionado para analizar.
+El objetivo es contrastar el diagnóstico (Grados de RD según APTOS) entre las tres arquitecturas para una mayor confiabilidad.
 
 ### 3.3 Analizar
 
@@ -38,12 +38,11 @@ Puedes elegir **uno, dos o los tres**. Debe haber al menos uno seleccionado para
 
 - **ID de inferencia:** identifica de forma única el análisis (trazabilidad).
 - **Tiempos (ms):** tiempo de ejecución de cada modelo usado.
-- **CDR:** ratio copa/disco (valores altos pueden asociarse a seguimiento de glaucoma).
-- **Prob. glaucoma:** probabilidad dada por el modelo B (0–100%).
-- **Lesiones:** número de detecciones del modelo C.
+- **Diagnóstico RD:** Ausencia o presencia de Retinopatía Diabética.
+- **Grado de severidad:** Clasificación según la escala APTOS (0 al 4).
+- **Confianza:** Porcentaje de certeza del modelo para esa predicción.
 - **Gráficas:** barras de probabilidades y de tiempos de inferencia.
 - **Recomendación:** texto resumen (orientativo).
-- **Mapa de relevancia:** imagen con el heatmap que indica zonas que el modelo considera relevantes (explicabilidad).
 
 Al final se muestra el **aviso legal**: el sistema es de apoyo, no constituye diagnóstico.
 
@@ -57,7 +56,7 @@ Al final se muestra el **aviso legal**: el sistema es de apoyo, no constituye di
 - **Documentación interactiva:** `http://<servidor>:8000/docs`
 - **Analizar imagen:** `POST /analyze-retina/`  
   - Cuerpo: `multipart/form-data` con campo `file` (imagen).  
-  - Parámetros: `models=A,B,C` (opcional; por defecto los tres), `include_heatmap=true/false`.  
+  - Parámetros: `models=densenet169,resnet50,xception` (opcional; por defecto los tres).  
   - Respuesta: JSON con resultados, `inference_id`, `traceability`, `postprocessing`, `disclaimer`.
 - **Historial:** `GET /history?limit=50&offset=0`
 - **Detalle de una inferencia:** `GET /inferences/{inference_id}`
@@ -71,5 +70,5 @@ Al final se muestra el **aviso legal**: el sistema es de apoyo, no constituye di
 ## 6. Solución de problemas
 
 - **“Error al leer la imagen”:** comprueba que el archivo sea una imagen válida (jpg/png) y no esté corrupto.
-- **“Selecciona al menos un modelo”:** marca al menos una casilla (A, B o C).
+- **“Error de conexión”:** verifica que el backend y los modelos estén operativos.
 - Si el historial no aparece: verifica que el backend esté en marcha y que la URL del API sea la correcta (en local, el frontend usa `/api` como proxy al backend).

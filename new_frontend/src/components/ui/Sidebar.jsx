@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils';
-import { LogOut, ChevronLeft, ChevronRight, User, House } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, User, House, ScanEye } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
@@ -10,12 +10,12 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
     <motion.aside
       initial={false}
       animate={{ width: isOpen ? 260 : 80 }}
-      className="h-screen bg-white/50 backdrop-blur-2xl border-r border-white/20 flex flex-col z-50 relative transition-all duration-300 no-print"
+      className="h-screen bg-slate-900/80 backdrop-blur-3xl border-r border-white/10 flex flex-col z-50 relative transition-all duration-300 no-print shadow-2xl"
     >
       {/* Toggle Button */}
       <button
         onClick={toggle}
-        className="absolute -right-3 top-10 bg-primary text-white p-1 rounded-full shadow-lg hover:scale-110 transition-transform"
+        className="absolute -right-3 top-10 bg-primary text-white p-1 rounded-full shadow-lg hover:scale-110 active:scale-95 transition-transform"
       >
         {isOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
       </button>
@@ -31,7 +31,7 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -10 }}
-              className="font-bold text-lg text-ocular-text-main whitespace-nowrap"
+              className="font-bold text-lg text-white whitespace-nowrap"
             >
               OcularAI
             </motion.span>
@@ -44,16 +44,16 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
         {links.map((link) => {
           const Icon = link.icon;
           const isActive = activeKey === link.key;
-          
+
           return (
             <button
               key={link.key}
               onClick={link.onClick}
               className={cn(
-                "flex items-center gap-3 p-3 rounded-2xl transition-all group overflow-hidden",
-                isActive 
-                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
-                  : "text-ocular-text-muted hover:bg-primary/10 hover:text-primary"
+                "flex items-center gap-3 p-3 rounded-2xl transition-all group overflow-hidden active:scale-95",
+                isActive
+                  ? "bg-primary text-white shadow-lg shadow-primary/20"
+                  : "text-slate-200 font-semibold hover:bg-white/10 hover:text-white"
               )}
             >
               <Icon size={22} className="flex-shrink-0" />
@@ -75,11 +75,11 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
       </nav>
 
       {/* Footer / User Area */}
-      <div className="p-3 border-t border-white/20 mt-auto">
+      <div className="p-3 border-t border-white/10 mt-auto">
         {onGoLanding && (
           <button
             onClick={onGoLanding}
-            className="w-full flex items-center gap-3 p-3 rounded-2xl bg-primary/10 text-primary hover:bg-primary/15 transition-colors group overflow-hidden mb-2"
+            className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-colors group overflow-hidden mb-2 active:scale-95"
           >
             <House size={22} className="flex-shrink-0" />
             <AnimatePresence>
@@ -97,7 +97,7 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
           </button>
         )}
 
-        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/30 mb-2 overflow-hidden">
+        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/5 mb-2 overflow-hidden border border-white/5">
           <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0">
             <User size={18} />
           </div>
@@ -109,16 +109,16 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
                 exit={{ opacity: 0 }}
                 className="flex flex-col truncate"
               >
-                <span className="text-sm font-bold text-ocular-text-main">Dr. Ocular</span>
-                <span className="text-xs text-ocular-text-muted">Admin User</span>
+                <span className="text-sm font-bold text-white">Dr. Rodmoli</span>
+                <span className="text-xs text-slate-400">Admin User</span>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
-        
+
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 p-3 rounded-2xl text-ocular-error hover:bg-ocular-error/10 transition-colors group overflow-hidden"
+          className="w-full flex items-center gap-3 p-3 rounded-2xl text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors group overflow-hidden active:scale-95"
         >
           <LogOut size={22} className="flex-shrink-0" />
           <AnimatePresence>
