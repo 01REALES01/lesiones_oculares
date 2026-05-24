@@ -40,7 +40,7 @@ def build_report(
 
     if "C" in models_used and model_c_result:
         if isinstance(model_c_result, dict):
-            # Formato de ML Manager de clasificación (ResNet, DenseNet, etc)
+            # Formato de ML Manager de clasificación (MobileNetV3, DenseNet, etc)
             label = f"Grado {model_c_result.get('predicted_class', 0)}: {model_c_result.get('diagnosis', 'Normal')}"
             conf = model_c_result.get('confidence_percent', 0.0) / 100.0
             detection_summary = [{"label": label, "confidence": conf}]

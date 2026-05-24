@@ -82,7 +82,7 @@ class MLManager:
             print(f"Error al cargar '{model_key}': {str(e)}")
             raise e
 
-    def preprocess_image(self, image_bytes: bytes, target_size=(224, 224), model_type="resnet50"):
+    def preprocess_image(self, image_bytes: bytes, target_size=(224, 224), model_type="mobilenetv3"):
         """
         Convierte bytes de imagen a un tensor procesado listo para el modelo Keras.
         """
@@ -94,9 +94,7 @@ class MLManager:
         img_array = np.array(image, dtype=np.float32)
 
         # Apply specific preprocessing based on the model architecture trained in the notebooks
-        if model_type == "resnet50" or model_type == "resnet50v2":
-            img_array = tf.keras.applications.resnet_v2.preprocess_input(img_array)
-        elif model_type == "densenet169":
+        if model_type == "densenet169":
             img_array = tf.keras.applications.densenet.preprocess_input(img_array)
         elif model_type == "mobilenetv3":
             img_array = tf.keras.applications.mobilenet_v3.preprocess_input(img_array)
@@ -110,7 +108,7 @@ class MLManager:
 
         return img_array
 
-    def predict_batch(self, model_key: str, images_bytes_list: list, target_size=None, model_type="resnet50"):
+    def predict_batch(self, model_key: str, images_bytes_list: list, target_size=None, model_type="mobilenetv3"):
         """
         Procesa un lote de imágenes en un solo pase hacia la tarjeta gráfica o CPU usando Tensor Stacking.
         """

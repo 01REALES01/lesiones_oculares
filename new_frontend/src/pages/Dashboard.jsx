@@ -397,15 +397,15 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5">
                     <label
                       htmlFor="dash-file-input"
-                      className="cursor-pointer rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold uppercase tracking-wider text-slate-600 shadow-sm hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all duration-150"
+                      className="cursor-pointer flex items-center rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold uppercase tracking-wider text-slate-600 shadow-sm hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all duration-150"
                     >
-                      Seleccionar Archivos
+                      Archivos
                     </label>
                     <label
                       htmlFor="dash-folder-input"
-                      className="cursor-pointer rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-primary/20 hover:bg-primary-dark hover:scale-105 active:scale-95 transition-all duration-150"
+                      className="cursor-pointer flex items-center rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-primary/20 hover:bg-primary-dark hover:scale-105 active:scale-95 transition-all duration-150"
                     >
-                      Seleccionar Carpetas
+                      Carpetas
                     </label>
                   </div>
 
@@ -485,9 +485,9 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                               {results?.[0]?.batch_id && (
                                 <button
                                   onClick={handleExportExcelResults}
-                                  className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-[10px] font-bold hover:bg-primary-dark transition-all uppercase tracking-widest shadow-sm shadow-primary/20"
+                                  className="flex items-center gap-2 px-5 py-2 text-xs bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide"
                                 >
-                                  <FileSpreadsheet size={14} /> Exportar Lote
+                                  <FileSpreadsheet size={14} /> Exportar Lote en Excel
                                 </button>
                               )}
                               <button

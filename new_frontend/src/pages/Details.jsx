@@ -24,14 +24,8 @@ function getImageUrl(result) {
 
   let preview = result.uploaded_image_preview;
   if (preview) {
-    // Base64 inline
-    if (preview.startsWith('data:')) return preview;
-    // Ruta absoluta del backend
     if (preview.startsWith('/')) return `${baseUrl}${preview}`;
-    // URL ya completa
-    if (preview.startsWith('http://') || preview.startsWith('https://')) return preview;
-    // Fallback: backend respondió solo nombre de archivo
-    return `${baseUrl}/images/${preview}`;
+    return preview;
   }
 
   const filename = result.filename || result.summary?.filename;
@@ -56,10 +50,8 @@ function getImageUrl_filtro(result) {
 
   let preview = result.uploaded_image_braham;
   if (preview) {
-    if (preview.startsWith('data:')) return preview;
     if (preview.startsWith('/')) return `${baseUrl}${preview}`;
-    if (preview.startsWith('http://') || preview.startsWith('https://')) return preview;
-    return `${baseUrl}/images/${preview}`;
+    return preview;
   }
 
   const filename = result.filename || result.summary?.filename;

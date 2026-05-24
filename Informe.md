@@ -30,7 +30,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **DenseNet169:** (Densely Connected Convolutional Networks). Es una arquitectura donde cada capa está conectada a todas las demás capas posteriores. Esta estructura mejora significativamente la propagación del flujo de información y gradientes a lo largo de la red, mitigando el problema del desvanecimiento del gradiente y logrando alta precisión con menos parámetros.
 
-**ResNet50:** (Residual Networks). Se caracteriza por el uso de "conexiones de salto" o "bloques residuales" que permiten el entrenamiento efectivo de redes neuronales extremadamente profundas (en este caso, de 50 capas). ResNet aprende funciones residuales con referencia a las entradas de capa, facilitando la optimización.
+**MobileNetV3:** Arquitectura ligera optimizada para dispositivos con recursos limitados. Combina eficiencia computacional con buena precisión para clasificación de imágenes.
 
 **Xception:** (Extreme Inception). Es una arquitectura que reemplaza los módulos Inception estándar por convoluciones separables en profundidad (depthwise separable convolutions). Esto desacopla el mapeo de correlaciones cruzadas espaciales y de canales, haciendo el modelo estadísticamente más eficiente.
 
@@ -89,11 +89,11 @@ El diagnóstico de patologías oculares mediante inteligencia artificial ha expe
 
 **1. Aprendizaje por Transferencia**
 
-La tendencia predominante en el estado del arte no es el entrenamiento de modelos desde cero, sino el uso de arquitecturas pre-entrenadas en bases de datos masivas (como ImageNet). Modelos como ResNet introdujeron las "conexiones de salto" para resolver el problema del desvanecimiento del gradiente, permitiendo redes mucho más profundas. Arquitecturas más recientes como Xception y EfficientNet han optimizado la relación entre el número de parámetros y la precisión, permitiendo que modelos de alta fidelidad operen en dispositivos con recursos limitados.
+La tendencia predominante en el estado del arte no es el entrenamiento de modelos desde cero, sino el uso de arquitecturas pre-entrenadas en bases de datos masivas (como ImageNet). Arquitecturas modernas como MobileNetV3, Xception y EfficientNet optimizan la relación entre número de parámetros y precisión, permitiendo operar modelos de alta fidelidad en dispositivos con recursos limitados.
 
 **2. Validación por Ensamble de Modelos**
 
-Uno de los mayores retos en la medicina actual es la confiabilidad de los sistemas automatizados. El estado del arte aborda este problema mediante el uso de ensambles (ensembles) o la ejecución concurrente de diferentes arquitecturas neuronales. Al contrastar resultados de modelos matemáticamente diferentes (como DenseNet y ResNet), se reduce la incertidumbre propia de un solo modelo ("caja negra"), validando el criterio ante el especialista humano.
+Uno de los mayores retos en la medicina actual es la confiabilidad de los sistemas automatizados. El estado del arte aborda este problema mediante el uso de ensambles (ensembles) o la ejecución concurrente de diferentes arquitecturas neuronales. Al contrastar resultados de modelos matemáticamente diferentes (como DenseNet y MobileNetV3), se reduce la incertidumbre propia de un solo modelo ("caja negra"), validando el criterio ante el especialista humano.
 
 **3. Especialización y Profundidad en la Clasificación**
 
@@ -152,7 +152,7 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 |--------|------------|
 | Calidad variable de imágenes | Se implementa preprocesamiento; se documentan limitaciones |
 | Desbalance/sesgos en datos | Se realiza evaluación con dataset público o provisto; se reportan métricas en script de evaluación |
-| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, ResNet, Xception) para validación cruzada |
+| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, MobileNetV3, Xception) para validación cruzada |
 | Latencia y recursos | Se cargan los modelos ya preentrenados; se muestra un historial acotado |
 | Privacidad de imágenes médicas | Se implementa cifrado, control de acceso, retención mínima, anonimización donde aplique |
 | Uso indebido como diagnóstico | Disclaimers en API e interfaz; enfoque "apoyo/tamizaje"; trazabilidad |

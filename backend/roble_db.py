@@ -138,6 +138,10 @@ async def list_user_analyses_from_roble(
                 result = json.loads(result)
             except json.JSONDecodeError:
                 result = {}
+
+        if isinstance(result, dict):
+            if not result.get("uploaded_image_preview") and result.get("uploaded_image_braham"):
+                result["uploaded_image_preview"] = result["uploaded_image_braham"]
                 
         summary = result.get("comparison_summary", {})
         primary = result.get("primary_result", {})
@@ -432,6 +436,11 @@ async def get_analysis_from_roble(
         import json
         result = json.loads(result)
 
+    # Compatibilidad con registros donde no se persistió preview original.
+    if isinstance(result, dict):
+        if not result.get("uploaded_image_preview") and result.get("uploaded_image_braham"):
+            result["uploaded_image_preview"] = result["uploaded_image_braham"]
+
     return {
         "inference_id": row.get("inference_id"),
         "timestamp": row.get("timestamp"),
@@ -470,6 +479,10 @@ async def get_batch_from_roble(
         if isinstance(result, str):
             import json
             result = json.loads(result)
+
+        if isinstance(result, dict):
+            if not result.get("uploaded_image_preview") and result.get("uploaded_image_braham"):
+                result["uploaded_image_preview"] = result["uploaded_image_braham"]
 
         records.append({
             "inference_id": row.get("inference_id"),

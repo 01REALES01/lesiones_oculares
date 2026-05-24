@@ -79,7 +79,7 @@ RETINA_TOOLS: list[dict] = [
                     "description": (
                         "Variante del modelo DR a usar. "
                         "'densenet169' = DenseNet169, "
-                        "'priority' = modelo prioritario (EfficientNet/ResNet/MobileNet), "
+                        "'priority' = modelo prioritario (EfficientNet/MobileNet), "
                         "'xception' = Xception."
                     ),
                 },
@@ -149,7 +149,7 @@ IMPORTANTE: Siempre incluye el disclaimer. Nunca inventes resultados de modelos 
 # Mapeo de variante de herramienta a model_key del MLManager
 _DR_MODEL_KEY_MAP: dict[str, tuple[str, str]] = {
     "densenet169": ("lesiones_densenet", "densenet169"),
-    "priority": ("lesiones_priority", "resnet50"),
+    "priority": ("lesiones_priority", "mobilenetv3"),
     "xception": ("lesiones_xception", "xception"),
 }
 

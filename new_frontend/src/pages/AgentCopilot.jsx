@@ -62,7 +62,7 @@ export default function AgentCopilot() {
     setIsSimulated(true);
     try {
       // 1. Llamar a analyzeComparison para obtener datos reales de los modelos locales
-      const localData = await analysisService.analyzeComparison([selectedFile], 'densenet169,resnet50,xception');
+      const localData = await analysisService.analyzeComparison([selectedFile], 'densenet169,mobilenetv3,xception');
       const primary = localData.primary_result || {};
       const comp = localData.comparison_summary || {};
       const details = localData.details?.[0] || {};

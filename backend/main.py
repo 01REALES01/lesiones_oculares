@@ -63,7 +63,6 @@ from backend.store import (
     list_inferences,
     get_global_stats,
     save_image_to_disk,
-    clear_images_dir,
     get_batch,
     clear_history,
     delete_batch,
@@ -82,6 +81,8 @@ from backend.auth import (
 import httpx
 
 MODEL_RUNTIME_METADATA = {}
+STATS_CACHE_TTL_SECONDS = 45
+_stats_cache: dict[str, dict[str, Any]] = {}
 
 # Disclaimer fijo (apoyo/tamizaje, no diagnóstico)
 DISCLAIMER = (
@@ -95,11 +96,6 @@ RD_MODEL_SPECS = {
         "model_key": "lesiones_densenet",
         "model_type": "densenet169",
         "label": "DenseNet169",
-    },
-    "resnet50": {
-        "model_key": "lesiones_resnet",
-        "model_type": "resnet50",
-        "label": "ResNet50",
     },
     "xception": {
         "model_key": "lesiones_xception",
@@ -142,10 +138,6 @@ async def lifespan(app: FastAPI):
     _load_first_available_model("lesiones_densenet", [
         {"filename": "densenet_169_aptos_fine.h5", "model_type": "densenet169", "label": "DenseNet169"},
     ])
-    _load_first_available_model("lesiones_resnet", [
-        {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50 Fine"},
-        {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
-    ])
     _load_first_available_model("lesiones_xception", [
         {"filename": "xception_aptos_fine2.h5", "model_type": "xception", "label": "Xception"},
         {"filename": "xception_model.keras", "model_type": "xception", "label": "Xception"},
@@ -165,8 +157,8 @@ async def lifespan(app: FastAPI):
         {"filename": "efficientnetB0.keras", "model_type": "efficientnet", "label": "EfficientNetB0"},
         {"filename": "efficientnet_model.keras", "model_type": "efficientnet", "label": "EfficientNet"},
         {"filename": "efficientnetB0.h5", "model_type": "efficientnet", "label": "EfficientNetB0"},
-        {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50 Fine"},
-        {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
+        {"filename": "mobilenetv3_model_fine.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Fine"},
+        {"filename": "mobilenetv3_model_fino.keras", "model_type": "mobilenetv3", "label": "MobileNetV3"},
     ])
     yield
 
@@ -486,14 +478,30 @@ async def stats(
     current_user: User = Depends(get_current_user),
     token: str = Depends(oauth2_scheme),
 ):
+    now = time.time()
+    cache_key = current_user.email
+    cached = _stats_cache.get(cache_key)
+    if cached and now < cached.get("expires_at", 0):
+        return cached["payload"]
+
     try:
-        return await get_user_stats_from_roble(
+        payload = await get_user_stats_from_roble(
             token=token,
             user_email=current_user.email,
         )
+        _stats_cache[cache_key] = {
+            "payload": payload,
+            "expires_at": now + STATS_CACHE_TTL_SECONDS,
+        }
+        return payload
     except Exception as e:
         print("ERROR CARGANDO STATS DESDE ROBLE:", str(e))
-        return get_global_stats()
+        payload = get_global_stats()
+        _stats_cache[cache_key] = {
+            "payload": payload,
+            "expires_at": now + 5,
+        }
+        return payload
 
 
 @app.get("/history")
@@ -1093,7 +1101,7 @@ async def analyze_rd_comparison(
     request: Request,
     files: List[UploadFile] = File(...),
     models: str = Query(
-        "densenet169,resnet50,xception,efficientnet,mobilenetv3",
+        "densenet169,xception,efficientnet,mobilenetv3",
         description="Modelos RD a ejecutar.",
     ),
     current_user: User = Depends(get_current_user),
@@ -1129,7 +1137,7 @@ async def _analyze_rd_comparison_impl(
         if model_id not in RD_MODEL_SPECS:
             return JSONResponse(
                 status_code=400,
-                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50, xception, efficientnet y/o mobilenetv3."},
+                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, xception, efficientnet y/o mobilenetv3."},
             )
 
     loop = asyncio.get_running_loop()
@@ -1253,7 +1261,6 @@ async def _analyze_rd_comparison_impl(
             })
             
             result_for_db = copy.deepcopy(result)
-            result_for_db.pop("uploaded_image_preview", None)
 
             roble_record = {
                 "inference_id": inference_id,
@@ -1304,7 +1311,7 @@ async def _analyze_rd_comparison_impl(
 @app.post("/analyze-demo/")
 async def analyze_demo(
     file: UploadFile = File(...),
-    model: str = Query("densenet169", description="Modelo a usar: densenet169, resnet50 o xception."),
+    model: str = Query("densenet169", description="Modelo a usar: densenet169, mobilenetv3 o xception."),
 ):
     """
     Análisis demo sin autenticación. Solo 1 imagen, 1 modelo, sin guardar historial.
@@ -1313,7 +1320,7 @@ async def analyze_demo(
     if model_id not in RD_MODEL_SPECS:
         return JSONResponse(
             status_code=400,
-            content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet50 o xception."},
+            content={"detail": f"Modelo inválido: {model_id}. Use densenet169, mobilenetv3 o xception."},
         )
 
     loop = asyncio.get_event_loop()
@@ -1389,8 +1396,8 @@ async def analyze_retina(
         description="Modelos a ejecutar: A (segmentación disco/copa), B (clasificación glaucoma), C (detección lesiones). Ej: A,B o B,C",
     ),
     model_c_type: str = Query(
-        "resnet50v2",
-        description="Tipo de modelo de IA a correr para las lesiones: 'resnet50v2' o 'mobilenetv3'"
+        "mobilenetv3",
+        description="Tipo de modelo de IA a correr para las lesiones: 'mobilenetv3'"
     ),
     current_user: User = Depends(get_current_user),
 ):

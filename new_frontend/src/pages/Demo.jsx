@@ -7,7 +7,7 @@ import Details from './Details';
 
 const MODEL_OPTIONS = [
   { key: 'densenet169', label: 'DenseNet169' },
-  { key: 'resnet50', label: 'ResNet50' },
+  { key: 'mobilenetv3', label: 'MobileNetV3' },
   { key: 'xception', label: 'Xception' },
 ];
 

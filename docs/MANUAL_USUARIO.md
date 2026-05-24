@@ -2,7 +2,7 @@
 
 ## 1. Propósito
 
-Nuestra plataforma permite **cargar retinografías** (imágenes de fondo de ojo), **ejecutar inferencias concurrentes** utilizando tres modelos de IA (DenseNet169, ResNet50, Xception) y **obtener resultados** con métricas, trazabilidad e interpretación orientada a **apoyo clínico y educativo para Retinopatía Diabética (RD)**. **No sustituye el diagnóstico médico.**
+Nuestra plataforma permite **cargar retinografías** (imágenes de fondo de ojo), **ejecutar inferencias concurrentes** utilizando tres modelos de IA (DenseNet169, MobileNetV3, Xception) y **obtener resultados** con métricas, trazabilidad e interpretación orientada a **apoyo clínico y educativo para Retinopatía Diabética (RD)**. **No sustituye el diagnóstico médico.**
 
 ## 2. Requisitos previos
 
@@ -23,7 +23,7 @@ Nuestra plataforma permite **cargar retinografías** (imágenes de fondo de ojo)
 En **“2. Seleccionar modelos”** la plataforma ejecuta por defecto una inferencia en paralelo utilizando:
 
 - **DenseNet169**
-- **ResNet50**
+- **MobileNetV3**
 - **Xception**
 
 El objetivo es contrastar el diagnóstico (Grados de RD según APTOS) entre las tres arquitecturas para una mayor confiabilidad.
@@ -56,7 +56,7 @@ Al final se muestra el **aviso legal**: el sistema es de apoyo, no constituye di
 - **Documentación interactiva:** `http://<servidor>:8000/docs`
 - **Analizar imagen:** `POST /analyze-retina/`  
   - Cuerpo: `multipart/form-data` con campo `file` (imagen).  
-  - Parámetros: `models=densenet169,resnet50,xception` (opcional; por defecto los tres).  
+  - Parámetros: `models=densenet169,mobilenetv3,xception` (opcional; por defecto los tres).  
   - Respuesta: JSON con resultados, `inference_id`, `traceability`, `postprocessing`, `disclaimer`.
 - **Historial:** `GET /history?limit=50&offset=0`
 - **Detalle de una inferencia:** `GET /inferences/{inference_id}`
