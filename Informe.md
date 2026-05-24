@@ -24,7 +24,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **Retinopatía Diabética (RD):** Es una complicación ocular de la diabetes causada por el daño a los vasos sanguíneos del tejido sensible a la luz en el fondo del ojo (retina). Es una de las principales causas de ceguera en adultos.
 
-**Escala APTOS o ICDR:** El conjunto de datos APTOS 2019 Blindness Detection provee una escala estandarizada para clasificar la severidad de la retinopatía diabética en cinco grados: 0 (Sin RD), 1 (RD Leve), 2 (RD Moderada), 3 (RD Severa) y 4 (RD Proliferativa). Esta es la métrica clínica base que la plataforma busca detectar.
+**Conjunto Aptos y Escala ICDR:** El conjunto de datos APTOS 2019 Blindness Detection provee una escala estandarizada para clasificar la severidad de la retinopatía diabética en cinco grados: 0 (Sin RD), 1 (RD Leve), 2 (RD Moderada), 3 (RD Severa) y 4 (RD Proliferativa). Esta es la métrica clínica base que la plataforma busca detectar.
 
 **Redes Neuronales Convolucionales (CNN):** Son una clase de redes neuronales artificiales profundas, aplicadas principalmente al análisis de imágenes visuales. Emplean una operación matemática llamada convolución en lugar de la multiplicación general de matrices, lo que les permite identificar patrones jerárquicos (bordes, texturas, lesiones) en las imágenes.
 
@@ -34,7 +34,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **Xception:** (Extreme Inception). Es una arquitectura que reemplaza los módulos Inception estándar por convoluciones separables en profundidad (depthwise separable convolutions). Esto desacopla el mapeo de correlaciones cruzadas espaciales y de canales, haciendo el modelo estadísticamente más eficiente.
 
-**Validación Cruzada por Conjunto (Ensemble/Concurrent Validation):** En lugar de depender de un solo modelo, la plataforma ejecuta inferencias en paralelo utilizando las tres arquitecturas mencionadas. Contrastar las salidas de modelos con diferentes aproximaciones matemáticas (densidad, residualidad y separabilidad) sobre la misma imagen médica aumenta la confianza clínica al buscar consensos y reducir falsos positivos.
+**Validación Cruzada por Conjunto (Ensemble/Concurrent Validation):** La plataforma permite ejecutar desde una hasta tres inferencias en paralelo utilizando las arquitecturas mencionadas. Contrastar las salidas de modelos con diferentes aproximaciones matemáticas (densidad, residualidad y separabilidad) sobre la misma imagen médica aumenta la confianza clínica al buscar consensos para reducir falsos positivos y negativos.
 
 ---
 
@@ -43,7 +43,7 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 ### 3.2 Restricciones y Supuestos de Diseño
 
 1. **Disponibilidad y calidad del dataset:** El desarrollo de los modelos de inteligencia artificial depende de la disponibilidad de un conjunto amplio y representativo de retinografías etiquetadas. La precisión del sistema estará directamente condicionada por la calidad, diversidad y volumen de estos datos.
-2. **Acceso a conocimiento especializado:** El diseño y validación de la solución requiere la colaboración con profesionales del área de la salud, particularmente especialistas en oftalmología, quienes proporcionarán criterios clínicos para el entrenamiento, interpretación de resultados y evaluación de la herramienta.
+2. **Acceso a conocimiento especializado:** El diseño y validación de la solución requiere la colaboración con profesionales del área de la salud, particularmente especialistas en oftalmología, quienes proporcionarán retroalimentación en la interpretación de resultados y evaluación de la herramienta.
 3. **Uso exclusivo por personal médico:** La plataforma está diseñada únicamente para ser utilizada por profesionales de la salud. Por lo tanto, la interfaz, funcionalidades y flujo de uso deben ajustarse a un contexto clínico y no a usuarios generales.
 4. **Capacidad computacional disponible:** El entrenamiento y ejecución de modelos de inteligencia artificial para análisis de imágenes médicas requiere recursos computacionales significativos. El desempeño del sistema estará limitado por la infraestructura tecnológica disponible para el procesamiento de imágenes y ejecución de modelos.
 5. **Privacidad y manejo de datos médicos:** El sistema debe manejar información sensible relacionada con pacientes e imágenes médicas, lo que impone restricciones en el almacenamiento, acceso y gestión de los datos para garantizar su confidencialidad.
@@ -97,7 +97,7 @@ Uno de los mayores retos en la medicina actual es la confiabilidad de los sistem
 
 **3. Especialización y Profundidad en la Clasificación**
 
-La investigación actual se ha desplazado hacia redes extremadamente profundas y eficientes para tareas clínicas de alta complejidad, como determinar el grado de severidad de la Retinopatía Diabética (escala ICDR o APTOS). Las arquitecturas modernas priorizan una clasificación robusta y precisa, optimizando el entrenamiento con técnicas de preprocesamiento avanzadas específicas para fondos de ojo.
+La investigación actual se ha desplazado hacia redes extremadamente profundas y eficientes para tareas clínicas de alta complejidad, como determinar el grado de severidad de la Retinopatía Diabética (escala ICDR). Las arquitecturas modernas priorizan una clasificación robusta y precisa, optimizando el entrenamiento con técnicas de preprocesamiento avanzadas específicas para fondos de ojo.
 
 **4. Bibliotecas y Frameworks de Alto Rendimiento**
 
@@ -105,7 +105,7 @@ A nivel de implementación, el estándar industrial se ha consolidado en torno a
 
 **5. Datasets Estándar y Evaluación**
 
-La validación de estos sistemas se apoya hoy en día en conjuntos de datos abiertos y etiquetados por expertos, como el dataset APTOS 2019 y EyePACS. Las métricas de éxito han evolucionado más allá del simple Accuracy, utilizando ahora el Kappa de Cohen Cuadrático (QWK) para medir el acuerdo entre la IA y los médicos, penalizando más fuertemente los errores en grados de severidad distantes.
+La validación de estos sistemas se apoya hoy en día en conjuntos de datos abiertos y etiquetados por expertos, como el dataset APTOS 2019. Las métricas de éxito han evolucionado más allá del simple Accuracy, utilizando ahora el Kappa de Cohen Cuadrático (QWK) para medir el acuerdo entre la IA y los médicos, penalizando más fuertemente los errores en grados de severidad distantes.
 
 ---
 
