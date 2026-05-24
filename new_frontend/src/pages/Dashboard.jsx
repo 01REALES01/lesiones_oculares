@@ -18,6 +18,7 @@ import {
   Zap,
   FileSpreadsheet,
   Info,
+  ShieldAlert,
 } from 'lucide-react';
 import { cn } from '../utils';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
@@ -56,6 +57,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   const hasHistoryToClear = globalStats.total_analyses > 0;
   const resultsRef = useRef(null);
   const folderInputRef = useRef(null);
+  const interactionLocked = loading;
 
   useEffect(() => {
     const el = folderInputRef.current;
@@ -139,6 +141,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   };
 
   const handleFileChange = (e) => {
+    if (interactionLocked) return;
     if (e.target.files?.length) {
       addFiles(Array.from(e.target.files));
     }
@@ -146,6 +149,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
   const handleDrop = async (e) => {
     e.preventDefault();
+    if (interactionLocked) return;
     setIsDragging(false);
     const items = e.dataTransfer.items;
     const extractedFiles = [];
@@ -220,6 +224,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   };
 
   const handleStartComparison = async () => {
+    if (interactionLocked) return;
     const res = await handleAnalyze();
     if (!res?.success) return;
 
@@ -343,14 +348,19 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
                 <div
                   onDragOver={(e) => {
+                    if (interactionLocked) return;
                     e.preventDefault();
                     setIsDragging(true);
                   }}
-                  onDragLeave={() => setIsDragging(false)}
+                  onDragLeave={() => {
+                    if (interactionLocked) return;
+                    setIsDragging(false);
+                  }}
                   onDrop={handleDrop}
                   className={`
                     relative min-h-[260px] rounded-2xl border-2 border-dashed transition-all duration-300
                     flex flex-col items-center justify-center text-center gap-3 px-6 py-12
+                    ${interactionLocked ? 'pointer-events-none opacity-70 saturate-75' : ''}
                     ${isDragging
                       ? 'border-primary bg-primary/10 scale-[1.01] shadow-[0_12px_40px_rgba(14,165,233,0.12),inset_0_0_0_1px_rgba(14,165,233,0.1)]'
                       : files.length > 0
@@ -365,6 +375,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     accept="image/*"
                     multiple
                     className="hidden"
+                    disabled={interactionLocked}
                     onChange={handleFileChange}
                   />
                   <input
@@ -373,6 +384,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     type="file"
                     multiple
                     className="hidden"
+                    disabled={interactionLocked}
                     onChange={handleFileChange}
                   />
 
@@ -397,13 +409,13 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5">
                     <label
                       htmlFor="dash-file-input"
-                      className="cursor-pointer flex items-center rounded-full border border-slate-200 bg-white px-5 py-2 text-xs font-bold uppercase tracking-wider text-slate-600 shadow-sm hover:bg-slate-50 hover:scale-105 active:scale-95 transition-all duration-150"
+                      className={`flex items-center rounded-full border px-5 py-2 text-xs font-bold uppercase tracking-wider shadow-sm transition-all duration-150 ${interactionLocked ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400' : 'cursor-pointer border-slate-200 bg-white text-slate-600 hover:bg-slate-50 hover:scale-105 active:scale-95'}`}
                     >
                       Archivos
                     </label>
                     <label
                       htmlFor="dash-folder-input"
-                      className="cursor-pointer flex items-center rounded-full bg-primary px-5 py-2 text-xs font-bold uppercase tracking-wider text-white shadow-md shadow-primary/20 hover:bg-primary-dark hover:scale-105 active:scale-95 transition-all duration-150"
+                      className={`flex items-center rounded-full px-5 py-2 text-xs font-bold uppercase tracking-wider shadow-md transition-all duration-150 ${interactionLocked ? 'cursor-not-allowed bg-slate-300 text-slate-500 shadow-none' : 'cursor-pointer bg-primary text-white shadow-primary/20 hover:bg-primary-dark hover:scale-105 active:scale-95'}`}
                     >
                       Carpetas
                     </label>
@@ -423,9 +435,11 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                             type="button"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (interactionLocked) return;
                               removeFile(i);
                             }}
-                            className="rounded-lg p-1 text-slate-400 transition hover:bg-red-50 hover:text-ocular-error"
+                            disabled={interactionLocked}
+                            className={`rounded-lg p-1 transition ${interactionLocked ? 'cursor-not-allowed text-slate-300' : 'text-slate-400 hover:bg-red-50 hover:text-ocular-error'}`}
                           >
                             <X size={14} />
                           </button>
@@ -448,8 +462,12 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   {files.length > 0 && (
                     <button
                       type="button"
-                      onClick={clearFiles}
-                      className="text-xs font-bold text-ocular-error hover:underline lowercase normal-case visual-fix" // Hereda el tamaño y tracking del padre
+                      onClick={() => {
+                        if (interactionLocked) return;
+                        clearFiles();
+                      }}
+                      disabled={interactionLocked}
+                      className={`text-xs font-bold lowercase normal-case visual-fix ${interactionLocked ? 'cursor-not-allowed text-slate-300 no-underline' : 'text-ocular-error hover:underline'}`} // Hereda el tamaño y tracking del padre
                     >
                       Vaciar lote
                     </button>
@@ -797,6 +815,50 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   >
                     {clearingHistory ? 'Limpiando...' : 'Sí, limpiar'}
                   </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {loading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[90] bg-slate-950/35 backdrop-blur-sm flex items-center justify-center p-4"
+            >
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.98 }}
+                className="w-full max-w-lg rounded-3xl border border-white/25 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 sm:p-7 shadow-2xl"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="mt-1 flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-sky-300/30 bg-sky-500/20 text-sky-300">
+                    <Loader2 className="h-6 w-6 animate-spin" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-black uppercase tracking-[0.22em] text-sky-300/90">Análisis en curso</p>
+                    <h4 className="mt-1 text-xl font-black tracking-tight text-white">Estamos procesando tus imágenes</h4>
+                    <p className="mt-2 text-sm text-slate-300 leading-relaxed">
+                      Para evitar conflictos, bloqueamos temporalmente subir, vaciar o borrar imágenes del lote actual.
+                      Al finalizar, esta ventana se cierra sola y podrás revisar los resultados.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-5 overflow-hidden rounded-full bg-white/10">
+                  <motion.div
+                    className="h-1.5 bg-gradient-to-r from-cyan-400 via-sky-400 to-blue-400"
+                    initial={{ x: '-100%' }}
+                    animate={{ x: '100%' }}
+                    transition={{ repeat: Infinity, duration: 1.25, ease: 'linear' }}
+                  />
+                </div>
+                <div className="mt-4 flex items-center gap-2 rounded-2xl border border-amber-300/20 bg-amber-400/10 px-3 py-2 text-xs text-amber-200">
+                  <ShieldAlert size={14} className="shrink-0" />
+                  <span>No cierres ni recargues esta vista hasta que termine el procesamiento.</span>
                 </div>
               </motion.div>
             </motion.div>

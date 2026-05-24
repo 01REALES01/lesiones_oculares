@@ -530,6 +530,7 @@ export default function HistoryPage({ onViewDetail }) {
                   key={item.inference_id || item.batch_id}
                   item={item}
                   index={index}
+                  clearingHistory={clearingHistory}
                   onClick={() => openHistoryDetail(item)}
                   onDelete={(e) => deleteItem(e, item)}
                 />
@@ -659,7 +660,7 @@ export default function HistoryPage({ onViewDetail }) {
   );
 }
 
-function HistoryCard({ item, onClick, onDelete, index }) {
+function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }) {
   const summary = item.summary || {
     filename: item.filename,
     risk_level: item.risk_level,
@@ -720,13 +721,15 @@ function HistoryCard({ item, onClick, onDelete, index }) {
         ? 'Monitoreo'
         : 'Estable';
 
+  const transitionDelay = clearingHistory ? 0 : (index || 0) * 0.05;
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, scale: 0.9 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.9 }}
-      transition={{ delay: index * 0.05 }}
+      transition={{ delay: transitionDelay }}
     >
       <GlassCard
         className="group hover:border-primary/50 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-0 overflow-hidden h-full flex flex-col bg-gradient-to-br from-white via-white to-slate-50/70 border border-slate-200 shadow-md shadow-slate-200/80"
