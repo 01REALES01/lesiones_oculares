@@ -62,7 +62,7 @@ export default function AgentCopilot() {
     setIsSimulated(true);
     try {
       // 1. Llamar a analyzeComparison para obtener datos reales de los modelos locales
-      const localData = await analysisService.analyzeComparison([selectedFile], 'densenet169,mobilenetv3,xception');
+      const localData = await analysisService.analyzeComparison([selectedFile], 'densenet169,resnet,efficientnet');
       const primary = localData.primary_result || {};
       const comp = localData.comparison_summary || {};
       const details = localData.details?.[0] || {};
@@ -374,7 +374,7 @@ export default function AgentCopilot() {
                   <div className="pt-6 border-t border-white/10 flex items-center justify-between text-xs text-white/40 font-sans">
                     <div className="flex items-center gap-2">
                       <RefreshCw size={14} className="animate-spin text-primary" />
-                      <span>Agente analizando con algoritmos VNet, DenseNet y Xception...</span>
+                      <span>Agente analizando con algoritmos VNet, DenseNet, ResNet50 y EfficientNetB0...</span>
                     </div>
                     <span>Paso {currentStep + 1} de {stepsList.length}</span>
                   </div>

@@ -10,7 +10,7 @@ set -e
 
 OS=$(uname -s)
 REPO_URL="https://github.com/01REALES01/lesiones_oculares.git"
-BRANCH="fix_recovered_diego"
+BRANCH="reciente"
 
 echo "=========================================="
 echo "       RetinaAI - Setup y arranque        "
@@ -100,7 +100,7 @@ else
   source .venv/bin/activate
 fi
 PYTHON_CMD=$(command -v python3 || command -v python)
-$PYTHON_CMD -m uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000 &
+$PYTHON_CMD -m uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 
 cd new_frontend

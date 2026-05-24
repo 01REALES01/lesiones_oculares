@@ -11,6 +11,7 @@ import asyncio
 import time
 import uuid
 import copy
+import math
 from typing import Any, List, Optional
 from datetime import timedelta, datetime, timezone
 
@@ -97,20 +98,25 @@ RD_MODEL_SPECS = {
         "model_type": "densenet169",
         "label": "DenseNet169",
     },
-    "xception": {
-        "model_key": "lesiones_xception",
-        "model_type": "xception",
-        "label": "Xception",
+    "resnet50": {
+        "model_key": "lesiones_resnet50",
+        "model_type": "resnet50",
+        "label": "ResNet50",
+    },
+    "resnet": {
+        "model_key": "lesiones_resnet50",
+        "model_type": "resnet50",
+        "label": "ResNet50",
+    },
+    "efficientnetb0": {
+        "model_key": "lesiones_efficientnetb0",
+        "model_type": "efficientnetb0",
+        "label": "EfficientNetB0",
     },
     "efficientnet": {
-        "model_key": "lesiones_efficientnet",
-        "model_type": "efficientnet",
-        "label": "EfficientNet",
-    },
-    "mobilenetv3": {
-        "model_key": "lesiones_mobilenet",
-        "model_type": "mobilenetv3",
-        "label": "MobileNetV3",
+        "model_key": "lesiones_efficientnetb0",
+        "model_type": "efficientnetb0",
+        "label": "EfficientNetB0",
     },
 }
 
@@ -138,27 +144,23 @@ async def lifespan(app: FastAPI):
     _load_first_available_model("lesiones_densenet", [
         {"filename": "densenet_169_aptos_fine.h5", "model_type": "densenet169", "label": "DenseNet169"},
     ])
-    _load_first_available_model("lesiones_xception", [
-        {"filename": "xception_aptos_fine2.h5", "model_type": "xception", "label": "Xception"},
-        {"filename": "xception_model.keras", "model_type": "xception", "label": "Xception"},
+    _load_first_available_model("lesiones_resnet50", [
+        {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
+        {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50"},
+        {"filename": "resnet50_model.keras", "model_type": "resnet50", "label": "ResNet50"},
     ])
-    _load_first_available_model("lesiones_efficientnet", [
-        {"filename": "efficientnetB0_weights.h5", "model_type": "efficientnet", "label": "EfficientNetB0"},
-        {"filename": "efficientnet_model.h5", "model_type": "efficientnet", "label": "EfficientNet"},
-        {"filename": "efficientnet_weights.h5", "model_type": "efficientnet", "label": "EfficientNet"},
-        {"filename": "efficientnetB0.keras", "model_type": "efficientnet", "label": "EfficientNetB0"},
-    ])
-    _load_first_available_model("lesiones_mobilenet", [
-        {"filename": "mobilenetv3_model_fine.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Fine"},
-        {"filename": "mobilenetv3_model_fino.keras", "model_type": "mobilenetv3", "label": "MobileNetV3"},
+    _load_first_available_model("lesiones_efficientnetb0", [
+        {"filename": "efficienetB0_model_fine.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
+        {"filename": "efficientnetB0_model_fine.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
+        {"filename": "efficientnetB0.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
+        {"filename": "efficientnetB0_weights.h5", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
     ])
     # Keep priority loaded for generic usages
     _load_first_available_model("lesiones_priority", [
-        {"filename": "efficientnetB0.keras", "model_type": "efficientnet", "label": "EfficientNetB0"},
-        {"filename": "efficientnet_model.keras", "model_type": "efficientnet", "label": "EfficientNet"},
-        {"filename": "efficientnetB0.h5", "model_type": "efficientnet", "label": "EfficientNetB0"},
-        {"filename": "mobilenetv3_model_fine.keras", "model_type": "mobilenetv3", "label": "MobileNetV3 Fine"},
-        {"filename": "mobilenetv3_model_fino.keras", "model_type": "mobilenetv3", "label": "MobileNetV3"},
+        {"filename": "efficienetB0_model_fine.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
+        {"filename": "resnet50_model_fine.h5", "model_type": "resnet50", "label": "ResNet50"},
+        {"filename": "resnet50_model_fine.keras", "model_type": "resnet50", "label": "ResNet50"},
+        {"filename": "efficientnetB0_model_fine.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
     ])
     yield
 
@@ -264,6 +266,26 @@ def _rd_recommendation_short(dr_grade: int) -> str:
     return "Control oftalmológico periódico."
 
 
+def _safe_float(value: Any, default: float = 0.0) -> float:
+    try:
+        numeric = float(value)
+    except (TypeError, ValueError):
+        return default
+    return numeric if math.isfinite(numeric) else default
+
+
+def _sanitize_json_values(obj: Any) -> Any:
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: _sanitize_json_values(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_sanitize_json_values(v) for v in obj]
+    if isinstance(obj, tuple):
+        return tuple(_sanitize_json_values(v) for v in obj)
+    return obj
+
+
 def _predict_rd_fallback(image: np.ndarray, model_label: str) -> dict:
     lesions = detect_hemorrhages(image)
     lesion_count = len(lesions)
@@ -302,10 +324,14 @@ def _predict_rd_fallback(image: np.ndarray, model_label: str) -> dict:
 
 def _normalize_rd_prediction(model_id: str, model_spec: dict, prediction: dict, model_loaded: bool, inference_time_ms: float) -> dict:
     dr_grade = int(prediction.get("predicted_class", 0))
-    confidence = float(prediction.get("confidence_percent", 0.0))
+    confidence = _safe_float(prediction.get("confidence_percent", 0.0), 0.0)
     risk_level = _rd_risk_level(dr_grade)
     runtime_meta = MODEL_RUNTIME_METADATA.get(model_spec["model_key"], {})
     model_name = runtime_meta.get("label", model_spec["label"])
+    raw_probabilities = prediction.get("raw_probabilities", [0, 0, 0, 0, 0])
+    if not isinstance(raw_probabilities, list):
+        raw_probabilities = [0, 0, 0, 0, 0]
+    raw_probabilities = [round(_safe_float(p, 0.0), 2) for p in raw_probabilities]
     return {
         "model_id": model_id,
         "model_name": model_name,
@@ -315,10 +341,10 @@ def _normalize_rd_prediction(model_id: str, model_spec: dict, prediction: dict, 
         "confidence_percent": round(confidence, 2),
         "diagnosis": prediction.get("diagnosis", "Normal"),
         "clinical_description": prediction.get("clinical_description", ""),
-        "raw_probabilities": prediction.get("raw_probabilities", [0, 0, 0, 0, 0]),
+        "raw_probabilities": raw_probabilities,
         "risk_level": risk_level,
         "recommendation_short": _rd_recommendation_short(dr_grade),
-        "inference_time_ms": round(inference_time_ms, 2),
+        "inference_time_ms": round(_safe_float(inference_time_ms, 0.0), 2),
     }
 
 
@@ -1101,7 +1127,7 @@ async def analyze_rd_comparison(
     request: Request,
     files: List[UploadFile] = File(...),
     models: str = Query(
-        "densenet169,xception,efficientnet,mobilenetv3",
+        "densenet169,resnet,efficientnet",
         description="Modelos RD a ejecutar.",
     ),
     current_user: User = Depends(get_current_user),
@@ -1137,7 +1163,7 @@ async def _analyze_rd_comparison_impl(
         if model_id not in RD_MODEL_SPECS:
             return JSONResponse(
                 status_code=400,
-                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, xception, efficientnet y/o mobilenetv3."},
+                content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet y/o efficientnet."},
             )
 
     loop = asyncio.get_running_loop()
@@ -1246,13 +1272,14 @@ async def _analyze_rd_comparison_impl(
                 "inference_times_ms": inference_times_ms,
                 "timestamp": analysis_timestamp,
             }
+            result = _sanitize_json_values(result)
             final_results.append(result)
             
             inferences_to_save.append({
                 "inference_id": inference_id,
                 "timestamp": analysis_timestamp,
                 "models_used": selected_models,
-                "inference_times_ms": inference_times_ms,
+                "inference_times_ms": _sanitize_json_values(inference_times_ms),
                 "result": result,
                 "image_size": (img.shape[1], img.shape[0]),
                 "batch_id": batch_id,
@@ -1311,7 +1338,7 @@ async def _analyze_rd_comparison_impl(
 @app.post("/analyze-demo/")
 async def analyze_demo(
     file: UploadFile = File(...),
-    model: str = Query("densenet169", description="Modelo a usar: densenet169, mobilenetv3 o xception."),
+    model: str = Query("densenet169", description="Modelo a usar: densenet169, resnet o efficientnet."),
 ):
     """
     Análisis demo sin autenticación. Solo 1 imagen, 1 modelo, sin guardar historial.
@@ -1320,7 +1347,7 @@ async def analyze_demo(
     if model_id not in RD_MODEL_SPECS:
         return JSONResponse(
             status_code=400,
-            content={"detail": f"Modelo inválido: {model_id}. Use densenet169, mobilenetv3 o xception."},
+            content={"detail": f"Modelo inválido: {model_id}. Use densenet169, resnet o efficientnet."},
         )
 
     loop = asyncio.get_event_loop()
@@ -1396,8 +1423,8 @@ async def analyze_retina(
         description="Modelos a ejecutar: A (segmentación disco/copa), B (clasificación glaucoma), C (detección lesiones). Ej: A,B o B,C",
     ),
     model_c_type: str = Query(
-        "mobilenetv3",
-        description="Tipo de modelo de IA a correr para las lesiones: 'mobilenetv3'"
+        "efficientnet",
+        description="Tipo de modelo de IA a correr para las lesiones: 'densenet169', 'resnet' o 'efficientnet'"
     ),
     current_user: User = Depends(get_current_user),
 ):
@@ -1428,8 +1455,10 @@ async def analyze_retina(
     c_inference_time_total = 0
     t0_batch = time.perf_counter()
     
-    if model_c_type == "mobilenetv3":
-        c_model_key = "lesiones_mobilenet"
+    if model_c_type in ("efficientnetb0", "efficientnet"):
+        c_model_key = "lesiones_efficientnetb0"
+    elif model_c_type in ("resnet50", "resnet"):
+        c_model_key = "lesiones_resnet50"
     elif model_c_type == "densenet169":
         c_model_key = "lesiones_densenet"
     else:

@@ -17,7 +17,7 @@ import TechEyeScene from '../components/landing/EyeScene';
 const featureCards = [
   {
     title: 'Clasificación Multimodelo',
-    description: 'Ejecución paralela de tres arquitecturas de Deep Learning (DenseNet169, MobileNetV3 y Xception) para validación cruzada.',
+    description: 'Ejecución paralela de tres arquitecturas de Deep Learning (DenseNet169, ResNet50 y EfficientNetB0) para validación cruzada.',
     icon: Layers,
   },
   {

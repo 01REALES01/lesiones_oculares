@@ -75,12 +75,13 @@ RETINA_TOOLS: list[dict] = [
             "properties": {
                 "model_variant": {
                     "type": "string",
-                    "enum": ["densenet169", "priority", "xception"],
+                    "enum": ["densenet169", "priority", "resnet", "efficientnet", "resnet50", "efficientnetb0"],
                     "description": (
                         "Variante del modelo DR a usar. "
                         "'densenet169' = DenseNet169, "
-                        "'priority' = modelo prioritario (EfficientNet/MobileNet), "
-                        "'xception' = Xception."
+                        "'priority' = modelo prioritario (EfficientNetB0/ResNet50), "
+                        "'resnet' = ResNet50, "
+                        "'efficientnet' = EfficientNetB0."
                     ),
                 },
                 "reason": {
@@ -149,8 +150,11 @@ IMPORTANTE: Siempre incluye el disclaimer. Nunca inventes resultados de modelos 
 # Mapeo de variante de herramienta a model_key del MLManager
 _DR_MODEL_KEY_MAP: dict[str, tuple[str, str]] = {
     "densenet169": ("lesiones_densenet", "densenet169"),
-    "priority": ("lesiones_priority", "mobilenetv3"),
-    "xception": ("lesiones_xception", "xception"),
+    "priority": ("lesiones_efficientnetb0", "efficientnetb0"),
+    "resnet": ("lesiones_resnet50", "resnet50"),
+    "efficientnet": ("lesiones_efficientnetb0", "efficientnetb0"),
+    "resnet50": ("lesiones_resnet50", "resnet50"),
+    "efficientnetb0": ("lesiones_efficientnetb0", "efficientnetb0"),
 }
 
 

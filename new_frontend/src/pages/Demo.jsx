@@ -7,8 +7,8 @@ import Details from './Details';
 
 const MODEL_OPTIONS = [
   { key: 'densenet169', label: 'DenseNet169' },
-  { key: 'mobilenetv3', label: 'MobileNetV3' },
-  { key: 'xception', label: 'Xception' },
+  { key: 'resnet', label: 'ResNet50' },
+  { key: 'efficientnet', label: 'EfficientNetB0' },
 ];
 
 export default function DemoPage({ onGoLanding }) {

@@ -225,7 +225,7 @@ function ZoomableImage({
           y: e.clientY - rect.top,
         });
       }}
-      onMouseLeaveCapture={() => setShowMagnifier(false)}
+      onMouseOutCapture={() => setShowMagnifier(false)}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >

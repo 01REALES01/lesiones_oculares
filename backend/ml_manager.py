@@ -82,7 +82,7 @@ class MLManager:
             print(f"Error al cargar '{model_key}': {str(e)}")
             raise e
 
-    def preprocess_image(self, image_bytes: bytes, target_size=(224, 224), model_type="mobilenetv3"):
+    def preprocess_image(self, image_bytes: bytes, target_size=(224, 224), model_type="densenet169"):
         """
         Convierte bytes de imagen a un tensor procesado listo para el modelo Keras.
         """
@@ -96,11 +96,9 @@ class MLManager:
         # Apply specific preprocessing based on the model architecture trained in the notebooks
         if model_type == "densenet169":
             img_array = tf.keras.applications.densenet.preprocess_input(img_array)
-        elif model_type == "mobilenetv3":
-            img_array = tf.keras.applications.mobilenet_v3.preprocess_input(img_array)
-        elif model_type == "xception":
-            img_array = tf.keras.applications.xception.preprocess_input(img_array)
-        elif model_type == "efficientnet":
+        elif model_type in ("resnet50", "resnet50v2", "resnet"):
+            img_array = tf.keras.applications.resnet_v2.preprocess_input(img_array)
+        elif model_type == "efficientnetb0":
             img_array = tf.keras.applications.efficientnet.preprocess_input(img_array)
         else:
             # Generic fallback: Normalize [0..255] to [0..1]
@@ -108,7 +106,34 @@ class MLManager:
 
         return img_array
 
-    def predict_batch(self, model_key: str, images_bytes_list: list, target_size=None, model_type="mobilenetv3"):
+    def _normalize_probabilities(self, values):
+        """
+        Convierte la salida cruda del modelo a probabilidades válidas [0,1].
+        Aplica softmax cuando el vector no parece estar normalizado.
+        """
+        probs = np.array(values, dtype=np.float32).reshape(-1)
+        if probs.size == 0:
+            return np.array([1.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float32)
+
+        probs = np.nan_to_num(probs, nan=0.0, posinf=0.0, neginf=0.0)
+        total = float(np.sum(probs))
+        min_val = float(np.min(probs))
+        max_val = float(np.max(probs))
+
+        is_prob_vector = min_val >= 0.0 and max_val <= 1.0 and abs(total - 1.0) < 1e-3
+        if is_prob_vector:
+            return probs
+
+        shifted = probs - float(np.max(probs))
+        exp = np.exp(shifted)
+        exp_sum = float(np.sum(exp))
+        if exp_sum <= 0.0:
+            safe = np.zeros_like(probs)
+            safe[int(np.argmax(probs))] = 1.0
+            return safe
+        return exp / exp_sum
+
+    def predict_batch(self, model_key: str, images_bytes_list: list, target_size=None, model_type="densenet169"):
         """
         Procesa un lote de imágenes en un solo pase hacia la tarjeta gráfica o CPU usando Tensor Stacking.
         """
@@ -132,6 +157,7 @@ class MLManager:
         # 4. Post-processing to structured JSON output
         results = []
         for idx, probs in enumerate(predictions):
+            probs = self._normalize_probabilities(probs)
             predicted_class = int(np.argmax(probs))
             confidence = float(np.max(probs)) * 100
             
@@ -168,7 +194,7 @@ class MLManager:
 
         # Model Inference
         predictions = self.models[model_key].predict(batch_tensor, verbose=0)
-        probs = predictions[0]
+        probs = self._normalize_probabilities(predictions[0])
 
         # Post-processing
         predicted_class = int(np.argmax(probs))

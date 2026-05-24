@@ -23,6 +23,7 @@ import {
 import { cn } from '../utils';
 import { GlassCard, StatsCard } from '../components/ui/GlassCard';
 import { SwitchToggle } from '../components/ui/SwitchToggle';
+import { ModalPortal } from '../components/ui/ModalPortal';
 import { analysisService } from '../services/api';
 
 export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
@@ -570,22 +571,22 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   onToggle={() => toggleModel('densenet169', !models.densenet169)}
                 />
                 <ModelRow
-                  id="xception"
-                  labelId="lbl-xception"
+                  id="resnet"
+                  labelId="lbl-resnet"
                   icon={Radio}
-                  title="Xception"
-                  sub="Convoluciones separables en profundidad"
-                  active={models.xception}
-                  onToggle={() => toggleModel('xception', !models.xception)}
+                  title="ResNet50"
+                  sub="Red residual profunda para patrones complejos"
+                  active={models.resnet}
+                  onToggle={() => toggleModel('resnet', !models.resnet)}
                 />
                 <ModelRow
-                  id="mobilenetv3"
-                  labelId="lbl-mobilenetv3"
+                  id="efficientnet"
+                  labelId="lbl-efficientnet"
                   icon={Activity}
-                  title="MobileNetV3"
-                  sub="Arquitectura optimizada y ligera"
-                  active={models.mobilenetv3}
-                  onToggle={() => toggleModel('mobilenetv3', !models.mobilenetv3)}
+                  title="EfficientNetB0"
+                  sub="Escalado eficiente con buen balance precisión/costo"
+                  active={models.efficientnet}
+                  onToggle={() => toggleModel('efficientnet', !models.efficientnet)}
                 />
               </ul>
 
@@ -778,6 +779,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           </div>
         </div>
 
+        <ModalPortal>
         <AnimatePresence>
           {clearModalOpen && (
             <motion.div
@@ -820,7 +822,9 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
             </motion.div>
           )}
         </AnimatePresence>
+        </ModalPortal>
 
+        <ModalPortal>
         <AnimatePresence>
           {loading && (
             <motion.div
@@ -864,6 +868,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
             </motion.div>
           )}
         </AnimatePresence>
+        </ModalPortal>
       </div>
     </>
   );

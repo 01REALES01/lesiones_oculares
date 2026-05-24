@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Calendar, ChevronRight, FileText, Loader2, Trash2, AlertCircle } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
+import { ModalPortal } from '../components/ui/ModalPortal';
 import { analysisService } from '../services/api';
 import { cn } from '../utils';
 
@@ -568,6 +569,7 @@ export default function HistoryPage({ onViewDetail }) {
           </div>
         )}
 
+        <ModalPortal>
         <AnimatePresence>
           {clearModalOpen && (
             <motion.div
@@ -655,6 +657,7 @@ export default function HistoryPage({ onViewDetail }) {
             </motion.div>
           )}
         </AnimatePresence>
+        </ModalPortal>
       </div>
     </>
   );
@@ -798,4 +801,3 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
     </motion.div>
   );
 }
-
