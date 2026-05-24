@@ -28,11 +28,11 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **Redes Neuronales Convolucionales (CNN):** Son una clase de redes neuronales artificiales profundas, aplicadas principalmente al análisis de imágenes visuales. Emplean una operación matemática llamada convolución en lugar de la multiplicación general de matrices, lo que les permite identificar patrones jerárquicos (bordes, texturas, lesiones) en las imágenes.
 
-**DenseNet169:** (Densely Connected Convolutional Networks). Es una arquitectura donde cada capa está conectada a todas las demás capas posteriores. Esta estructura mejora significativamente la propagación del flujo de información y gradientes a lo largo de la red, mitigando el problema del desvanecimiento del gradiente y logrando alta precisión con menos parámetros.
+**DenseNet169 (Densely Connected Convolutional Networks):** Es una arquitectura donde cada capa está conectada a todas las demás capas posteriores. Esta estructura mejora significativamente la propagación del flujo de información y gradientes a lo largo de la red, mitigando el problema del desvanecimiento del gradiente y logrando alta precisión con menos parámetros.
 
-**MobileNetV3:** Arquitectura ligera optimizada para dispositivos con recursos limitados. Combina eficiencia computacional con buena precisión para clasificación de imágenes.
+**ResNet (Residual Neural Network):** Es una arquitectura de red neuronal profunda que utiliza conexiones residuales (skip connections) para facilitar el entrenamiento de redes con muchas capas, mejorando la precisión y evitando el desvanecimiento del gradiente.
 
-**Xception:** (Extreme Inception). Es una arquitectura que reemplaza los módulos Inception estándar por convoluciones separables en profundidad (depthwise separable convolutions). Esto desacopla el mapeo de correlaciones cruzadas espaciales y de canales, haciendo el modelo estadísticamente más eficiente.
+**EfficientNet:** Es una arquitectura de CNN optimizada que equilibra profundidad, ancho y resolución de la red para lograr alta precisión con menor costo computacional y mayor eficiencia.
 
 **Validación Cruzada por Conjunto (Ensemble/Concurrent Validation):** La plataforma permite ejecutar desde una hasta tres inferencias en paralelo utilizando las arquitecturas mencionadas. Contrastar las salidas de modelos con diferentes aproximaciones matemáticas (densidad, residualidad y separabilidad) sobre la misma imagen médica aumenta la confianza clínica al buscar consensos para reducir falsos positivos y negativos.
 
@@ -121,7 +121,6 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 | RF04 | Historial básico: listado de análisis recientes con posibilidad de ver detalle de cada uno | Alta |
 | RF05 | Trazabilidad: cada inferencia con ID único, timestamp, modelos usados y tiempos de ejecución | Alta |
 | RF06 | Postprocesamiento: etiquetas legibles, probabilidades y datos cuantitativos| Media |
-| RF07 | Evaluación con dataset: script que calcule métricas (accuracy, F1, AUC, sensibilidad, especificidad) y tiempos de inferencia; comparación entre modelos | Media |
 | RF08 | Gestión de usuarios (opcional): registro/login para asociar análisis a usuario | Baja |
 
 ### 6.2 No Funcionales
@@ -152,7 +151,7 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 |--------|------------|
 | Calidad variable de imágenes | Se implementa preprocesamiento; se documentan limitaciones |
 | Desbalance/sesgos en datos | Se realiza evaluación con dataset público o provisto; se reportan métricas en script de evaluación |
-| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, MobileNetV3, Xception) para validación cruzada |
+| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, ResNet, EfficientNet) para validación cruzada |
 | Latencia y recursos | Se cargan los modelos ya preentrenados; se muestra un historial acotado |
 | Privacidad de imágenes médicas | Se implementa cifrado, control de acceso, retención mínima, anonimización donde aplique |
 | Uso indebido como diagnóstico | Disclaimers en API e interfaz; enfoque "apoyo/tamizaje"; trazabilidad |
@@ -166,20 +165,58 @@ La solución se estructuró como una plataforma web modular para análisis de re
 
 ### 7.1 Evaluación de Alternativas
 
-Para el diseño de la solución se evaluaron alternativas tecnológicas y de enfoque, priorizando coherencia clínica, facilidad de mantenimiento y desempeño en inferencia.
+Para el diseño de la solución se evaluaron alternativas tecnológicas y de enfoque, priorizando coherencia clínica, facilidad de mantenimiento, escalabilidad y desempeño en inferencia.
 
 - **Frontend:** Se consideró implementar una interfaz básica de análisis secuencial (modelo por modelo) frente a un dashboard comparativo en una sola ejecución. Se seleccionó el dashboard comparativo porque permite elegir 1, 2 o 3 modelos de manera simultánea, visualizar resultados lado a lado y tomar decisiones de forma más eficiente en contexto de tamizaje.
 
 - **Backend:** Se evaluó mantener un flujo rígido por endpoint (un endpoint por modelo) frente a un endpoint orquestador único. Se eligió un backend orquestador porque simplifica la integración del frontend, unifica la trazabilidad y permite agregar o retirar modelos sin cambiar el flujo principal de la aplicación.
 
-- **Modelos de IA:** Se evaluaron tres modelos para la misma patología (retinopatía diabética), en lugar de mezclar patologías distintas. Esta decisión garantiza una comparación homogénea y técnicamente válida entre modelos, usando los mismos datos de entrada y métricas comparables. Los criterios de evaluación definidos fueron sensibilidad, especificidad, F1-score, AUC, tiempo de inferencia y confianza de predicción.
+- **Modelos de IA:** Se evaluaron múltiples arquitecturas de redes neuronales convolucionales para la detección y clasificación de Retinopatía Diabética utilizando el mismo conjunto de datos, preprocesamiento y condiciones de entrenamiento, con el fin de garantizar una comparación homogénea y técnicamente válida entre modelos.
 
-- **Autenticación y persistencia:** Se definió una estrategia de integración directa con los servicios institucionales: autenticación mediante **ROBLE Auth** (con validación de tokens JWT) y almacenamiento de trazabilidad de inferencias en **ROBLE Database**. Esto garantiza centralización y seguridad acorde a los estándares del entorno operativo.
+  Debido al desbalance presente en las clases de la escala ICDR, la selección del modelo no se basó únicamente en la exactitud (*accuracy*), ya que esta métrica puede verse favorecida por las clases mayoritarias. En su lugar, se dio mayor relevancia a métricas capaces de reflejar el desempeño real del modelo en clases minoritarias y clínicamente relevantes.
 
-- **Exportación de resultados:** Se implementó una exportación de datos estructurados para análisis técnico y validación interna en formato CSV/Excel.
+  Los criterios de evaluación considerados fueron:
 
-Como resultado de esta evaluación, se seleccionó una arquitectura modular con frontend comparativo, backend orquestador y tres modelos enfocados exclusivamente en retinopatía diabética.
+  - **Macro F1-score:** Evalúa el equilibrio general del modelo entre todas las clases sin favorecer aquellas con mayor cantidad de muestras.
+  - **Recall (Sensibilidad):** Mide la capacidad del modelo para detectar correctamente los casos positivos, especialmente en grados severos de retinopatía.
+  - **Weighted F1-score:** Permite medir el rendimiento global considerando el desbalance del conjunto de datos.
+  - **Accuracy (Exactitud):** Representa el porcentaje total de predicciones correctas.
+  - **Tiempo de inferencia:** Evalúa la viabilidad computacional y rapidez de respuesta del modelo.
 
+  Como criterio general de selección, se utilizó una evaluación ponderada conceptual basada en la siguiente relación:
+
+  $$
+  \text{Score}_{modelo} =
+  (0.35 \times MacroF1)
+  +
+  (0.30 \times Recall_{clases\ severas})
+  +
+  (0.20 \times WeightedF1)
+  +
+  (0.10 \times Accuracy)
+  +
+  (0.05 \times Tiempo_{inferencia})
+  $$
+
+  Donde:
+
+  - **0.35 → Macro F1-score:** Prioriza el equilibrio entre todas las clases.
+  - **0.30 → Recall en clases severas:** Da mayor importancia a la detección de casos clínicamente críticos.
+  - **0.20 → Weighted F1-score:** Evalúa el rendimiento global considerando el desbalance del conjunto de datos.
+  - **0.10 → Accuracy:** Aporta una medida general complementaria.
+  - **0.05 → Tiempo de inferencia:** Considera la eficiencia computacional del modelo.
+
+#### Score aproximado obtenido por cada modelo
+
+| Modelo | Score Aproximado |
+|---|---|
+| EfficientNet | **0.67** |
+| DenseNet169 | **0.65** |
+| ResNet50V2 | **0.64** |
+| Xception | **0.62** |
+| MobileNetV3 | **0.43** |
+
+ 
 ### 7.2 Arquitectura
 
 La solución se orienta exclusivamente a la detección de retinopatía diabética (RD). El sistema no mezcla patologías distintas, sino que compara tres modelos de inteligencia artificial entrenados para la misma tarea clínica: clasificar si el paciente presenta o no retinopatía diabética y estimar su severidad. Desde el dashboard, el usuario puede ejecutar uno, dos o los tres modelos en una sola corrida para contrastar resultados, confianza y tiempos de inferencia.
