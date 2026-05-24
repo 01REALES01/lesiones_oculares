@@ -5,6 +5,40 @@ import { GlassCard } from '../components/ui/GlassCard';
 import { analysisService } from '../services/api';
 import { cn } from '../utils';
 
+function getConsensusGradeFromResult(result) {
+  if (!result) return null;
+
+  const comparisons = Array.isArray(result.model_comparisons) ? result.model_comparisons : [];
+  if (comparisons.length > 0) {
+    const predictedClasses = [];
+    const weights = [];
+    const items = comparisons;
+
+    items.forEach((item) => {
+      const cls = Number(item.predicted_class);
+      const confidence = Number(item.confidence_percent) || 0;
+      const others = items.filter((i) => i !== item).map((i) => Number(i.predicted_class));
+      const othersAvg = others.length > 0 ? others.reduce((a, b) => a + b, 0) / others.length : cls;
+      const distance = Math.abs(cls - othersAvg);
+      let finalWeight = confidence;
+      if (distance >= 2) finalWeight *= 0.5;
+      predictedClasses.push(cls);
+      weights.push(finalWeight);
+    });
+
+    const sumWeights = weights.reduce((a, b) => a + b, 0);
+    if (sumWeights > 0) {
+      const center = predictedClasses.reduce((acc, cls, i) => acc + (cls * weights[i]), 0) / sumWeights;
+      return Math.round(center);
+    }
+  }
+
+  return result?.comparison_summary?.consensus_grade
+    ?? result?.primary_result?.predicted_class
+    ?? result?.predicted_class
+    ?? null;
+}
+
 export default function HistoryPage({ onViewDetail }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +81,39 @@ export default function HistoryPage({ onViewDetail }) {
     return summary.batch_filenames?.length
       ? summary.batch_filenames
       : item.items?.map(i => i.filename || i.result?.filename).filter(Boolean) || [];
+  };
+
+  const getRiskBuckets = (item) => {
+    const summary = getItemSummary(item);
+    let high = 0;
+    let medium = 0;
+    let low = 0;
+    let noRd = 0;
+
+    const getGradeFromRecord = (record) => getConsensusGradeFromResult(record?.result);
+
+    const classifyGrade = (gradeRaw) => {
+      const grade = Number(gradeRaw);
+      if (!Number.isFinite(grade)) return;
+      if (grade >= 3) high += 1; // Severo + Proliferativo
+      else if (grade === 2) medium += 1; // Moderado
+      else if (grade === 1) low += 1; // Leve
+      else if (grade === 0) noRd += 1; // NO R.D.
+    };
+
+    if (item.is_batch && Array.isArray(item.items) && item.items.length > 0) {
+      item.items.forEach((it) => {
+        const grade = getGradeFromRecord(it);
+        classifyGrade(grade);
+      });
+    } else {
+      const grade = getGradeFromRecord(item);
+      classifyGrade(grade);
+    }
+
+    const nonZeroBuckets = [high, medium, low, noRd].filter((v) => v > 0).length;
+    const isMixed = nonZeroBuckets >= 2;
+    return { high, medium, low, noRd, isMixed };
   };
 
   const getSuggestions = () => {
@@ -149,19 +216,23 @@ export default function HistoryPage({ onViewDetail }) {
       (summary?.headline || "").toLowerCase().includes(query) ||
       batchFilenames.some(fn => (fn || "").toLowerCase().includes(query));
 
-    const itemLevel = summary?.risk_level || 'low';
+    const itemLevel = summary?.risk_level || item.risk_level || 'low';
     const itemMaxLevel = summary?.risk_max_level || itemLevel;
-    const riskCounts = summary?.risk_counts || {};
-    const mixedHasRisk = (level) => Number(riskCounts[level] || 0) > 0;
+    const buckets = getRiskBuckets(item);
     const matchesDate = !dateFilter || new Date(item.timestamp).toISOString().split('T')[0] === dateFilter;
+    const hasRiskByFilter =
+      (riskFilter === 'high' && buckets.high > 0) ||
+      (riskFilter === 'medium' && buckets.medium > 0) ||
+      (riskFilter === 'low' && buckets.low > 0);
 
     const matchesRisk =
       riskFilter === 'all' ||
       itemLevel === riskFilter ||
-      (itemLevel === 'mixed' && (
-        (riskFilter === 'high' && (mixedHasRisk('high') || itemMaxLevel === 'high')) ||
-        (riskFilter === 'medium' && (mixedHasRisk('medium') || itemMaxLevel === 'medium')) ||
-        (riskFilter === 'low' && mixedHasRisk('low'))
+      hasRiskByFilter ||
+      (buckets.isMixed && (
+        (riskFilter === 'high' && (buckets.high > 0 || itemMaxLevel === 'high')) ||
+        (riskFilter === 'medium' && (buckets.medium > 0 || itemMaxLevel === 'medium')) ||
+        (riskFilter === 'low' && buckets.low > 0)
       ));
 
     return matchesSearch && matchesRisk && matchesDate;
@@ -382,9 +453,6 @@ export default function HistoryPage({ onViewDetail }) {
                             <ChevronRight size={14} className="text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
                           </button>
                         ))}
-                        <div className="px-3 py-1.5 text-[9px] font-bold text-primary uppercase tracking-widest text-center mt-1 border-t border-slate-100/80 pt-2">
-                          Presiona Enter para filtrar la lista
-                        </div>
                       </>
                     ) : (
                       <div className="px-4 py-6 text-center text-xs text-slate-400 font-medium">
@@ -592,12 +660,43 @@ export default function HistoryPage({ onViewDetail }) {
 }
 
 function HistoryCard({ item, onClick, onDelete, index }) {
-  const riskCounts = item.summary?.risk_counts || {};
-  const highCount = Number(riskCounts.high || 0);
-  const mediumCount = Number(riskCounts.medium || 0);
-  const lowCount = Number(riskCounts.low || 0);
-  const riskLevel = item.summary?.risk_level || 'low';
-  const riskMaxLevel = item.summary?.risk_max_level || riskLevel;
+  const summary = item.summary || {
+    filename: item.filename,
+    risk_level: item.risk_level,
+    risk_max_level: item.risk_level,
+    positive_models: item.positive_models,
+    total_models: item.total_models,
+    headline: item.result?.comparison_summary?.headline,
+    primary_grade: item.result?.primary_result?.predicted_class,
+    risk_counts: item.result?.comparison_summary?.risk_counts || {},
+  };
+  let highCount = 0;
+  let mediumCount = 0;
+  let lowCount = 0;
+  let noRdCount = 0;
+  const getGradeFromRecord = (record) => getConsensusGradeFromResult(record?.result);
+  const classifyGrade = (gradeRaw) => {
+    const grade = Number(gradeRaw);
+    if (!Number.isFinite(grade)) return;
+    if (grade >= 3) highCount += 1;
+    else if (grade === 2) mediumCount += 1;
+    else if (grade === 1) lowCount += 1;
+    else if (grade === 0) noRdCount += 1;
+  };
+  if (item.is_batch && Array.isArray(item.items) && item.items.length > 0) {
+    item.items.forEach((it) => {
+      const grade = getGradeFromRecord(it);
+      classifyGrade(grade);
+    });
+  } else {
+    const grade = getGradeFromRecord(item);
+    classifyGrade(grade);
+  }
+  const hasMixedCounts = [highCount, mediumCount, lowCount, noRdCount].filter((c) => c > 0).length >= 2;
+  const inferredRiskLevel = hasMixedCounts
+    ? 'mixed'
+    : (highCount > 0 ? 'high' : mediumCount > 0 ? 'medium' : lowCount > 0 ? 'low' : null);
+  const riskLevel = inferredRiskLevel || summary?.risk_level || item.risk_level || 'low';
 
   const getRiskBadgeStyle = (level) => {
     switch (level) {
@@ -614,7 +713,7 @@ function HistoryCard({ item, onClick, onDelete, index }) {
   };
 
   const riskText = riskLevel === 'mixed'
-    ? `Mixto (${riskMaxLevel === 'high' ? 'incluye críticos' : riskMaxLevel === 'medium' ? 'incluye medios' : 'estable'})`
+    ? (highCount > 0 ? 'Mixto (incluye altos)' : 'Mixto')
     : riskLevel === 'high'
       ? 'Prioridad Alta'
       : riskLevel === 'medium'
@@ -653,7 +752,7 @@ function HistoryCard({ item, onClick, onDelete, index }) {
           <div className="space-y-1">
             <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
               <FileText size={16} className="text-primary" />
-              {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0, 8)}` : `Archivo: ${item.summary?.filename || 'Sin nombre'}`}
+              {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0, 8)}` : `Archivo: ${summary?.filename || item.filename || 'Sin nombre'}`}
             </h3>
             {item.is_batch && (
               <p className="text-xs text-slate-700 font-medium truncate uppercase tracking-widest">
@@ -662,10 +761,10 @@ function HistoryCard({ item, onClick, onDelete, index }) {
             )}
             <p className="text-xs text-ocular-text-main font-medium mt-1">
               {item.is_batch
-                ? `Altos: ${highCount} · Medios: ${mediumCount} · Bajos: ${lowCount}`
-                : (item.summary?.headline || 'Comparación de modelos RD')}
+                ? `Altos: ${highCount} · Medios: ${mediumCount} · Bajos: ${lowCount} · NO R.D.: ${noRdCount}`
+                : (summary?.headline || item.diagnosis || 'Comparaci?n de modelos RD')}
             </p>
-            {item.summary?.is_mixed_risk}
+            {summary?.is_mixed_risk}
           </div>
 
           {!item.is_batch && (
@@ -673,14 +772,14 @@ function HistoryCard({ item, onClick, onDelete, index }) {
               <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
                 <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Modelos Positivos</p>
                 <p className="text-sm font-black text-ocular-text-main mt-0.5">
-                  {item.summary?.positive_models ?? 0}/{item.summary?.total_models ?? item.models_used?.length ?? 0}
+                  {summary?.positive_models ?? 0}/{summary?.total_models ?? item.models_used?.length ?? 0}
                 </p>
               </div>
               <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
                 <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Diagnóstico</p>
                 <p className="text-xs font-black text-primary mt-0.5 truncate uppercase tracking-tight">
-                  {item.summary?.primary_grade !== undefined && item.summary?.primary_grade !== null
-                    ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][item.summary.primary_grade] || 'N/A'
+                  {summary?.primary_grade !== undefined && summary?.primary_grade !== null
+                    ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][summary.primary_grade] || 'N/A'
                     : 'N/A'}
                 </p>
               </div>
@@ -696,3 +795,4 @@ function HistoryCard({ item, onClick, onDelete, index }) {
     </motion.div>
   );
 }
+
