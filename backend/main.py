@@ -32,6 +32,7 @@ from backend.roble_db import roble_delete_batch
 from backend.roble_db import roble_delete_all_user_history
 from backend.roble_db import get_user_stats_from_roble
 from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
+from backend.roble_db import roble_read_records
 
 from pydantic import BaseModel
 
@@ -119,6 +120,8 @@ RD_MODEL_SPECS = {
         "label": "EfficientNetB0",
     },
 }
+
+
 
 
 def _load_first_available_model(model_key: str, candidates: List[dict]) -> None:
@@ -228,7 +231,94 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="No se pudo conectar con ROBLE. Intenta nuevamente.",
         )
 
+@app.get("/me")
+async def get_me(current_user: User = Depends(get_current_user)):
+    return {
+        "email": current_user.email,
+        "username": current_user.username,
+        "role": current_user.role,
+        "roble_user_id": current_user.roble_user_id,
+    }
 
+def require_admin(current_user: User = Depends(get_current_user)):
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo los administradores pueden realizar esta acción.",
+        )
+    return current_user
+
+class AdminCreateUserRequest(BaseModel):
+    email: str
+    name: str
+    password: str
+    role: str = "user"
+    
+@app.post("/admin/create-user")
+async def admin_create_user(
+    payload: AdminCreateUserRequest,
+    current_user: User = Depends(require_admin),
+    current_user_token: str = Depends(oauth2_scheme),
+):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.roble_auth_base}/{settings.roble_db_name}/signup-direct",
+                json={
+                    "email": payload.email,
+                    "name": payload.name,
+                    "password": payload.password,
+                    "role": payload.role,
+                },
+                timeout=15.0,
+            )
+
+        if response.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=response.text,
+            )
+
+        data = response.json()
+
+        created_user = data.get("user") or data
+
+        user_record = {
+            "roble_user_id": created_user.get("id") or created_user.get("sub"),
+            "email": payload.email,
+            "nombre": payload.name,
+            "rol": payload.role,
+            "activo_app": True,
+            "fecha_creacion": datetime.now(timezone.utc).isoformat(),
+            "ultimo_login": None,
+        }
+
+        try:
+            await roble_insert(
+                token=current_user_token,
+                table_name="usuarios_app",
+                records=[user_record],
+            )
+        except Exception as db_error:
+            print("Usuario creado en ROBLE, pero no se pudo guardar en usuarios_app:", db_error)
+
+        return {
+            "ok": True,
+            "message": "Usuario creado correctamente.",
+            "user": data,
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print("ERROR CREANDO USUARIO:", str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo crear el usuario.",
+        )
+        
 def _read_image_from_upload(file: UploadFile) -> np.ndarray:
     import cv2
     contents = file.file.read()
@@ -1790,4 +1880,26 @@ async def refresh_token(payload: RefreshTokenRequest):
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="No se pudo conectar con ROBLE.",
+        )
+@app.get("/admin/users")
+async def admin_list_users(
+    current_user: User = Depends(require_admin),
+    token: str = Depends(oauth2_scheme),
+):
+    try:
+        users = await roble_read_records(
+            token=token,
+            table_name="usuarios_app",
+        )
+
+        return {
+            "ok": True,
+            "users": users,
+        }
+
+    except Exception as e:
+        print("ERROR LISTANDO USUARIOS:", str(e))
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudieron cargar los usuarios.",
         )

@@ -9,6 +9,7 @@ from typing import Optional
 import hashlib
 import secrets
 
+from cv2 import data
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from fastapi import Depends, HTTPException, status
@@ -92,10 +93,18 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 
         data = response.json()
 
-        email = data.get("email") or data.get("user", {}).get("email")
-        role = data.get("role") or data.get("user", {}).get("role", "user")
-        roble_user_id = data.get("sub") or data.get("id") or data.get("user", {}).get("id")
+        user_data = data.get("user", {})
 
+
+        email = data.get("email") or user_data.get("email")
+        role = data.get("role") or user_data.get("role", "user")
+
+        roble_user_id = (
+            data.get("sub")
+            or data.get("id")
+            or user_data.get("id")
+            or user_data.get("sub")
+        )
         return User(
             username=email or "usuario_roble",
             email=email,
