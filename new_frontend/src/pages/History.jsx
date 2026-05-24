@@ -592,6 +592,10 @@ export default function HistoryPage({ onViewDetail }) {
 }
 
 function HistoryCard({ item, onClick, onDelete, index }) {
+  const riskCounts = item.summary?.risk_counts || {};
+  const highCount = Number(riskCounts.high || 0);
+  const mediumCount = Number(riskCounts.medium || 0);
+  const lowCount = Number(riskCounts.low || 0);
   const riskLevel = item.summary?.risk_level || 'low';
   const riskMaxLevel = item.summary?.risk_max_level || riskLevel;
 
@@ -656,7 +660,11 @@ function HistoryCard({ item, onClick, onDelete, index }) {
                 Contiene <span className="text-primary">{item.batch_size} imágenes</span>
               </p>
             )}
-            <p className="text-xs text-ocular-text-main font-medium mt-1">{item.summary?.headline || 'Comparación de modelos RD'}</p>
+            <p className="text-xs text-ocular-text-main font-medium mt-1">
+              {item.is_batch
+                ? `Altos: ${highCount} · Medios: ${mediumCount} · Bajos: ${lowCount}`
+                : (item.summary?.headline || 'Comparación de modelos RD')}
+            </p>
             {item.summary?.is_mixed_risk}
           </div>
 

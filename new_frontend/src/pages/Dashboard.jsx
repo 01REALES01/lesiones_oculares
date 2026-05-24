@@ -652,6 +652,17 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                       })()
                       : 'Sin ejecuciones aún'}
                   </p>
+                  <p className="text-[10px] text-ocular-text-muted uppercase font-medium truncate">
+                    {recentHistory[0]
+                      ? (() => {
+                        const h = recentHistory[0];
+                        const batch = h.is_batch || (h.batch_id && h.batch_size > 1);
+                        return batch
+                          ? new Date(h.timestamp).toLocaleDateString()
+                          : (h.summary?.headline || new Date(h.timestamp).toLocaleDateString());
+                      })()
+                      : '—'}
+                  </p>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />
               </GlassCard>
@@ -721,7 +732,11 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                                 {isBatchItem ? `Lote${item.batch_size ? ` (${item.batch_size})` : ''}` : 'Individual'}
                               </span>
                             </div>
-                            <p className="text-[10px] text-ocular-text-muted uppercase font-medium truncate">{item.summary?.headline || new Date(item.timestamp).toLocaleDateString()}</p>
+                            <p className="text-[10px] text-ocular-text-muted uppercase font-medium truncate">
+                              {isBatchItem
+                                ? new Date(item.timestamp).toLocaleDateString()
+                                : (item.summary?.headline || new Date(item.timestamp).toLocaleDateString())}
+                            </p>
                           </div>
                           <div
                             role="button"

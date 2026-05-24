@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search, X } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search, X, Plus, Minus, RotateCcw } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import api, { analysisService } from '../services/api';
@@ -134,72 +134,158 @@ function getGradeGradient(grade) {
   }
 }
 
-function ZoomableImage({ src, alt, className, onClick, initialZoom = 2.5, minZoom = 1.5, maxZoom = 4, zoomStep = 0.25 }) {
-  const [showMagnifier, setShowMagnifier] = useState(false);
-  const [[x, y], setXY] = useState([0, 0]);
-  const [[imgWidth, imgHeight], setSize] = useState([0, 0]);
+function ZoomableImage({
+  src,
+  alt,
+  className,
+  onClick,
+  initialZoom = 1,
+  minZoom = 1,
+  maxZoom = 5,
+  zoomStep = 0.25,
+  showControls = false,
+  enableMagnifier = false,
+}) {
   const [zoomLevel, setZoomLevel] = useState(initialZoom);
-  const magnifierSize = 200;
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [showMagnifier, setShowMagnifier] = useState(false);
+  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
+  const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
+  const magnifierSize = 180;
+
+  useEffect(() => {
+    setZoomLevel(initialZoom);
+    setPan({ x: 0, y: 0 });
+  }, [src, initialZoom]);
+
+  const clampZoom = (value) => Math.max(minZoom, Math.min(maxZoom, value));
+
+  const handleZoomIn = (e) => {
+    e?.stopPropagation?.();
+    setZoomLevel((prev) => clampZoom(prev + zoomStep));
+  };
+
+  const handleZoomOut = (e) => {
+    e?.stopPropagation?.();
+    setZoomLevel((prev) => clampZoom(prev - zoomStep));
+  };
+
+  const handleReset = (e) => {
+    e?.stopPropagation?.();
+    setZoomLevel(initialZoom);
+    setPan({ x: 0, y: 0 });
+  };
 
   const handleWheel = (e) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (!showControls) return;
     const delta = e.deltaY > 0 ? -zoomStep : zoomStep;
-    setZoomLevel((prev) => Math.max(minZoom, Math.min(maxZoom, prev + delta)));
+    setZoomLevel((prev) => clampZoom(prev + delta));
   };
+
+  const handleMouseDown = (e) => {
+    if (zoomLevel <= 1) return;
+    e.preventDefault();
+    setIsDragging(true);
+    setDragStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging) return;
+    setPan({
+      x: e.clientX - dragStart.x,
+      y: e.clientY - dragStart.y,
+    });
+  };
+
+  const handleMouseUp = () => setIsDragging(false);
 
   return (
     <div
-      className={cn("relative overflow-hidden cursor-zoom-in", className)}
+      className={cn("relative overflow-hidden rounded-2xl", className)}
       onClick={onClick}
       onWheel={handleWheel}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseUp}
+      onMouseUp={handleMouseUp}
       onMouseEnter={(e) => {
-        const elem = e.currentTarget;
-        const { width, height } = elem.getBoundingClientRect();
-        setSize([width, height]);
+        if (!enableMagnifier) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setImgSize({ width: rect.width, height: rect.height });
         setShowMagnifier(true);
       }}
-      onMouseMove={(e) => {
-        const elem = e.currentTarget;
-        const { top, left } = elem.getBoundingClientRect();
-        const x = e.pageX - left - window.scrollX;
-        const y = e.pageY - top - window.scrollY;
-        setXY([x, y]);
+      onMouseMoveCapture={(e) => {
+        if (!enableMagnifier) return;
+        const rect = e.currentTarget.getBoundingClientRect();
+        setCursorPos({
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
       }}
-      onMouseLeave={() => setShowMagnifier(false)}
+      onMouseLeaveCapture={() => setShowMagnifier(false)}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
-      <img src={src} alt={alt} className="w-full h-full object-contain" />
+      <div
+        className={cn(
+          "h-full w-full flex items-center justify-center",
+          zoomLevel > 1 ? "cursor-grab active:cursor-grabbing" : "cursor-zoom-in"
+        )}
+        onMouseDown={handleMouseDown}
+      >
+        <img
+          src={src}
+          alt={alt}
+          draggable={false}
+          className="max-w-full max-h-full object-contain select-none"
+          style={{
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoomLevel})`,
+            transition: isDragging ? 'none' : 'transform 0.15s ease-out',
+            transformOrigin: 'center center',
+          }}
+        />
+      </div>
 
       <div data-html2canvas-ignore="true" className="absolute top-4 right-4 z-10 bg-primary text-white p-2 rounded-full shadow-lg no-print animate-pulse">
         <Search size={18} />
       </div>
 
-      <div className="absolute bottom-4 left-4 bg-slate-950/70 text-white px-3 py-1 rounded-full text-[11px] font-semibold shadow-lg">
-        Zoom {zoomLevel.toFixed(1)}x
-      </div>
-
-      {showMagnifier && (
+      {enableMagnifier && showMagnifier && !showControls && (
         <div
+          className="pointer-events-none absolute z-20 rounded-full border-2 border-white/70 bg-white shadow-2xl"
           style={{
-            position: 'absolute',
-            pointerEvents: 'none',
-            height: `${magnifierSize}px`,
             width: `${magnifierSize}px`,
-            top: `${y - magnifierSize / 2}px`,
-            left: `${x - magnifierSize / 2}px`,
-            opacity: '1',
-            border: '2px solid rgba(255, 255, 255, 0.5)',
-            borderRadius: '50%',
-            backgroundColor: 'white',
+            height: `${magnifierSize}px`,
+            left: `${cursorPos.x - magnifierSize / 2}px`,
+            top: `${cursorPos.y - magnifierSize / 2}px`,
             backgroundImage: `url('${src}')`,
             backgroundRepeat: 'no-repeat',
-            backgroundSize: `${imgWidth * zoomLevel}px ${imgHeight * zoomLevel}px`,
-            backgroundPosition: `${-x * zoomLevel + magnifierSize / 2}px ${-y * zoomLevel + magnifierSize / 2}px`,
-            boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
-            zIndex: 50,
+            backgroundSize: `${imgSize.width * 2.3}px ${imgSize.height * 2.3}px`,
+            backgroundPosition: `${-cursorPos.x * 2.3 + magnifierSize / 2}px ${-cursorPos.y * 2.3 + magnifierSize / 2}px`,
           }}
         />
+      )}
+
+      {showControls && (
+        <div
+          data-html2canvas-ignore="true"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 rounded-full border border-white/25 bg-slate-950/80 px-3 py-2 text-white shadow-2xl backdrop-blur"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button type="button" onClick={handleZoomOut} className="p-1 rounded-md hover:bg-white/10 transition" aria-label="Alejar zoom">
+            <Minus size={14} />
+          </button>
+          <span className="text-[11px] font-semibold min-w-[58px] text-center">{(zoomLevel * 100).toFixed(0)}%</span>
+          <button type="button" onClick={handleZoomIn} className="p-1 rounded-md hover:bg-white/10 transition" aria-label="Acercar zoom">
+            <Plus size={14} />
+          </button>
+          <button type="button" onClick={handleReset} className="ml-1 p-1 rounded-md hover:bg-white/10 transition" aria-label="Resetear zoom">
+            <RotateCcw size={14} />
+          </button>
+        </div>
       )}
     </div>
   );
@@ -223,16 +309,19 @@ export default function AnalysisDetail({
   const [usarOriginal, setUsarOriginal] = useState(true);
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupSrc, setPopupSrc] = useState(null);
+  const [popupAlt, setPopupAlt] = useState('Imagen ampliada');
 
-  const openImagePopup = (src) => {
+  const openImagePopup = (src, alt = 'Imagen ampliada') => {
     if (!src) return;
     setPopupSrc(src);
+    setPopupAlt(alt);
     setPopupOpen(true);
   };
 
   const closeImagePopup = () => {
     setPopupOpen(false);
     setPopupSrc(null);
+    setPopupAlt('Imagen ampliada');
   };
 
   const imageUrl = usarOriginal ? getImageUrl(result) : getImageUrl_filtro(result);
@@ -241,6 +330,23 @@ export default function AnalysisDetail({
   const handleToggle = () => {
     setUsarOriginal((prev) => !prev);
   };
+
+  useEffect(() => {
+    if (!popupOpen) return undefined;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') closeImagePopup();
+    };
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [popupOpen]);
 
   if (!result) return null;
 
@@ -405,32 +511,48 @@ const calculatedConsensusGrade = useMemo(() => {
       <AnimatePresence>
         {popupOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 backdrop-blur-md p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
             <div className="absolute inset-0" onClick={closeImagePopup} />
             <motion.div
-              className="relative z-10 w-full max-w-[1100px] max-h-[90vh] rounded-[2rem] overflow-hidden bg-slate-950/95 border border-white/10 shadow-2xl"
+              className="relative z-10 w-full max-w-[1180px] h-[88vh] rounded-[2rem] overflow-hidden border border-slate-200/70 bg-white/95 shadow-[0_30px_80px_rgba(15,23,42,0.28)]"
               initial={{ scale: 0.96, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.96, opacity: 0 }}
               transition={{ duration: 0.18 }}
               onClick={(e) => e.stopPropagation()}
             >
+              <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 bg-slate-50/70">
+                <div>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Visor clínico</p>
+                  <p className="text-sm font-bold text-slate-800 truncate max-w-[75vw]">{popupAlt}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeImagePopup}
+                  className="rounded-xl border border-slate-200 bg-white text-slate-700 p-2 shadow-sm hover:border-primary/40 hover:text-primary transition"
+                  aria-label="Cerrar visor"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={closeImagePopup}
-                className="absolute right-4 top-4 z-30 rounded-full bg-white/95 text-slate-950 p-2 shadow-2xl hover:bg-white transition"
+                className="hidden"
               >
                 <X size={18} />
               </button>
-              <div className="h-[85vh] w-full bg-slate-950">
+              <div className="h-[calc(88vh-68px)] w-full p-5 bg-gradient-to-b from-slate-100/70 to-slate-200/60">
                 <ZoomableImage
                   src={popupSrc}
-                  alt="Imagen ampliada"
-                  className="h-full w-full"
+                  alt={popupAlt}
+                  className="h-full w-full border border-slate-200 bg-white"
+                  showControls
                 />
               </div>
             </motion.div>
@@ -706,9 +828,10 @@ const calculatedConsensusGrade = useMemo(() => {
                                 src={imageUrl}
                                 alt="Retinografia analizada"
                                 className="h-full w-full"
-                                onClick={() => openImagePopup(imageUrl)}
+                                onClick={() => openImagePopup(imageUrl, result.filename || 'Retinografía analizada')}
+                                enableMagnifier
                               />
-                              <div className="absolute bottom-4 left-4 rounded-full bg-slate-950 px-3 py-1 text-[11px] text-white uppercase tracking-[0.12em] shadow-lg">
+                              <div className="absolute bottom-4 left-4 rounded-full bg-gradient-to-r from-primary to-primary-dark px-3 py-1 text-[11px] text-white uppercase tracking-[0.12em] shadow-lg">
                                 Clic para ampliar
                               </div>
                             </div>
@@ -801,7 +924,8 @@ const calculatedConsensusGrade = useMemo(() => {
                           src={imageUrl}
                           alt="Retinografia analizada"
                           className="min-h-[260px] max-h-[360px] w-full"
-                          onClick={() => openImagePopup(imageUrl)}
+                          onClick={() => openImagePopup(imageUrl, result.filename || 'Retinografía analizada')}
+                          enableMagnifier
                         />
                       ) : (
                         <div className="text-center space-y-4">
