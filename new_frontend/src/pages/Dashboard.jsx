@@ -225,11 +225,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
     const withPreview = (res.data || []).map((item) => ({
       ...item,
-      uploaded_image_preview: item.uploaded_image_preview?.startsWith('data:')
-        ? item.uploaded_image_preview
-        : item.uploaded_image_preview
-          ? `${analysisService.apiBase}${item.uploaded_image_preview}`
-          : null,
+      uploaded_image_preview: item.uploaded_image_preview
     }));
 
     setResults(withPreview);
