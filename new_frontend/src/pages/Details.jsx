@@ -318,79 +318,66 @@ export default function AnalysisDetail({
 
 
 
-  const aplicarPonderado = (itemPosibilities, pesos, predictedClasses) => {
-    if (!itemPosibilities || itemPosibilities.length === 0) return [0, 0, 0, 0, 0];
+const calculo_ponderado_total = () => {
+  const predictedClasses = [];
+  const pesos = [];
+  const items = Object.values(comparisonModels);
 
-    const n = 5;
-    let weighted_pos = new Array(n).fill(0);
+  if (items.length === 0) return { probabilidades: [0, 0, 0, 0, 0], grado: 0 };
 
-    for (let i = 0; i < n; i++) {
-      let sumaPonderadaClase = 0;
-      let sumaPesosTotal = 0;
+  items.forEach((item) => {
+    const clase = Number(item.predicted_class);
+    const confianza = Number(item.confidence_percent) || 0;
+    
+    const otros = items.filter(i => i !== item).map(i => Number(i.predicted_class));
+    const promedioOtros = otros.length > 0 ? otros.reduce((a, b) => a + b, 0) / otros.length : clase;
+    const distancia = Math.abs(clase - promedioOtros);
+    
+    let pesoFinal = confianza;
+    if (distancia >= 2) pesoFinal *= 0.5; 
+    
+    predictedClasses.push(clase);
+    pesos.push(pesoFinal);
+  });
 
-      for (let j = 0; j < itemPosibilities.length; j++) {
-        let pesoModificado = Number(pesos[j]) || 0;
+  const sumaPesos = pesos.reduce((a, b) => a + b, 0);
+  const centroGravedad = predictedClasses.reduce((acc, clase, i) => acc + (clase * pesos[i]), 0) / (sumaPesos || 1);
+  const gradoFinal = Math.round(centroGravedad);
 
-        const prediccionActual = predictedClasses[j];
-        const distancias = predictedClasses.map(p => Math.abs(p - prediccionActual));
-        const distanciaPromedio = distancias.reduce((a, b) => a + b, 0) / (predictedClasses.length);
+  // --- NUEVA LÓGICA DE CONCENTRACIÓN ---
+  const numCoincidencias = predictedClasses.filter(c => c === gradoFinal).length;
+  // Si hay más coincidencias, el exponente es mayor y la barra es más alta
+  const factorSharp = numCoincidencias + 1.5; 
 
-        if (distanciaPromedio >= 2) {
-          pesoModificado *= 0.4;
-        }
+  let probs = [0, 0, 0, 0, 0];
+  for (let i = 0; i < 5; i++) {
+    const distanciaAlCentro = Math.abs(i - centroGravedad);
+    // Usamos una potencia mayor para que el pico sea mucho más claro
+    probs[i] = 1 / Math.pow(1 + distanciaAlCentro, factorSharp);
+  }
 
-        if (prediccionActual === 0) {
-          const algunEnfermo = predictedClasses.some(p => p > 0);
-          if (algunEnfermo) pesoModificado *= 0.6;
-        }
+  const sumaProbs = probs.reduce((a, b) => a + b, 0);
+  const probabilidadesFinales = probs.map(p => (p / (sumaProbs || 1)) * 100);
 
-        const clasesCoincidentes = predictedClasses.filter(c => c === prediccionActual).length;
-        if (clasesCoincidentes >= 2) {
-          pesoModificado *= 1.5;
-        }
-
-        const probRaw = Number(itemPosibilities[j][i]) || 0;
-        sumaPonderadaClase += probRaw * pesoModificado;
-        sumaPesosTotal += pesoModificado;
-      }
-      weighted_pos[i] = sumaPesosTotal > 0 ? (sumaPonderadaClase / sumaPesosTotal) : 0;
-    }
-
-    const totalSum = weighted_pos.reduce((a, b) => a + b, 0);
-    return weighted_pos.map(val => (totalSum > 0 ? (val / totalSum) * 100 : 0));
+  return {
+    probabilidades: probabilidadesFinales,
+    grado: gradoFinal
   };
+};
 
-  const calculo_ponderado = () => {
-    const itemPosibilities = [];
-    const pesos = [];
-    const predictedClasses = [];
+const resultadoConsenso = useMemo(() => 
+  (hasComparison ? calculo_ponderado_total() : null), 
+  [comparisonModels, hasComparison]
+);
 
-    Object.values(comparisonModels).forEach((item) => {
-      pesos.push(Number(item.confidence_percent) || 0);
-      predictedClasses.push(Number(item.predicted_class));
-      const raw = Array.isArray(item.raw_probabilities)
-        ? item.raw_probabilities
-        : Array.isArray(item.raw_posibilities)
-          ? item.raw_posibilities
-          : [];
-      itemPosibilities.push(raw);
-    });
+const consensusProbabilities = resultadoConsenso?.probabilidades ?? null;
 
-    return aplicarPonderado(itemPosibilities, pesos, predictedClasses);
-  };
-
-  const consensusProbabilities = useMemo(() =>
-    (hasComparison ? calculo_ponderado() : null),
-    [comparisonModels, hasComparison]
-  );
-
-  const calculatedConsensusGrade = useMemo(() => {
-    if (hasComparison && consensusProbabilities) {
-      const maxVal = Math.max(...consensusProbabilities);
-      return consensusProbabilities.indexOf(maxVal);
-    }
-    return summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
-  }, [hasComparison, consensusProbabilities, primaryResult, result, summary]);
+const calculatedConsensusGrade = useMemo(() => {
+  if (hasComparison && resultadoConsenso) {
+    return resultadoConsenso.grado;
+  }
+  return summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
+}, [hasComparison, resultadoConsenso, primaryResult, result, summary]);
 
 
 
