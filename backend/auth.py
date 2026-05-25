@@ -29,9 +29,9 @@ class Token(BaseModel):
 
 class User(BaseModel):
     username: str
-    email: str | None = None
+    email: Optional[str] = None
     role: str = "user"
-    roble_user_id: str | None = None
+    roble_user_id: Optional[str] = None
 
 # ---- Hashing (SHA-256 + salt) ----
 _SALT = "retina_ai_salt_2024"
