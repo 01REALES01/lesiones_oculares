@@ -544,30 +544,61 @@ Se evaluó la experiencia del usuario (personal médico).
 
 A continuación, se presenta el análisis de los resultados obtenidos durante la fase de validación con personal de salud, interpretando el desempeño de la plataforma *OcularAI* frente a los requerimientos de usabilidad, carga cognitiva y posicionamiento ético.
 ## 11.1. Análisis de Usabilidad y Experiencia de Usuario (UX)
-La validación de la interfaz arrojó métricas altamente positivas en cuanto a la operatividad del sistema:
 
-**Identificación del Grado de R.D.:** Como se observa en los resultados, el **87.5%** de los evaluadores (7 de 8) calificó como "Fácil" o "Muy Fácil" la identificación del nivel de severidad sugerido por la IA. Esto valida que la jerarquía visual de la plataforma permite una detección rápida del veredicto clínico.
-![secuencia_admin](resultado_4.jpeg)
+La validación de la interfaz arrojó métricas positivas en cuanto a operatividad y comprensión del resultado clínico sugerido por la plataforma.
 
-**Intuitividad y Sencillez:** El *75%* de los participantes (6 de 8) percibió la aplicación como "Bastante" o "Mucho" muy intuitiva. Existe un margen de mejora identificado por un 25% de los usuarios que calificaron la intuitividad como "Moderada" o "Poca", lo cual coincide con el feedback cualitativo sobre la densidad de elementos en la vista de análisis.
-![secuencia_admin](resultado_3.jpeg)
+**Identificación del grado de R.D.**  
+El **87.5%** de los evaluadores (7 de 8) calificó como "Fácil" o "Muy Fácil" la identificación del nivel de severidad sugerido por la IA. Esto valida que la jerarquía visual favorece una lectura rápida del veredicto.
+
+<p align="center">
+  <img src="resultado_4.jpeg" alt="Resultado de facilidad para identificar el grado de RD" width="700"/>
+</p>
+<p align="center"><em>Figura 11.1. Facilidad percibida para identificar el grado de retinopatía diabética.</em></p>
+
+**Intuitividad y sencillez**  
+El **75%** de los participantes (6 de 8) percibió la aplicación como "Bastante" o "Mucho" intuitiva. Se identifica un margen de mejora en el 25% restante, que calificó la intuitividad como "Moderada" o "Poca", consistente con el feedback cualitativo sobre densidad de elementos en la vista de análisis.
+
+<p align="center">
+  <img src="resultado_3.jpeg" alt="Resultado de intuitividad y sencillez de la interfaz" width="700"/>
+</p>
+<p align="center"><em>Figura 11.2. Percepción de intuitividad de la interfaz.</em></p>
+
 ## 11.2. Percepción de la Carga de Información
-Uno de los retos del diseño en salud digital es el equilibrio entre la cantidad de datos técnicos y la claridad diagnóstica:
 
-**Claridad de los datos:** El *75%* de los evaluadores consideró que la información presentada es "Clara y Suficiente". 
-**Carga Cognitiva:** Un *25%* percibió la carga de información como "Abrumadora". 
-![secuencia_admin](resultado_2.jpeg)
-**Discusión:** Este hallazgo es crucial para futuras iteraciones del proyecto. Aunque la plataforma ofrece métricas detalladas de latencia y comparativas multimodelo, para una implementación en entornos hospitalarios de alta demanda se sugiere una vista simplificada que priorice únicamente el resultado del consenso y la imagen analizada, dejando los datos técnicos como información secundaria o bajo demanda.
+Uno de los retos del diseño en salud digital es equilibrar la cantidad de datos técnicos con la claridad de interpretación diagnóstica.
+
+**Claridad de los datos**  
+El **75%** de los evaluadores consideró que la información presentada es "Clara y Suficiente".
+
+**Carga cognitiva**  
+Un **25%** percibió la carga de información como "Abrumadora".
+
+<p align="center">
+  <img src="resultado_2.jpeg" alt="Percepción de carga de información en la interfaz" width="700"/>
+</p>
+<p align="center"><em>Figura 11.3. Percepción de claridad y carga de información.</em></p>
+
+**Discusión**  
+Este hallazgo orienta mejoras para próximas iteraciones. Aunque la plataforma expone métricas de latencia y comparación multimodelo, para contextos hospitalarios de alta demanda se recomienda una vista simplificada que priorice el consenso clínico y la imagen analizada, dejando los datos técnicos bajo demanda.
 
 ## 11.3. Posicionamiento Ético y Rol del Sistema
-Un punto fundamental en la validación de software médico es la definición del rol de la inteligencia artificial en la toma de decisiones:
 
-**Acuerdo de Soporte:** Se obtuvo un **Acuerdo Total (100%)** respecto a que el sistema debe funcionar exclusivamente como una herramienta de "Soporte" y que la decisión final debe recaer siempre en el profesional de la salud.
-![secuencia_admin](resultado_1.jpeg)
-**Discusión:** Este consenso unánime ratifica que la propuesta de diseño de *OcularAI* es éticamente viable. El personal médico no percibe la herramienta como una amenaza a su juicio profesional, sino como un asistente de filtrado rápido que incrementa la seguridad en el proceso de tamizaje masivo.
+Un eje clave de validación en software médico es delimitar el rol de la IA frente al juicio profesional.
+
+**Acuerdo de soporte**  
+Se obtuvo **acuerdo total (100%)** en que el sistema debe usarse exclusivamente como herramienta de soporte y que la decisión final corresponde siempre al profesional de la salud.
+
+<p align="center">
+  <img src="resultado_1.jpeg" alt="Acuerdo ético sobre el rol de soporte del sistema" width="700"/>
+</p>
+<p align="center"><em>Figura 11.4. Consenso sobre el rol ético de apoyo clínico del sistema.</em></p>
+
+**Discusión**  
+Este consenso unánime respalda la viabilidad ética de *OcularAI*: el personal médico no lo percibe como sustituto del criterio clínico, sino como asistente de tamizaje rápido que fortalece la seguridad del proceso.
 
 ## 11.4. Síntesis de la Validación
-Los resultados demuestran que **OcularAI** cumple satisfactoriamente con los requerimientos funcionales y de diseño. La interfaz es intuitiva para el usuario clínico y el algoritmo de consenso multimodelo es percibido como un apoyo confiable. Las limitaciones identificadas respecto a la carga de información en el 25% de los casos definen la hoja de ruta para optimizar la experiencia de usuario en futuras versiones, priorizando el minimalismo informativo sin sacrificar la robustez del análisis técnico.
+
+Los resultados demuestran que **OcularAI** cumple satisfactoriamente con los requerimientos funcionales y de diseño. La interfaz resulta intuitiva para el usuario clínico, y el consenso multimodelo se percibe como apoyo confiable. La principal oportunidad de mejora se concentra en reducir la carga informativa para un subconjunto de usuarios, manteniendo la trazabilidad y robustez técnica del análisis.
 ---
 
 ## 12. Referencias
