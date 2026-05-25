@@ -30,11 +30,11 @@ Para comprender adecuadamente la solución desarrollada en este proyecto, es fun
 
 **DenseNet169 (Densely Connected Convolutional Networks):** Es una arquitectura donde cada capa está conectada a todas las demás capas posteriores. Esta estructura mejora significativamente la propagación del flujo de información y gradientes a lo largo de la red, mitigando el problema del desvanecimiento del gradiente y logrando alta precisión con menos parámetros.
 
-**ResNet (Residual Neural Network):** Es una arquitectura de red neuronal profunda que utiliza conexiones residuales (skip connections) para facilitar el entrenamiento de redes con muchas capas, mejorando la precisión y evitando el desvanecimiento del gradiente.
+**ResNet50:** (Residual Network con 50 capas). Es una arquitectura de red neuronal profunda que utiliza conexiones residuales (skip connections) para facilitar el entrenamiento de redes con muchas capas, mejorando la precisión y evitando el desvanecimiento del gradiente.
 
-**EfficientNet:** Es una arquitectura de CNN optimizada que equilibra profundidad, ancho y resolución de la red para lograr alta precisión con menor costo computacional y mayor eficiencia.
+**EfficientNet:** Arquitectura de CNN optimizada que equilibra profundidad, ancho y resolución de la red para lograr alta precisión con menor costo computacional y mayor eficiencia.
 
-**Validación Cruzada por Conjunto (Ensemble/Concurrent Validation):** La plataforma permite ejecutar desde una hasta tres inferencias en paralelo utilizando las arquitecturas mencionadas. Contrastar las salidas de modelos con diferentes aproximaciones matemáticas (densidad, residualidad y separabilidad) sobre la misma imagen médica aumenta la confianza clínica al buscar consensos para reducir falsos positivos y negativos.
+**Validación Cruzada por Conjunto (Ensemble/Concurrent Validation):** La plataforma permite ejecutar desde una hasta tres inferencias de forma consecutiva utilizando las arquitecturas mencionadas. Contrastar las salidas de modelos con diferentes aproximaciones matemáticas (densidad, residualidad y escalado) sobre la misma imagen médica aumenta la confianza clínica al buscar consensos para reducir falsos positivos y negativos.
 
 ---
 
@@ -78,7 +78,7 @@ Diseñar e implementar una plataforma de software orientada al análisis de reti
 ### Objetivos Específicos
 
 1. **Desarrollo de una interfaz usable:** Diseñar e implementar una plataforma web con una interfaz intuitiva y accesible, orientada al personal médico. La interfaz deberá permitir la carga de retinografías, la ejecución automática de los modelos de análisis y la visualización clara de los resultados obtenidos.
-2. **Integración de inteligencia artificial multi-modelo:** Implementar tres arquitecturas de IA especializadas que realicen un análisis en paralelo sobre la misma retinografía. Esta integración busca permitir al médico comparar los resultados de cada modelo para fortalecer la confiabilidad del diagnóstico preliminar mediante la identificación de coincidencias en los hallazgos.
+2. **Integración de inteligencia artificial multi-modelo:** Implementar tres arquitecturas de IA especializadas que realicen un análisis automatizado sobre la misma retinografía. Esta integración busca permitir al médico comparar los resultados de cada modelo para fortalecer la confiabilidad del diagnóstico preliminar mediante la identificación de coincidencias en los hallazgos.
 3. **Trazabilidad y visualización de métricas:** Incorporar mecanismos que permitan registrar y almacenar el historial de análisis realizados dentro de la plataforma, junto con los resultados generados por los modelos de inteligencia artificial. Además, el sistema deberá mostrar indicadores de desempeño relevantes, como precisión y sensibilidad, con el fin de facilitar la interpretación de los resultados y permitir una evaluación clara del comportamiento de los modelos utilizados.
 
 ---
@@ -89,11 +89,11 @@ El diagnóstico de patologías oculares mediante inteligencia artificial ha expe
 
 **1. Aprendizaje por Transferencia**
 
-La tendencia predominante en el estado del arte no es el entrenamiento de modelos desde cero, sino el uso de arquitecturas pre-entrenadas en bases de datos masivas (como ImageNet). Arquitecturas modernas como MobileNetV3, Xception y EfficientNet optimizan la relación entre número de parámetros y precisión, permitiendo operar modelos de alta fidelidad en dispositivos con recursos limitados.
+La tendencia predominante en el estado del arte no es el entrenamiento de modelos desde cero, sino el uso de arquitecturas pre-entrenadas en bases de datos masivas (como ImageNet). Arquitecturas modernas como ResNet50, EfficientNet y DenseNet169 optimizan la relación entre número de parámetros y precisión, permitiendo operar modelos de alta fidelidad en dispositivos con recursos limitados.
 
 **2. Validación por Ensamble de Modelos**
 
-Uno de los mayores retos en la medicina actual es la confiabilidad de los sistemas automatizados. El estado del arte aborda este problema mediante el uso de ensambles (ensembles) o la ejecución concurrente de diferentes arquitecturas neuronales. Al contrastar resultados de modelos matemáticamente diferentes (como DenseNet y MobileNetV3), se reduce la incertidumbre propia de un solo modelo ("caja negra"), validando el criterio ante el especialista humano.
+Uno de los mayores retos en la medicina actual es la confiabilidad de los sistemas automatizados. El estado del arte aborda este problema mediante el uso de ensambles (ensembles) o la ejecución concurrente de diferentes arquitecturas neuronales. Al contrastar resultados de modelos matemáticamente diferentes (como DenseNet, ResNet y EfficientNet), se reduce la incertidumbre propia de un solo modelo ("caja negra"), validando el criterio ante el especialista humano.
 
 **3. Especialización y Profundidad en la Clasificación**
 
@@ -116,12 +116,14 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 | ID | Descripción | Prioridad |
 |----|-------------|-----------|
 | RF01 | Carga de imagen de retinografía (formatos habituales: jpg, png) | Alta |
-| RF02 | Ejecución de inferencia en paralelo utilizando los tres modelos de IA sobre la imagen cargada | Alta |
+| RF02 | Ejecución de inferencia utilizando los tres modelos de IA sobre la imagen cargada | Alta |
 | RF03 | Visualización comparativa de resultados: el sistema mostrará las salidas de los tres modelos de forma simultánea para permitir la validación cruzada por parte del médico | Alta |
 | RF04 | Historial básico: listado de análisis recientes con posibilidad de ver detalle de cada uno | Alta |
 | RF05 | Trazabilidad: cada inferencia con ID único, timestamp, modelos usados y tiempos de ejecución | Alta |
 | RF06 | Postprocesamiento: etiquetas legibles, probabilidades y datos cuantitativos| Media |
-| RF08 | Gestión de usuarios (opcional): registro/login para asociar análisis a usuario | Baja |
+| RF07 | Evaluación con dataset: script que calcule métricas (accuracy, F1, AUC, sensibilidad, especificidad) y tiempos de inferencia; comparación entre modelos | Media |
+| RF08 | Gestión de usuarios: registro/login mediante ROBLE Auth para asociar análisis a usuario | Alta |
+| RF09 | Panel de administración: gestión de usuarios, roles, visualización de métricas globales y auditoría de inferencias | Media |
 
 ### 6.2 No Funcionales
 
@@ -151,7 +153,7 @@ La validación de estos sistemas se apoya hoy en día en conjuntos de datos abie
 |--------|------------|
 | Calidad variable de imágenes | Se implementa preprocesamiento; se documentan limitaciones |
 | Desbalance/sesgos en datos | Se realiza evaluación con dataset público o provisto; se reportan métricas en script de evaluación |
-| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet, ResNet, EfficientNet) para validación cruzada |
+| Confiabilidad de resultados | Ejecución concurrente de tres arquitecturas diferentes (DenseNet169, ResNet50, EfficientNet) para validación cruzada |
 | Latencia y recursos | Se cargan los modelos ya preentrenados; se muestra un historial acotado |
 | Privacidad de imágenes médicas | Se implementa cifrado, control de acceso, retención mínima, anonimización donde aplique |
 | Uso indebido como diagnóstico | Disclaimers en API e interfaz; enfoque "apoyo/tamizaje"; trazabilidad |
@@ -237,7 +239,7 @@ La plataforma adopta una arquitectura **cliente-servidor** con los siguientes ni
 **1. Frontend Web (React + Vite)**
 - Carga de retinografías.
 - Selección de modelos (Modelo 1, Modelo 2, Modelo 3) para análisis comparativo.
-- Visualización unificada de resultados por modelo: diagnóstico RD (sí/no), grado de severidad, confianza.
+- Visualización unificada de resultados por modelo: grado de severidad (0-4), confianza y diagnóstico clínico.
 - Consulta de historial y detalle de inferencias.
 
 **2. Backend API (FastAPI)**
@@ -258,6 +260,12 @@ La plataforma adopta una arquitectura **cliente-servidor** con los siguientes ni
 - Construye respuesta comparativa para la interfaz.
 - Guarda historial de análisis para auditoría y seguimiento.
 
+**5. Módulo de Administración**
+- Gestión de usuarios del sistema (creación, roles, permisos).
+- Visualización de métricas globales de uso del sistema.
+- Auditoría de inferencias realizadas por cada usuario.
+- Configuración de parámetros del sistema.
+
 **Responsabilidades por componente:**
 
 | Componente | Responsabilidad |
@@ -265,6 +273,7 @@ La plataforma adopta una arquitectura **cliente-servidor** con los siguientes ni
 | Frontend | Interacción y comparación visual |
 | Backend | Orquestación, seguridad, validación y trazabilidad |
 | Modelos IA | Inferencia de retinopatía diabética |
+| Administración | Gestión de usuarios, métricas y auditoría |
 | Persistencia | Almacenamiento de resultados y metadatos de ejecución |
 
 ##### 7.2.2.2 Interacción entre Módulos
@@ -286,13 +295,13 @@ Los módulos se comunican mediante HTTP (multipart para envío de imágenes). El
 
 La arquitectura responde favorablemente a las siguientes preguntas de diseño:
 
-- **¿El flujo es eficiente?** Sí. La ejecución de modelos es paralela dentro del backend orquestador, reduciendo el tiempo total de inferencia respecto a un enfoque secuencial.
+- **¿El flujo es eficiente?** Sí. La ejecución de modelos dentro del backend orquestador mantiene tiempos de respuesta aceptables al procesar las inferencias de forma controlada.
 - **¿Existen pasos innecesarios?** No. El pipeline sigue directamente: carga → preprocesamiento → inferencia → postprocesamiento → respuesta.
 - **¿Hay problemas de latencia?** Se mitigan con carga de modelos preentrenados y restricción del historial en memoria.
-- **¿Existen cuellos de botella?** El modelo más lento en una ejecución paralela define el tiempo total; se documenta en métricas de trazabilidad.
+- **¿Existen cuellos de botella?** El modelo más lento en una ejecución secuencial define el tiempo total; se documenta en métricas de trazabilidad.
 - **¿La interacción refleja un buen desacoplamiento?** Sí. Frontend y modelos de IA no se conocen directamente; toda comunicación pasa por la API orquestadora.
 
-Los diagramas de secuencia cubren dos flujos principales: el proceso de autenticación de usuario (login → token JWT → acceso al dashboard) y el proceso de análisis de retinografías (carga de imagen → selección de modelos → inferencia paralela → postprocesamiento → visualización comparativa).
+Los diagramas de secuencia cubren tres flujos principales: el proceso de autenticación de usuario (login → token JWT → acceso al dashboard), el proceso de análisis de retinografías (carga de imagen → selección de modelos → inferencia → postprocesamiento → visualización comparativa) y el flujo de administración del sistema.
 ![Arquitectura](secuencia_login.png)
 ![Arquitectura](secuancia_core.png)
 ![Arquitectura](secuencia_admin.png)
@@ -364,6 +373,11 @@ La implementación actual del proyecto está orientada a soportar un flujo funci
 - Registro de identificador único por inferencia.
 - Registro de timestamp, modelos utilizados y tiempos de inferencia.
 - Consulta de historial y detalle por inferencia.
+
+**7. Componente de administración**
+- Gestión de usuarios (creación, roles, permisos).
+- Visualización de métricas globales del sistema.
+- Auditoría de inferencias por usuario.
 
 **Flujo de interacción entre componentes:**
 
@@ -448,7 +462,7 @@ Se evaluaron individualmente los módulos principales del sistema: frontend, bac
 
 **3. Módulo de inferencia (Modelos IA)**
 
-- **Descripción:** Verificar ejecución de los tres modelos en paralelo.
+- **Descripción:** Verificar ejecución de los tres modelos.
 - **Casos de prueba:**
   - Ejecución con imagen válida.
   - Comparación de salidas entre modelos.

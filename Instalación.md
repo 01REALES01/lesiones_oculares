@@ -7,7 +7,7 @@ La plataforma es una solución web de apoyo clínico para el tamizaje de retinop
 ### 1.1 Lenguajes y tecnologías utilizadas
 - **Frontend:** React, Vite, Node.js (v20+), TailwindCSS.
 - **Backend:** Python (3.12+), FastAPI, Uvicorn.
-- **IA/ML:** TensorFlow, Keras, OpenCV, scikit-image.
+- **IA/ML:** TensorFlow, tf_keras, OpenCV, scikit-image.
 - **Contenedores:** Docker, Docker Compose.
 
 ### 1.2 Componentes de la solución
@@ -69,7 +69,7 @@ Puedes iniciar ambos servicios simultáneamente si has configurado el script en 
 ```
 
 De forma manual:
-- Backend: `uvicorn backend.main:app --reload`
+- Backend: `uvicorn backend.main:app` (nota: evitar `--reload` ya que causa inestabilidad con la carga de múltiples modelos)
 - Frontend: `cd new_frontend && npm run dev`
 
 ### 3.2 Desarrollo con contenedores (Recomendado)
@@ -106,7 +106,8 @@ En producción, se recomienda el uso de contenedores para garantizar la reproduc
 - **Error de puertos ocupados:** Verifique que no haya servicios ejecutándose en el puerto 80 o 8000. Use `docker ps` o `lsof -i :8000`.
 - **Problemas de memoria con TensorFlow en Docker:** Asegúrese de asignar al menos 4GB de RAM a Docker Desktop / Engine.
 - **Errores de importación en Python:** Valide que el servidor se esté ejecutando desde el directorio raíz y que `PYTHONPATH` esté configurado.
-- **Modelos IA no encontrados:** Verifique que los archivos `.h5` o `.keras` existan en la carpeta correspondiente de modelos dentro del backend.
+- **Modelos IA no encontrados:** Verifique que los archivos `.h5` o `.keras` existan en `backend/models/`.
+- **Error de conexión o crash del backend:** Si usó `--reload` al iniciar, intente sin esa bandera. El `--reload` puede causar fallos al recargar los modelos de TensorFlow.
 
 ## 6. Mantenimiento y actualización
 

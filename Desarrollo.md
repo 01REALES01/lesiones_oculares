@@ -12,7 +12,7 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 
 - **Frontend:** React, Vite, TailwindCSS.
 - **Backend:** FastAPI, Python 3.12+, Uvicorn.
-- **IA/ML:** TensorFlow, Keras, OpenCV, scikit-image.
+- **IA/ML:** TensorFlow, tf_keras, OpenCV, scikit-image.
 - **Persistencia y Autenticación:** Integración directa con los servicios institucionales **ROBLE Auth** y **ROBLE Database**.
 - **Contenedores:** Docker, Docker Compose.
 
@@ -30,9 +30,8 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 ├── backend/            # API FastAPI, modelos y lógica de IA
 ├── new_frontend/       # Aplicación React + Vite (Producción)
 ├── data/               # Persistencia
-├── tests/              # Pruebas del sistema (componente, integración, etc)
 ├── docs/               # Manual de usuario y requerimientos
-├── diseno/             # Documentación técnica por áreas
+├── diagramas/          # Diagramas de arquitectura y diseño
 ├── README.md           # Guía rápida
 ├── Informe.md          # Resumen ejecutivo y equipo
 ├── Instalacion.md      # Guía de despliegue
@@ -51,13 +50,13 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 ### 4.1 Organización por módulos o capas
 
 - **Capa de presentación:** Componentes de UI, Hooks de estado (`useAnalysis.js`) y servicios de API en el frontend.
-- **Capa de lógica de negocio:** Endpoints de FastAPI y lógica de orquestación en `backend/main.py` y `backend/services/`.
-- **Capa de procesamiento:** Módulos especializados en preprocesamiento de imagen y carga de modelos TensorFlow.
+- **Capa de lógica de negocio:** Endpoints de FastAPI y lógica de orquestación en `backend/main.py`, `backend/ml_manager.py`, `backend/store.py` y `backend/roble_db.py`.
+- **Capa de procesamiento:** Módulos especializados en preprocesamiento de imagen (`backend/preprocessing/`) y carga de modelos TensorFlow.
 - **Capa de persistencia:** Gestión de lectura/escritura de datos JSON en el directorio `data/`.
 
 ### 4.2 Relación entre componentes del sistema y código fuente
 
-Cada componente principal se mapea directamente a un directorio. El flujo inicia en `new_frontend/src/`, pasa por los controladores en `backend/main.py` y finaliza en los servicios de inferencia dentro de `backend/services/`.
+Cada componente principal se mapea directamente a un directorio. El flujo inicia en `new_frontend/src/`, pasa por los controladores en `backend/main.py` y finaliza en los servicios de inferencia (`backend/ml_manager.py`, `backend/preprocessing/`).
 
 ## 5. Contenedores
 
@@ -107,7 +106,7 @@ Se debe iniciar el archivo **start**. Este instala todo lo necesario para la apl
 ### 6.2 Ubicación de scripts auxiliares
 Si quiere hacerlo de fomra manual:
 
-- Backend: `uvicorn backend.main:app --reload`
+- Backend: `uvicorn backend.main:app` (evitar `--reload`, causa inestabilidad con múltiples modelos)
 - Frontend: `cd new_frontend && npm run dev`
 
 ### 6.3 Consideraciones para su uso
@@ -122,7 +121,7 @@ Asegúrese de tener instalado `requirements.txt` y los módulos de Node antes de
 
 ### 7.2 Variables por ambiente
 
-- **Desarrollo:** Se utiliza `uvicorn` con `--reload`.
+- **Desarrollo:** Se utiliza `uvicorn` (sin `--reload` para evitar inestabilidad con la carga de modelos).
 - **Producción:** Se utiliza la configuración definida en `docker-compose.yml`.
 
 ### 7.3 Archivos de configuración
@@ -193,8 +192,7 @@ Toda nueva funcionalidad técnica debe verse reflejada en este `Manual de desarr
 
 ### 11.2 Deuda técnica conocida
 
-- Migración completa de los estilos legacy a TailwindCSS en todos los componentes.
-- Implementación a una base de datos relacional más potente si el volumen de datos crece excesivamente.
+- Migración a una base de datos relacional más potente si el volumen de datos crece excesivamente.
 
 ### 11.3 Recomendaciones para continuidad
 
