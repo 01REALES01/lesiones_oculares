@@ -8,7 +8,10 @@ export default function AdminPanel() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [creating, setCreating] = useState(false);
   const [notice, setNotice] = useState(null);
-
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -82,6 +85,63 @@ export default function AdminPanel() {
     }
   };
 
+  const toggleUserStatus = async (user) => {
+  try {
+    await adminService.updateUser(user.email, {
+      activo_app: !(user.activo_app !== false),
+    });
+
+    setNotice({
+      type: 'success',
+      message: 'Estado del usuario actualizado.',
+    });
+
+    await loadUsers();
+  } catch (error) {
+    console.error('Error actualizando estado:', error);
+    setNotice({
+      type: 'error',
+      message: 'No se pudo actualizar el estado del usuario.',
+    });
+  }
+};
+
+    const openEditUserName = (user) => {
+  setEditingUser(user);
+  setEditName(user.nombre || '');
+  setEditModalOpen(true);
+};
+
+    const saveEditedUserName = async () => {
+    if (!editingUser || !editName.trim()) return;
+
+    setSavingEdit(true);
+
+    try {
+        await adminService.updateUser(editingUser.email, {
+        nombre: editName.trim(),
+        });
+
+        setNotice({
+        type: 'success',
+        message: 'Nombre actualizado correctamente.',
+        });
+
+        setEditModalOpen(false);
+        setEditingUser(null);
+        setEditName('');
+
+        await loadUsers();
+    } catch (error) {
+        console.error('Error actualizando nombre:', error);
+        setNotice({
+        type: 'error',
+        message: 'No se pudo actualizar el nombre.',
+        });
+    } finally {
+        setSavingEdit(false);
+    }
+    };
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div>
@@ -241,9 +301,16 @@ export default function AdminPanel() {
                 <tbody>
                   {users.map((u, idx) => (
                     <tr key={u._id || u.email || idx} className="border-b border-slate-100">
-                      <td className="py-3 px-2 font-bold text-ocular-text-main">
-                        {u.nombre || 'Sin nombre'}
-                      </td>
+                        <td className="py-3 px-2">
+                        <button
+                            type="button"
+                            onClick={() => openEditUserName(u)}
+                            className="font-bold text-ocular-text-main hover:text-primary hover:underline transition-colors text-left"
+                            title="Editar nombre"
+                        >
+                            {u.nombre || 'Sin nombre'}
+                        </button>
+                        </td>
                       <td className="py-3 px-2 text-slate-600">
                         {u.email}
                       </td>
@@ -253,18 +320,25 @@ export default function AdminPanel() {
                         </span>
                       </td>
                       <td className="py-3 px-2">
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold uppercase ${
-                          u.activo_app === false
-                            ? 'bg-red-100 text-red-600'
-                            : 'bg-emerald-100 text-emerald-600'
-                        }`}>
-                          {u.activo_app === false ? 'Inactivo' : 'Activo'}
-                        </span>
+                        <button
+                        type="button"
+                        onClick={() => toggleUserStatus(u)}
+                        className={`relative inline-flex h-7 w-14 items-center rounded-full transition-all ${
+                            u.activo_app === false ? 'bg-red-300' : 'bg-emerald-400'
+                        }`}
+                        title={u.activo_app === false ? 'Activar usuario' : 'Deshabilitar usuario'}
+                        >
+                        <span
+                            className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-all ${
+                            u.activo_app === false ? 'translate-x-1' : 'translate-x-8'
+                            }`}
+                        />
+                        </button>
                       </td>
                       <td className="py-3 px-2 text-slate-500">
                         {u.ultimo_login
-                          ? new Date(u.ultimo_login).toLocaleString()
-                          : '—'}
+                        ? new Date(`${u.ultimo_login}Z`).toLocaleString()
+                        : '—'}
                       </td>
                     </tr>
                   ))}
@@ -274,6 +348,56 @@ export default function AdminPanel() {
           )}
         </GlassCard>
       </div>
+        {editModalOpen && (
+        <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5">
+            <div>
+                <h3 className="text-2xl font-black text-ocular-text-main">
+                Editar nombre
+                </h3>
+                <p className="text-sm text-ocular-text-muted mt-1">
+                Actualiza el nombre visible del usuario en OcularAI.
+                </p>
+            </div>
+
+            <div>
+                <label className="text-xs font-bold text-ocular-text-muted uppercase">
+                Nombre
+                </label>
+                <input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                autoFocus
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-primary"
+                placeholder="Nombre completo"
+                />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+                <button
+                type="button"
+                onClick={() => {
+                    setEditModalOpen(false);
+                    setEditingUser(null);
+                    setEditName('');
+                }}
+                className="px-5 py-3 rounded-2xl border border-slate-200 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors"
+                >
+                Cancelar
+                </button>
+
+                <button
+                type="button"
+                onClick={saveEditedUserName}
+                disabled={savingEdit || !editName.trim()}
+                className="px-5 py-3 rounded-2xl bg-primary text-white font-bold text-sm hover:bg-primary-dark transition-all disabled:opacity-50"
+                >
+                {savingEdit ? 'Guardando...' : 'Guardar'}
+                </button>
+            </div>
+            </div>
+        </div>
+        )}
     </div>
   );
 }

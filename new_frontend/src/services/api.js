@@ -108,6 +108,11 @@ export const authService = {
       localStorage.removeItem('token');
       localStorage.removeItem('refreshToken');
     }
+  },
+
+  forgotPassword: async (email) => {
+  const response = await api.post('/forgot-password', { email });
+  return response.data;
   }
 };
 
@@ -124,6 +129,11 @@ export const adminService = {
       password,
       role,
     });
+    return response.data;
+  },
+
+  updateUser: async (email, updates) => {
+    const response = await api.put(`/admin/users/${encodeURIComponent(email)}`, updates);
     return response.data;
   },
 };

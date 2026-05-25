@@ -33,6 +33,7 @@ class User(BaseModel):
     email: str | None = None
     role: str = "user"
     roble_user_id: str | None = None
+    name: Optional[str] = None
 
 # ---- Hashing (SHA-256 + salt) ----
 _SALT = "retina_ai_salt_2024"
@@ -110,6 +111,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
             email=email,
             role=role,
             roble_user_id=roble_user_id,
+            name=user_data.get("name"),
         )
 
     except httpx.RequestError:
