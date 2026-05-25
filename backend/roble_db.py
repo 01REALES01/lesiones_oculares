@@ -525,3 +525,56 @@ async def update_user_app_status_or_login(
         raise Exception(f"Error actualizando usuario en ROBLE DB: {response.text}")
 
     return response.json()
+
+async def get_admin_global_stats(
+    token: str,
+) -> Dict[str, Any]:
+    users = await roble_read_records(
+        token=token,
+        table_name="usuarios_app",
+    )
+
+    analyses = await roble_read_records(
+        token=token,
+        table_name="analisis_retina",
+    )
+
+    total_users = len(users)
+    active_users = sum(1 for u in users if u.get("activo_app") is not False)
+    inactive_users = sum(1 for u in users if u.get("activo_app") is False)
+
+    confidences = []
+    rd_detected = 0
+    latest_analysis = None
+
+    for row in analyses:
+        result = row.get("result_json") or {}
+
+        if isinstance(result, str):
+            import json
+            result = json.loads(result)
+
+        confidence = row.get("confidence_percent") or result.get("confidence_percent")
+        if confidence is not None:
+            confidences.append(float(confidence))
+
+        predicted_class = result.get("predicted_class")
+        if predicted_class is not None and int(predicted_class) > 0:
+            rd_detected += 1
+
+        timestamp = row.get("timestamp")
+        if timestamp:
+            if latest_analysis is None or timestamp > latest_analysis:
+                latest_analysis = timestamp
+
+    total_analyses = len(analyses)
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "inactive_users": inactive_users,
+        "total_analyses": total_analyses,
+        "avg_confidence": round(sum(confidences) / len(confidences), 1) if confidences else 0,
+        "rd_detected_percent": round((rd_detected / total_analyses) * 100, 1) if total_analyses else 0,
+        "latest_analysis": latest_analysis,
+    }

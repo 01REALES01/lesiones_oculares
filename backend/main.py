@@ -33,6 +33,7 @@ from backend.roble_db import get_user_stats_from_roble
 from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
 from backend.roble_db import roble_read_records
 from backend.roble_db import get_user_app_by_email, update_user_app_status_or_login
+from backend.roble_db import get_admin_global_stats
 
 from pydantic import BaseModel
 
@@ -1932,3 +1933,10 @@ async def forgot_password(payload: ForgotPasswordRequest):
             status_code=503,
             detail="No se pudo conectar con ROBLE.",
         )
+        
+@app.get("/admin/stats")
+async def admin_stats(
+    current_user: User = Depends(require_admin),
+    token: str = Depends(oauth2_scheme),
+):
+    return await get_admin_global_stats(token)

@@ -136,6 +136,11 @@ export const adminService = {
     const response = await api.put(`/admin/users/${encodeURIComponent(email)}`, updates);
     return response.data;
   },
+
+  getStats: async () => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
 };
 
 export const analysisService = {

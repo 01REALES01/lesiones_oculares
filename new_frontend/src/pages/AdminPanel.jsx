@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Shield, UserPlus, RefreshCw, Users, AlertCircle } from 'lucide-react';
+import { Shield, UserPlus, RefreshCw, Users, AlertCircle, Activity, TrendingUp, Clock, UserCheck, UserX} from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { adminService } from '../services/api';
 
@@ -12,6 +12,7 @@ export default function AdminPanel() {
   const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [stats, setStats] = useState(null);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -24,6 +25,8 @@ export default function AdminPanel() {
     try {
       const data = await adminService.getUsers();
       setUsers(data);
+      const statsData = await adminService.getStats();
+      setStats(statsData);
     } catch (error) {
       console.error('Error cargando usuarios:', error);
       setNotice({
@@ -165,6 +168,47 @@ export default function AdminPanel() {
           {notice.message}
         </div>
       )}
+
+        {stats && (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <AdminStatCard
+            icon={Users}
+            label="Usuarios totales"
+            value={stats.total_users}
+            />
+            <AdminStatCard
+            icon={UserCheck}
+            label="Usuarios activos"
+            value={stats.active_users}
+            />
+            <AdminStatCard
+            icon={UserX}
+            label="Deshabilitados"
+            value={stats.inactive_users}
+            />
+            <AdminStatCard
+            icon={Activity}
+            label="Análisis globales"
+            value={stats.total_analyses}
+            />
+            <AdminStatCard
+            icon={TrendingUp}
+            label="Confianza promedio"
+            value={`${stats.avg_confidence}%`}
+            />
+            <AdminStatCard
+            icon={AlertCircle}
+            label="% RD detectada"
+            value={`${stats.rd_detected_percent}%`}
+            />
+            <AdminStatCard
+            icon={Clock}
+            label="Último análisis"
+            value={stats.latest_analysis ? new Date(`${stats.latest_analysis}Z`).toLocaleString() : '—'}
+            wide
+            />
+        </div>
+        )}
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <GlassCard className="xl:col-span-1 p-6 border border-slate-200 shadow-md shadow-slate-200/60">
@@ -399,5 +443,25 @@ export default function AdminPanel() {
         </div>
         )}
     </div>
+  );
+}
+
+function AdminStatCard({ icon: Icon, label, value, wide = false }) {
+  return (
+    <GlassCard className={`p-5 border border-slate-200 shadow-md shadow-slate-200/60 ${wide ? 'xl:col-span-2' : ''}`}>
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+          <Icon size={22} />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-ocular-text-muted uppercase">
+            {label}
+          </p>
+          <p className="text-2xl font-black text-ocular-text-main">
+            {value ?? '—'}
+          </p>
+        </div>
+      </div>
+    </GlassCard>
   );
 }
