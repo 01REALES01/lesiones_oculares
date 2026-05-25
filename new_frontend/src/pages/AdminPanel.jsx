@@ -299,7 +299,7 @@ export default function AdminPanel() {
             <div>
               <h2 className="font-black text-xl text-ocular-text-main">Crear usuario</h2>
               <p className="text-xs text-ocular-text-muted font-semibold">
-                Se registrará en ROBLE y en usuarios_app.
+                Se registrará en la base de datos ROBLE
               </p>
             </div>
           </div>
@@ -386,7 +386,7 @@ export default function AdminPanel() {
               <div>
                 <h2 className="font-black text-xl text-ocular-text-main">Usuarios registrados</h2>
                 <p className="text-xs text-ocular-text-muted font-semibold">
-                  Lista tomada desde usuarios_app.
+                  Lista tomada desde la base de datos
                 </p>
               </div>
             </div>
