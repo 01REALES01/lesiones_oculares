@@ -1,4 +1,4 @@
-# Nombre del Proyecto
+# OcularAI
 
 ## Resumen ejecutivo
 
