@@ -1,7 +1,20 @@
 import { useEffect, useState } from 'react';
-import { Shield, UserPlus, RefreshCw, Users, AlertCircle } from 'lucide-react';
-import { GlassCard } from '../components/ui/GlassCard';
+import {
+  Shield,
+  UserPlus,
+  RefreshCw,
+  Users,
+  AlertCircle,
+  Activity,
+  TrendingUp,
+  Clock,
+  UserCheck,
+  UserX,
+  Cpu,
+  Zap,
+} from 'lucide-react';import { GlassCard } from '../components/ui/GlassCard';
 import { adminService } from '../services/api';
+
 
 export default function AdminPanel() {
   const [users, setUsers] = useState([]);
@@ -12,6 +25,8 @@ export default function AdminPanel() {
   const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
+  const [stats, setStats] = useState(null);
+  const [adminTab, setAdminTab] = useState('users');
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -24,6 +39,8 @@ export default function AdminPanel() {
     try {
       const data = await adminService.getUsers();
       setUsers(data);
+      const statsData = await adminService.getStats();
+      setStats(statsData);
     } catch (error) {
       console.error('Error cargando usuarios:', error);
       setNotice({
@@ -166,7 +183,114 @@ export default function AdminPanel() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="flex flex-wrap gap-2">
+        <button
+            type="button"
+            onClick={() => setAdminTab('users')}
+            className={`rounded-2xl px-4 py-2 text-xs font-black uppercase transition-all ${
+            adminTab === 'users'
+                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                : 'bg-white text-slate-500 border border-slate-200 hover:text-primary'
+            }`}
+        >
+            Gestión de usuarios
+        </button>
+
+        <button
+            type="button"
+            onClick={() => setAdminTab('metrics')}
+            className={`rounded-2xl px-4 py-2 text-xs font-black uppercase transition-all ${
+            adminTab === 'metrics'
+                ? 'bg-primary text-white shadow-lg shadow-primary/20'
+                : 'bg-white text-slate-500 border border-slate-200 hover:text-primary'
+            }`}
+        >
+            Métricas
+        </button>
+        </div>
+
+        {adminTab === 'metrics' && stats && (
+        <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <AdminStatCard
+                icon={Users}
+                label="Usuarios totales"
+                value={stats.total_users}
+            />
+
+            <AdminStatCard
+                icon={UserCheck}
+                label="Usuarios activos"
+                value={stats.active_users}
+            />
+
+            <AdminStatCard
+                icon={UserX}
+                label="Deshabilitados"
+                value={stats.inactive_users}
+            />
+
+            <AdminStatCard
+                icon={Activity}
+                label="Análisis globales"
+                value={stats.total_analyses}
+            />
+
+            <AdminStatCard
+                icon={TrendingUp}
+                label="Confianza promedio"
+                value={`${stats.avg_confidence}%`}
+            />
+
+            <AdminStatCard
+                icon={AlertCircle}
+                label="% RD detectada"
+                value={`${stats.rd_detected_percent}%`}
+            />
+
+            <AdminStatCard
+                icon={Clock}
+                label="Último análisis"
+                value={
+                stats.latest_analysis
+                    ? new Date(`${stats.latest_analysis}Z`).toLocaleString()
+                    : '—'
+                }
+                wide
+            />
+
+            <AdminInsightCard
+                icon={Cpu}
+                title="Modelo más usado"
+                value={stats.most_used_model?.[0] || 'Sin datos'}
+                subtitle={`${stats.most_used_model?.[1] || 0} análisis`}
+            />
+
+            <AdminInsightCard
+                icon={Zap}
+                title="Modelo más rápido"
+                value={stats.fastest_model?.[0] || 'Sin datos'}
+                subtitle={`${stats.fastest_model?.[1] || 0} ms promedio`}
+            />
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            <SimpleBarChart
+                title="Uso por modelo"
+                data={stats.model_usage || []}
+            />
+
+            <SimpleBarChart
+                title="Latencia promedio por modelo"
+                data={stats.model_latency || []}
+                suffix=" ms"
+            />
+            </div>
+        </>
+        )}
+        
+      {adminTab === 'users' && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         <GlassCard className="xl:col-span-1 p-6 border border-slate-200 shadow-md shadow-slate-200/60">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
@@ -348,6 +472,7 @@ export default function AdminPanel() {
           )}
         </GlassCard>
       </div>
+      )}
         {editModalOpen && (
         <div className="fixed inset-0 z-[90] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
             <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5">
@@ -401,3 +526,96 @@ export default function AdminPanel() {
     </div>
   );
 }
+
+function AdminStatCard({ icon: Icon, label, value, wide = false }) {
+  return (
+    <GlassCard className={`p-5 border border-slate-200 shadow-md shadow-slate-200/60 ${wide ? 'xl:col-span-2' : ''}`}>
+      <div className="flex items-center gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
+          <Icon size={22} />
+        </div>
+        <div>
+          <p className="text-xs font-bold text-ocular-text-muted uppercase">
+            {label}
+          </p>
+          <p className="text-2xl font-black text-ocular-text-main">
+            {value ?? '—'}
+          </p>
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+function AdminInsightCard({ icon: Icon, title, value, subtitle }) {
+  return (
+    <GlassCard className="p-5 border border-slate-200 shadow-md shadow-slate-200/60">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
+          <Icon size={22} />
+        </div>
+
+        <div className="min-w-0">
+          <p className="text-xs font-bold uppercase text-ocular-text-muted">
+            {title}
+          </p>
+
+          <h3 className="text-lg font-black text-ocular-text-main truncate">
+            {value}
+          </h3>
+
+          <p className="text-sm text-primary font-bold mt-1">
+            {subtitle}
+          </p>
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+function SimpleBarChart({ title, data, suffix = '' }) {
+  const maxValue = Math.max(...data.map(item => Number(item.value) || 0), 1);
+
+  return (
+    <GlassCard className="p-6 border border-slate-200 shadow-md shadow-slate-200/60">
+      <h3 className="text-lg font-black text-ocular-text-main mb-5">
+        {title}
+      </h3>
+
+      <div className="space-y-4">
+        {data.length === 0 ? (
+          <p className="text-sm text-ocular-text-muted font-semibold">
+            No hay datos disponibles.
+          </p>
+        ) : (
+          data.map((item, index) => {
+            const value = Number(item.value) || 0;
+            const width = Math.max((value / maxValue) * 100, value > 0 ? 8 : 0);
+
+            return (
+              <div key={`${item.name}-${index}`} className="space-y-1.5">
+                <div className="flex items-center justify-between gap-3 text-xs font-bold">
+                  <span className="text-slate-700 truncate">
+                    {item.name}
+                  </span>
+
+                  <span className="text-primary whitespace-nowrap">
+                    {value}{suffix}
+                  </span>
+                </div>
+
+                <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-primary to-sky-400 transition-all duration-700 shadow-sm"
+                    style={{ width: `${width}%` }}
+                  />
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </GlassCard>
+  );
+}
+
