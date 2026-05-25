@@ -10,8 +10,9 @@ import Demo from './pages/Demo';
 import { useAnalysis } from './hooks/useAnalysis';
 import { AnimatePresence, motion } from 'framer-motion';
 import { analysisService, authService } from './services/api';
-import { LayoutDashboard, History, Settings, HelpCircle, Shield } from 'lucide-react';
+import { LayoutDashboard, History, Shield, User } from 'lucide-react';
 import AdminPanel from './pages/AdminPanel';
+import Profile from './pages/Profile';
 
 function AppContent() {
     const { token, user, loadingUser, logout } = useAuth();  
@@ -198,6 +199,13 @@ function AppContent() {
       onClick: () => { setActiveTab('history'); setView('main'); } 
     },
 
+    {
+      key: 'profile',
+      label: 'Perfil',
+      icon: User,
+      onClick: () => { setActiveTab('profile'); setView('main'); }
+    },
+
     ...(user?.role === 'admin'
       ? [{
           key: 'admin',
@@ -206,19 +214,6 @@ function AppContent() {
           onClick: () => { setActiveTab('admin'); setView('main'); }
         }]
       : []),
-
-    { 
-      key: 'settings',
-      label: 'Configuración',
-      icon: Settings, 
-      onClick: () => {} 
-    },
-    { 
-      key: 'help',
-      label: 'Sugerencia Médica',
-      icon: HelpCircle, 
-      onClick: () => {} 
-    },
   ];
 
   return (
@@ -274,6 +269,8 @@ function AppContent() {
                   <HistoryPage onViewDetail={navigateToDetail} />
                 ) : activeTab === 'admin' ? (
                   <AdminPanel />
+                ) : activeTab === 'profile' ? (
+                  <Profile />
                 ) : (
                   <Dashboard
                     onViewDetail={navigateToDetail}
