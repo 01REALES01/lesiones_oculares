@@ -251,6 +251,7 @@ La plataforma adopta una arquitectura **cliente-servidor** con los siguientes ni
 - Modelo 2 de clasificación RD.
 - Modelo 3 de clasificación RD.
 - Todos se enfocan en la misma patología para permitir comparación homogénea.
+![Arquitectura](diagrama_arquitectura.jpeg)
 
 **4. Postprocesamiento y Trazabilidad**
 - Normaliza salidas de los modelos (diagnóstico, probabilidad, grado).
@@ -278,8 +279,8 @@ El flujo de comunicación entre componentes es el siguiente:
 6. Frontend muestra comparación: presencia/ausencia de RD, severidad y confianza por modelo.
 
 Los módulos se comunican mediante HTTP (multipart para envío de imágenes). El backend actúa como orquestador central, reduciendo el acoplamiento entre el frontend y los modelos de IA.
-<img width="856" height="620" alt="image" src="https://github.com/user-attachments/assets/5dbf4073-6192-478d-8216-b65382166d98" />
 
+![Arquitectura](diagrama_inter_modulos.jpeg)
 
 ##### 7.2.2.3 Comportamiento
 
@@ -292,6 +293,9 @@ La arquitectura responde favorablemente a las siguientes preguntas de diseño:
 - **¿La interacción refleja un buen desacoplamiento?** Sí. Frontend y modelos de IA no se conocen directamente; toda comunicación pasa por la API orquestadora.
 
 Los diagramas de secuencia cubren dos flujos principales: el proceso de autenticación de usuario (login → token JWT → acceso al dashboard) y el proceso de análisis de retinografías (carga de imagen → selección de modelos → inferencia paralela → postprocesamiento → visualización comparativa).
+![Arquitectura](secuencia_login.png)
+![Arquitectura](secuancia_core.png)
+![Arquitectura](secuencia_admin.png)
 
 ---
 
