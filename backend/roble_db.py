@@ -5,7 +5,7 @@ import httpx
 from backend.config import settings
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
-
+import asyncio
 import json
 
 ROBLE_DATABASE_BASE = "https://roble-api.openlab.uninorte.edu.co/database"
@@ -296,27 +296,30 @@ async def roble_delete_batch(
         },
     )
 
-    deleted = []
+    semaphore = asyncio.Semaphore(10)
+    deleted_count = 0
 
-    for row in rows:
+    async def delete_one(row):
+        nonlocal deleted_count
+
         inference_id = row.get("inference_id")
-
         if not inference_id:
-            continue
+            return
 
-        result = await roble_delete_record(
-            token=token,
-            table_name="analisis_retina",
-            id_column="inference_id",
-            id_value=inference_id,
-        )
+        async with semaphore:
+            await roble_delete_record(
+                token=token,
+                table_name="analisis_retina",
+                id_column="inference_id",
+                id_value=inference_id,
+            )
+            deleted_count += 1
 
-        deleted.append(result)
+    await asyncio.gather(*(delete_one(row) for row in rows))
 
     return {
         "batch_id": batch_id,
-        "deleted_count": len(deleted),
-        "deleted": deleted,
+        "deleted_count": deleted_count,
     }
     
 async def roble_delete_all_user_history(
@@ -331,25 +334,29 @@ async def roble_delete_all_user_history(
         },
     )
 
-    deleted = []
+    semaphore = asyncio.Semaphore(10)
+    deleted_count = 0
 
-    for row in rows:
+    async def delete_one(row):
+        nonlocal deleted_count
+
         inference_id = row.get("inference_id")
-
         if not inference_id:
-            continue
+            return
 
-        result = await roble_delete_record(
-            token=token,
-            table_name="analisis_retina",
-            id_column="inference_id",
-            id_value=inference_id,
-        )
+        async with semaphore:
+            await roble_delete_record(
+                token=token,
+                table_name="analisis_retina",
+                id_column="inference_id",
+                id_value=inference_id,
+            )
+            deleted_count += 1
 
-        deleted.append(result)
+    await asyncio.gather(*(delete_one(row) for row in rows))
 
     return {
-        "deleted_count": len(deleted),
+        "deleted_count": deleted_count,
     }
     
 async def get_user_stats_from_roble(
