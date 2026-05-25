@@ -585,8 +585,20 @@ export default function AnalysisDetail({
                       <div className="p-4 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
-                            <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">Aplicar Filtro Ben-Graham</p>
-                            <button
+                              <p className="text-xs font-semibold text-slate-600 uppercase tracking-widest">
+                                Aplicar Filtro Ben-Graham
+                              </p>
+
+                              <div className="relative group">
+                                <div className="w-5 h-5 rounded-full bg-primary/10 text-primary flex items-center justify-center cursor-help">
+                                  <Info size={12} />
+                                </div>
+
+                                <div className="absolute left-1/2 -translate-x-1/2 bottom-7 hidden group-hover:block w-64 rounded-2xl bg-slate-900 text-white text-[11px] leading-relaxed p-3 shadow-2xl z-50">
+                                  Mejora el contraste y la visibilidad de estructuras retinales para facilitar la observación clínica de detalles en la imagen.
+                                </div>
+                              </div>                            
+                              <button
                               onClick={handleToggle}
                               className={`w-12 h-6 rounded-full transition-all duration-300 relative ${
                                 usarOriginal ? 'bg-primary' : 'bg-slate-300'
