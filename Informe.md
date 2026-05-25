@@ -540,7 +540,7 @@ Se evaluó la experiencia del usuario (personal médico).
 
 ---
 
-## Referencias
+## 12. Referencias
 
 1. V. Gulshan et al., "Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs," *JAMA*, vol. 316, no. 22, pp. 2402–2410, Dec. 2016.
 2. World Health Organization, "Diabetes," Sep. 2023. [Online]. Available: https://www.who.int/news-room/fact-sheets/detail/diabetes
