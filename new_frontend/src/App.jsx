@@ -7,13 +7,14 @@ import Dashboard from './pages/Dashboard';
 import HistoryPage from './pages/History';
 import AnalysisDetail from './pages/Details';
 import Demo from './pages/Demo';
+import AdminPanel from './pages/AdminPanel';
 import { useAnalysis } from './hooks/useAnalysis';
-import { LayoutDashboard, History, Settings, HelpCircle } from 'lucide-react';
+import { LayoutDashboard, History, Settings, HelpCircle, Shield } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { analysisService } from './services/api';
 
 function AppContent() {
-  const { token } = useAuth();
+  const { token, user, loadingUser } = useAuth();
   const [showLanding, setShowLanding] = useState(() => {
     const screen = sessionStorage.getItem('screen');
     if (screen === 'landing') return true;
@@ -116,6 +117,14 @@ function AppContent() {
     return <Login onGoLanding={() => { sessionStorage.setItem('screen', 'landing'); setShowLanding(true); }} />;
   }
 
+  if (loadingUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-ocular-text-muted font-bold">
+        Cargando sesión...
+      </div>
+    );
+  }
+
   const navigateToDetail = (results, index = 0, options = {}) => {
     // Si viene de un solo resultado (como Historial), lo envolvemos en un array
     const batch = Array.isArray(results) ? results : [results];
@@ -168,6 +177,14 @@ function AppContent() {
       key: 'history', label: 'Historial', icon: History, 
       onClick: () => { setActiveTab('history'); setView('main'); } 
     },
+    ...(user?.role === 'admin'
+      ? [{
+          key: 'admin',
+          label: 'Admin',
+          icon: Shield,
+          onClick: () => { setActiveTab('admin'); setView('main'); }
+        }]
+      : []),
     { 
       key: 'settings', label: 'Configuración', icon: Settings, 
       onClick: () => {} 
@@ -201,6 +218,8 @@ function AppContent() {
               >
                 {activeTab === 'history' ? (
                   <HistoryPage onViewDetail={navigateToDetail} />
+                ) : activeTab === 'admin' ? (
+                  <AdminPanel />
                 ) : (
                   <Dashboard
                     onViewDetail={navigateToDetail}
