@@ -136,6 +136,38 @@ export const adminService = {
     const response = await api.put(`/admin/users/${encodeURIComponent(email)}`, updates);
     return response.data;
   },
+
+  getStats: async () => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
+
+  getSuggestions: async () => {
+    const response = await api.get('/admin/suggestions');
+    return response.data;
+  },
+
+  updateSuggestionStatus: async (id, estado) => {
+    const response = await api.put(`/admin/suggestions/${id}`, {
+      estado,
+    });
+    return response.data;
+  },
+
+  deleteSuggestion: async (id) => {
+    const response = await api.delete(`/admin/suggestions/${id}`);
+    return response.data;
+  },
+};
+
+export const suggestionService = {
+  create: async ({ mensaje, tipo }) => {
+    const response = await api.post('/suggestions', {
+      mensaje,
+      tipo,
+    });
+    return response.data;
+  },
 };
 
 export const analysisService = {
