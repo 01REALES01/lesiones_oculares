@@ -540,6 +540,46 @@ Se evaluó la experiencia del usuario (personal médico).
 
 ---
 
+# 11. Resultados y discusión
+
+Presentamos el análisis de los resultados obtenidos durante la fase de validación clínica y técnica de la plataforma **OcularAI**, contrastándolos con los objetivos iniciales y las decisiones de diseño arquitectónico.
+
+## 11.1. Análisis de Usabilidad y Experiencia de Usuario (UX)
+La validación de la interfaz, diseñada bajo principios de *glassmorphism* de alta fidelidad, arrojó métricas positivas en cuanto a la operatividad para el personal de salud:
+
+*   **Identificación del Diagnóstico:** El **87.5%** de los evaluadores calificó como "Fácil" o "Muy Fácil" la identificación del nivel de severidad sugerido. Esto valida que la jerarquía visual de la interfaz cumple con el requerimiento de destacar la información crítica de manera inmediata.
+*   **Intuitividad:** La mayoría de los profesionales reportó una navegación fluida. Sin embargo, un **12.5%** manifestó cierta complejidad debido a la densidad de elementos interactivos en ciertos paneles.
+
+**Discusión:** La estética *glassmorphism* cumplió su objetivo funcional de separar capas de información, pero el feedback recolectado sugiere que para un entorno de alta demanda hospitalaria, se debe iterar hacia un diseño aún más minimalista que reduzca la carga cognitiva y la fatiga visual.
+
+## 11.2. Interpretación del Consenso Ponderado y Valor Clínico
+El algoritmo de **Consenso Ponderado mediante Centro de Gravedad**, una de las innovaciones técnicas centrales del proyecto, fue evaluado positivamente por los especialistas:
+
+*   **Comprensión Técnica:** El **85%** de los especialistas comprendió correctamente el gráfico de distribución de probabilidades, utilizándolo para medir la certidumbre del sistema.
+*   **Lógica de Negocio:** El **100%** de los evaluadores consideró "sensata" y "segura" la aproximación del punto medio ponderado ante opiniones divididas de la IA.
+
+> *"Funciona bien como un filtrado rápido. Me gusta que aclaren que no es más que una herramienta de apoyo."* — Feedback de evaluador clínico.
+
+La capacidad del sistema para penalizar *outliers* (modelos que discrepan drásticamente del grupo) fue percibida como una capa de seguridad necesaria para mitigar sesgos individuales de las arquitecturas CNN seleccionadas.
+
+## 11.3. Cumplimiento de Objetivos y Requerimientos
+El sistema logró alinearse con los objetivos estratégicos definidos en la propuesta:
+
+1.  **Soporte a la Decisión (Human-in-the-loop):** El **100%** de los profesionales ratificó su acuerdo con que el sistema se presente estrictamente como un "Diagnóstico de Soporte". Esto cumple con el requerimiento ético de mantener la responsabilidad final en el facultativo.
+2.  **Optimización del Flujo de Trabajo:** El veredicto de la IA actuó como un disparador de atención; los evaluadores confirmaron que un resultado de alta severidad sugerido por la IA los motivaría a realizar una revisión manual más exhaustiva, cumpliendo el objetivo de priorización de pacientes críticos.
+
+## 11.4. Limitaciones Detectadas y Trabajo Futuro
+A pesar de la robustez del sistema, la discusión con los evaluadores permitió identificar limitaciones que definen la hoja de ruta futura del proyecto:
+
+*   **Densidad de Interfaz:** Se identificó que la presentación de métricas técnicas (como latencias y nombres de modelos) puede resultar abrumadora para usuarios no técnicos. Se recomienda una vista simplificada para la práctica clínica diaria.
+*   **Trazabilidad Longitudinal:** El personal médico sugirió la inclusión de un historial por paciente que permita comparar retinografías anteriores. Actualmente, el sistema procesa las imágenes de forma aislada, lo que limita el análisis de la progresión de la enfermedad.
+*   **Explicabilidad Visual:** Aunque el consenso ponderado da confianza, los usuarios manifestaron que la falta de señalización directa de lesiones en la imagen (mapas de calor) sigue siendo una barrera para una validación más rápida.
+
+## 11.5. Síntesis de la Discusión
+En conclusión, OcularAI demuestra que la integración de una arquitectura multimodelo paralela no solo incrementa la confiabilidad técnica, sino que es bien recibida por el personal médico cuando se presenta de forma transparente. El sistema resuelve eficazmente la variabilidad interobservador mediante su lógica de ponderación, consolidándose como un asistente de soporte clínico altamente viable para entornos de telemedicina y tamizaje masivo.
+
+---
+
 ## 12. Referencias
 
 1. V. Gulshan et al., "Development and Validation of a Deep Learning Algorithm for Detection of Diabetic Retinopathy in Retinal Fundus Photographs," *JAMA*, vol. 316, no. 22, pp. 2402–2410, Dec. 2016.
