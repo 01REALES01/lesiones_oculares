@@ -88,11 +88,19 @@ export const authService = {
     const response = await api.post('/token', formData, {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
+
     if (response.data.refresh_token) {
       localStorage.setItem('refreshToken', response.data.refresh_token);
     }
 
-    return response.data;  },
+    return response.data;
+  },
+
+  me: async () => {
+    const response = await api.get('/me');
+    return response.data;
+  },
+
   logout: async () => {
     try {
       return await api.post('/logout');
@@ -101,6 +109,23 @@ export const authService = {
       localStorage.removeItem('refreshToken');
     }
   }
+};
+
+export const adminService = {
+  getUsers: async () => {
+    const response = await api.get('/admin/users');
+    return response.data.users || [];
+  },
+
+  createUser: async ({ email, name, password, role = 'user' }) => {
+    const response = await api.post('/admin/create-user', {
+      email,
+      name,
+      password,
+      role,
+    });
+    return response.data;
+  },
 };
 
 export const analysisService = {
