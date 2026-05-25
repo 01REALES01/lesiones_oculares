@@ -10,9 +10,11 @@ import Demo from './pages/Demo';
 import { useAnalysis } from './hooks/useAnalysis';
 import { AnimatePresence, motion } from 'framer-motion';
 import { analysisService, authService } from './services/api';
-import { LayoutDashboard, History, Shield, User } from 'lucide-react';
+import { LayoutDashboard, History, Shield, User, MessageSquare} from 'lucide-react';
 import AdminPanel from './pages/AdminPanel';
 import Profile from './pages/Profile';
+import Suggestions from './pages/Suggestions';
+import AdminSuggestions from './pages/AdminSuggestions';
 
 function AppContent() {
     const { token, user, loadingUser, logout } = useAuth();  
@@ -206,6 +208,13 @@ function AppContent() {
       onClick: () => { setActiveTab('profile'); setView('main'); }
     },
 
+    {
+      key: 'suggestions',
+      label: 'Gestión de sugerencias',
+      icon: MessageSquare,
+      onClick: () => { setActiveTab('suggestions'); setView('main'); }
+    },
+
     ...(user?.role === 'admin'
       ? [{
           key: 'admin',
@@ -271,6 +280,8 @@ function AppContent() {
                   <AdminPanel />
                 ) : activeTab === 'profile' ? (
                   <Profile />
+                ) : activeTab === 'suggestions' ? (
+                  user?.role === 'admin' ? <AdminSuggestions /> : <Suggestions />
                 ) : (
                   <Dashboard
                     onViewDetail={navigateToDetail}

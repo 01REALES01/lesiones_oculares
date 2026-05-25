@@ -34,6 +34,12 @@ from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
 from backend.roble_db import roble_read_records
 from backend.roble_db import get_user_app_by_email, update_user_app_status_or_login
 from backend.roble_db import get_admin_global_stats
+from backend.roble_db import (
+    create_suggestion,
+    get_all_suggestions,
+    update_suggestion_status,
+    delete_suggestion
+)
 
 from pydantic import BaseModel
 
@@ -45,6 +51,13 @@ try:
 except ImportError:
     anthropic_sdk = None
 
+class SuggestionCreate(BaseModel):
+    mensaje: str
+    tipo: str = "sugerencia"
+
+class SuggestionStatusUpdate(BaseModel):
+    estado: str
+    
 import openpyxl
 from io import BytesIO
 from fastapi.responses import StreamingResponse
@@ -1940,3 +1953,54 @@ async def admin_stats(
     token: str = Depends(oauth2_scheme),
 ):
     return await get_admin_global_stats(token)
+
+@app.post("/suggestions")
+async def submit_suggestion(
+    payload: SuggestionCreate,
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    user_app = await get_user_app_by_email(token, current_user.email)
+
+    return await create_suggestion(
+        token=token,
+        suggestion_data={
+            "usuario_email": current_user.email,
+            "usuario_nombre": user_app.get("nombre") if user_app else current_user.name,
+            "mensaje": payload.mensaje,
+            "tipo": payload.tipo,
+            "estado": "pendiente",
+            "fecha": datetime.now(timezone.utc).isoformat(),
+        },
+    )
+    
+@app.get("/admin/suggestions")
+async def admin_get_suggestions(
+    current_user: User = Depends(require_admin),
+    token: str = Depends(oauth2_scheme),
+):
+    return await get_all_suggestions(token)
+
+@app.put("/admin/suggestions/{suggestion_id}")
+async def admin_update_suggestion(
+    suggestion_id: str,
+    payload: SuggestionStatusUpdate,
+    current_user: User = Depends(require_admin),
+    token: str = Depends(oauth2_scheme),
+):
+    return await update_suggestion_status(
+        token=token,
+        suggestion_id=suggestion_id,
+        estado=payload.estado,
+    )
+    
+@app.delete("/admin/suggestions/{suggestion_id}")
+async def admin_delete_suggestion(
+    suggestion_id: str,
+    current_user: User = Depends(require_admin),
+    token: str = Depends(oauth2_scheme),
+):
+    return await delete_suggestion(
+        token=token,
+        suggestion_id=suggestion_id,
+    )

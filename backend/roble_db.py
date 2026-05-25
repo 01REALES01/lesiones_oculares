@@ -578,3 +578,98 @@ async def get_admin_global_stats(
         "rd_detected_percent": round((rd_detected / total_analyses) * 100, 1) if total_analyses else 0,
         "latest_analysis": latest_analysis,
     }
+    
+async def roble_update_by_column(
+    token: str,
+    table_name: str,
+    id_column: str,
+    id_value: str,
+    updates: Dict[str, Any],
+) -> Dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        response = await client.put(
+            f"{ROBLE_DATABASE_BASE}/{settings.roble_db_name}/update",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "tableName": table_name,
+                "idColumn": id_column,
+                "idValue": id_value,
+                "updates": updates,
+            },
+            timeout=15.0,
+        )
+
+    if response.status_code not in (200, 201):
+        raise Exception(f"Error actualizando {table_name}: {response.text}")
+
+    return response.json()
+    
+async def create_suggestion(
+    token: str,
+    suggestion_data: Dict[str, Any],
+):
+    return await roble_insert(
+        token=token,
+        table_name="sugerencias_app",
+        records=[suggestion_data],
+    )
+
+
+async def get_all_suggestions(
+    token: str,
+):
+    return await roble_read_records(
+        token=token,
+        table_name="sugerencias_app",
+    )
+
+
+async def update_suggestion_status(
+    token: str,
+    suggestion_id: str,
+    estado: str,
+):
+    return await roble_update_by_column(
+        token=token,
+        table_name="sugerencias_app",
+        id_column="_id",
+        id_value=suggestion_id,
+        updates={
+            "estado": estado,
+        },
+    )
+    
+async def roble_delete_by_column(
+    token: str,
+    table_name: str,
+    id_column: str,
+    id_value: str,
+) -> Dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        response = await client.request(
+            "DELETE",
+            f"{ROBLE_DATABASE_BASE}/{settings.roble_db_name}/delete",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "tableName": table_name,
+                "idColumn": id_column,
+                "idValue": id_value,
+            },
+            timeout=15.0,
+        )
+
+    if response.status_code not in (200, 201):
+        raise Exception(f"Error eliminando en {table_name}: {response.text}")
+
+    return response.json()
+
+async def delete_suggestion(
+    token: str,
+    suggestion_id: str,
+):
+    return await roble_delete_by_column(
+        token=token,
+        table_name="sugerencias_app",
+        id_column="_id",
+        id_value=suggestion_id,
+    )
