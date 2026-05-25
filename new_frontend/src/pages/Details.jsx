@@ -312,20 +312,33 @@ export default function AnalysisDetail({
   };
 
   const handleExportExcel = async () => {
-    if (!isBatch || !batch[0]?.batch_id) return;
     try {
-      const blob = await analysisService.exportBatchExcel(batch[0].batch_id);
+      let blob;
+
+      if (isBatch && batch[0]?.batch_id) {
+        blob = await analysisService.exportBatchExcel(batch[0].batch_id);
+      } else if (result?.batch_id) {
+        blob = await analysisService.exportBatchExcel(result.batch_id);
+      } else {
+        console.error('No hay batch_id para exportar Excel');
+        return;
+      }
+
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
+
       anchor.href = url;
-      anchor.download = `batch_${batch[0].batch_id}.xlsx`;
+      anchor.download = isBatch
+        ? `batch_${batch[0].batch_id}.xlsx`
+        : `analisis_${result.inference_id || result.batch_id}.xlsx`;
+
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting Excel:', error);
-      // Optionally show a toast or alert
     }
   };  return (
     <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-500 pb-12 print:p-0">
