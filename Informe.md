@@ -300,9 +300,9 @@ La arquitectura responde favorablemente a las siguientes preguntas de diseño:
 - **¿La interacción refleja un buen desacoplamiento?** Sí. Frontend y modelos de IA no se conocen directamente; toda comunicación pasa por la API orquestadora.
 
 Los diagramas de secuencia cubren tres flujos principales: el proceso de autenticación de usuario (login → token JWT → acceso al dashboard), el proceso de análisis de retinografías (carga de imagen → selección de modelos → inferencia → postprocesamiento → visualización comparativa) y el flujo de administración del sistema.
-![Arquitectura](secuencia_login.png)
-![Arquitectura](secuancia_core.png)
-![Arquitectura](secuencia_admin.png)
+![secuencia_login](secuencia_login.png)
+![secuencia_core](secuancia_core.png)
+![secuencia_admin](secuencia_admin.png)
 
 ---
 
@@ -542,42 +542,32 @@ Se evaluó la experiencia del usuario (personal médico).
 
 # 11. Resultados y discusión
 
-Presentamos el análisis de los resultados obtenidos durante la fase de validación clínica y técnica de la plataforma **OcularAI**, contrastándolos con los objetivos iniciales y las decisiones de diseño arquitectónico.
-
+A continuación, se presenta el análisis de los resultados obtenidos durante la fase de validación con personal de salud, interpretando el desempeño de la plataforma *OcularAI* frente a los requerimientos de usabilidad, carga cognitiva y posicionamiento ético.
 ## 11.1. Análisis de Usabilidad y Experiencia de Usuario (UX)
-La validación de la interfaz, diseñada bajo principios de *glassmorphism* de alta fidelidad, arrojó métricas positivas en cuanto a la operatividad para el personal de salud:
+La validación de la interfaz arrojó métricas altamente positivas en cuanto a la operatividad del sistema:
 
-*   **Identificación del Diagnóstico:** El **87.5%** de los evaluadores calificó como "Fácil" o "Muy Fácil" la identificación del nivel de severidad sugerido. Esto valida que la jerarquía visual de la interfaz cumple con el requerimiento de destacar la información crítica de manera inmediata.
-*   **Intuitividad:** La mayoría de los profesionales reportó una navegación fluida. Sin embargo, un **12.5%** manifestó cierta complejidad debido a la densidad de elementos interactivos en ciertos paneles.
+**Identificación del Grado de R.D.:** Como se observa en los resultados, el **87.5%** de los evaluadores (7 de 8) calificó como "Fácil" o "Muy Fácil" la identificación del nivel de severidad sugerido por la IA. Esto valida que la jerarquía visual de la plataforma permite una detección rápida del veredicto clínico.
+![secuencia_admin](resultado_4.jpeg)
 
-**Discusión:** La estética *glassmorphism* cumplió su objetivo funcional de separar capas de información, pero el feedback recolectado sugiere que para un entorno de alta demanda hospitalaria, se debe iterar hacia un diseño aún más minimalista que reduzca la carga cognitiva y la fatiga visual.
+**Intuitividad y Sencillez:** El *75%* de los participantes (6 de 8) percibió la aplicación como "Bastante" o "Mucho" muy intuitiva. Existe un margen de mejora identificado por un 25% de los usuarios que calificaron la intuitividad como "Moderada" o "Poca", lo cual coincide con el feedback cualitativo sobre la densidad de elementos en la vista de análisis.
+![secuencia_admin](resultado_3.jpeg)
+## 11.2. Percepción de la Carga de Información
+Uno de los retos del diseño en salud digital es el equilibrio entre la cantidad de datos técnicos y la claridad diagnóstica:
 
-## 11.2. Interpretación del Consenso Ponderado y Valor Clínico
-El algoritmo de **Consenso Ponderado mediante Centro de Gravedad**, una de las innovaciones técnicas centrales del proyecto, fue evaluado positivamente por los especialistas:
+**Claridad de los datos:** El *75%* de los evaluadores consideró que la información presentada es "Clara y Suficiente". 
+**Carga Cognitiva:** Un *25%* percibió la carga de información como "Abrumadora". 
+![secuencia_admin](resultado_2.jpeg)
+**Discusión:** Este hallazgo es crucial para futuras iteraciones del proyecto. Aunque la plataforma ofrece métricas detalladas de latencia y comparativas multimodelo, para una implementación en entornos hospitalarios de alta demanda se sugiere una vista simplificada que priorice únicamente el resultado del consenso y la imagen analizada, dejando los datos técnicos como información secundaria o bajo demanda.
 
-*   **Comprensión Técnica:** El **85%** de los especialistas comprendió correctamente el gráfico de distribución de probabilidades, utilizándolo para medir la certidumbre del sistema.
-*   **Lógica de Negocio:** El **100%** de los evaluadores consideró "sensata" y "segura" la aproximación del punto medio ponderado ante opiniones divididas de la IA.
+## 11.3. Posicionamiento Ético y Rol del Sistema
+Un punto fundamental en la validación de software médico es la definición del rol de la inteligencia artificial en la toma de decisiones:
 
-> *"Funciona bien como un filtrado rápido. Me gusta que aclaren que no es más que una herramienta de apoyo."* — Feedback de evaluador clínico.
+**Acuerdo de Soporte:** Se obtuvo un **Acuerdo Total (100%)** respecto a que el sistema debe funcionar exclusivamente como una herramienta de "Soporte" y que la decisión final debe recaer siempre en el profesional de la salud.
+![secuencia_admin](resultado_1.jpeg)
+**Discusión:** Este consenso unánime ratifica que la propuesta de diseño de *OcularAI* es éticamente viable. El personal médico no percibe la herramienta como una amenaza a su juicio profesional, sino como un asistente de filtrado rápido que incrementa la seguridad en el proceso de tamizaje masivo.
 
-La capacidad del sistema para penalizar *outliers* (modelos que discrepan drásticamente del grupo) fue percibida como una capa de seguridad necesaria para mitigar sesgos individuales de las arquitecturas CNN seleccionadas.
-
-## 11.3. Cumplimiento de Objetivos y Requerimientos
-El sistema logró alinearse con los objetivos estratégicos definidos en la propuesta:
-
-1.  **Soporte a la Decisión (Human-in-the-loop):** El **100%** de los profesionales ratificó su acuerdo con que el sistema se presente estrictamente como un "Diagnóstico de Soporte". Esto cumple con el requerimiento ético de mantener la responsabilidad final en el facultativo.
-2.  **Optimización del Flujo de Trabajo:** El veredicto de la IA actuó como un disparador de atención; los evaluadores confirmaron que un resultado de alta severidad sugerido por la IA los motivaría a realizar una revisión manual más exhaustiva, cumpliendo el objetivo de priorización de pacientes críticos.
-
-## 11.4. Limitaciones Detectadas y Trabajo Futuro
-A pesar de la robustez del sistema, la discusión con los evaluadores permitió identificar limitaciones que definen la hoja de ruta futura del proyecto:
-
-*   **Densidad de Interfaz:** Se identificó que la presentación de métricas técnicas (como latencias y nombres de modelos) puede resultar abrumadora para usuarios no técnicos. Se recomienda una vista simplificada para la práctica clínica diaria.
-*   **Trazabilidad Longitudinal:** El personal médico sugirió la inclusión de un historial por paciente que permita comparar retinografías anteriores. Actualmente, el sistema procesa las imágenes de forma aislada, lo que limita el análisis de la progresión de la enfermedad.
-*   **Explicabilidad Visual:** Aunque el consenso ponderado da confianza, los usuarios manifestaron que la falta de señalización directa de lesiones en la imagen (mapas de calor) sigue siendo una barrera para una validación más rápida.
-
-## 11.5. Síntesis de la Discusión
-En conclusión, OcularAI demuestra que la integración de una arquitectura multimodelo paralela no solo incrementa la confiabilidad técnica, sino que es bien recibida por el personal médico cuando se presenta de forma transparente. El sistema resuelve eficazmente la variabilidad interobservador mediante su lógica de ponderación, consolidándose como un asistente de soporte clínico altamente viable para entornos de telemedicina y tamizaje masivo.
-
+## 11.4. Síntesis de la Validación
+Los resultados demuestran que **OcularAI** cumple satisfactoriamente con los requerimientos funcionales y de diseño. La interfaz es intuitiva para el usuario clínico y el algoritmo de consenso multimodelo es percibido como un apoyo confiable. Las limitaciones identificadas respecto a la carga de información en el 25% de los casos definen la hoja de ruta para optimizar la experiencia de usuario en futuras versiones, priorizando el minimalismo informativo sin sacrificar la robustez del análisis técnico.
 ---
 
 ## 12. Referencias
