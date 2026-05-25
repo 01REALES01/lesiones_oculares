@@ -425,11 +425,21 @@ export default function AnalysisDetail({
 
 
 const calculo_ponderado_total = () => {
-  const predictedClasses = [];
-  const pesos = [];
   const items = Object.values(comparisonModels);
 
   if (items.length === 0) return { probabilidades: [0, 0, 0, 0, 0], grado: 0 };
+
+  if (items.length === 1) {
+    const raw = items[0].raw_probabilities;
+    const grado = Number(items[0].predicted_class);
+    return {
+      probabilidades: raw && raw.length === 5 ? raw : [0, 0, 0, 0, 0],
+      grado,
+    };
+  }
+
+  const predictedClasses = [];
+  const pesos = [];
 
   items.forEach((item) => {
     const clase = Number(item.predicted_class);

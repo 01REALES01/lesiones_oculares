@@ -144,6 +144,7 @@ function AppContent() {
       const newBatch = resultBatch.filter(item => item.inference_id !== inference_id);
       
       if (newBatch.length === 0) {
+        analysisState.setResults(null);
         setResultBatch([]);
         setView('main');
       } else {

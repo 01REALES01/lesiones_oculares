@@ -230,6 +230,7 @@ export default function HistoryPage({ onViewDetail }) {
       riskFilter === 'all' ||
       itemLevel === riskFilter ||
       hasRiskByFilter ||
+      (riskFilter === 'mixed' && buckets.isMixed) ||
       (buckets.isMixed && (
         (riskFilter === 'high' && (buckets.high > 0 || itemMaxLevel === 'high')) ||
         (riskFilter === 'medium' && (buckets.medium > 0 || itemMaxLevel === 'medium')) ||
@@ -721,8 +722,8 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
     : riskLevel === 'high'
       ? 'Prioridad Alta'
       : riskLevel === 'medium'
-        ? 'Monitoreo'
-        : 'Estable';
+        ? 'Prioridad Media'
+        : 'Prioridad Baja';
 
   const transitionDelay = clearingHistory ? 0 : (index || 0) * 0.05;
 

@@ -316,14 +316,14 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 Inicialice el pipeline de diagnóstico ocular en alta resolución. Compare uno, dos o tres modelos de retinopatía diabética en una sola ejecución.
               </p>
             </div>
-            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 bg-slate-100 px-3 py-1 rounded-full border border-slate-200/50">
+            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.25em] text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200/50">
               {globalStats.total_analyses} análisis en sistema
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatsCard title="Analisis totales" value={globalStats.total_analyses.toString()} icon={Activity} />
+          <StatsCard title="Analisis totales" value={globalStats.total_analyses.toString()} icon={Activity} classname="text-5xl font-bold" />
           <StatsCard title="RD detectada" value={`${globalStats.rd_detected_rate}%`} icon={AlertCircle} delay={0.1} />
           <StatsCard title="Confianza" value={`${globalStats.avg_confidence}%`} icon={CheckCircle2} delay={0.2} />
         </div>
@@ -621,16 +621,6 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     </>
                   )}
                 </button>
-                {loading && (
-                  <button
-                    type="button"
-                    onClick={cancelAnalyze}
-                    className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-red-200 py-2.5 text-sm font-bold text-ocular-error transition hover:bg-red-50"
-                  >
-                    <X size={18} />
-                    Cancelar
-                  </button>
-                )}
                 <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
                   Tiempo estimado:{' '}
                   {files.length && selectedModelCount
@@ -864,6 +854,14 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   <ShieldAlert size={14} className="shrink-0" />
                   <span>No cierres ni recargues esta vista hasta que termine el procesamiento.</span>
                 </div>
+                <button
+                  type="button"
+                  onClick={cancelAnalyze}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-red-200/30 py-2.5 text-sm font-bold text-red-300 transition hover:border-red-200/70 hover:text-red-200 hover:bg-red-500/10"
+                >
+                  <X size={18} />
+                  Cancelar análisis
+                </button>
               </motion.div>
             </motion.div>
           )}
