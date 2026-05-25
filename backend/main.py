@@ -150,6 +150,7 @@ async def lifespan(app: FastAPI):
         {"filename": "resnet50_model.keras", "model_type": "resnet50", "label": "ResNet50"},
     ])
     _load_first_available_model("lesiones_efficientnetb0", [
+        {"filename": "efficientnetB0_model_fine.h5", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
         {"filename": "efficienetB0_model_fine.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
         {"filename": "efficientnetB0_model_fine.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},
         {"filename": "efficientnetB0.keras", "model_type": "efficientnetb0", "label": "EfficientNetB0"},

@@ -43,7 +43,7 @@ python -m pip install -r requirements.txt -q
 # ---------- 4. Verificar modelos ----------
 Write-Host "[4/6] Verificando archivos de modelos..." -ForegroundColor Yellow
 $modelsDir = "backend\models"
-$modelos   = @("densenet_169_aptos_fine.h5", "efficientnetB0_model_fine.h5", "resnet_50_aptos_fine.h5")
+$modelos   = @("densenet_169_aptos_fine.h5", "efficientnetB0_model_fine.h5", "resnet50_model_fine.h5")
 $missing   = $false
 
 foreach ($m in $modelos) {
