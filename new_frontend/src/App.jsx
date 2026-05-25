@@ -8,8 +8,9 @@ import HistoryPage from './pages/History';
 import AnalysisDetail from './pages/Details';
 import Demo from './pages/Demo';
 import AdminPanel from './pages/AdminPanel';
+import Profile from './pages/Profile';
 import { useAnalysis } from './hooks/useAnalysis';
-import { LayoutDashboard, History, Settings, HelpCircle, Shield } from 'lucide-react';
+import { LayoutDashboard, History, Settings, HelpCircle, Shield, User } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { analysisService, authService } from './services/api';
 
@@ -203,6 +204,12 @@ function AppContent() {
       key: 'history', label: 'Historial', icon: History, 
       onClick: () => { setActiveTab('history'); setView('main'); } 
     },
+    {
+      key: 'profile',
+      label: 'Perfil',
+      icon: User,
+      onClick: () => { setActiveTab('profile'); setView('main'); }
+    },
     ...(user?.role === 'admin'
       ? [{
           key: 'admin',
@@ -274,6 +281,8 @@ function AppContent() {
                   <HistoryPage onViewDetail={navigateToDetail} />
                 ) : activeTab === 'admin' ? (
                   <AdminPanel />
+                ) : activeTab === 'profile' ? (
+                  <Profile />
                 ) : (
                   <Dashboard
                     onViewDetail={navigateToDetail}

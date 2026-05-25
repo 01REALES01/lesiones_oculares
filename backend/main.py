@@ -275,6 +275,7 @@ async def get_me(
         "role": current_user.role,
         "roble_user_id": current_user.roble_user_id,
         "name": name,
+        "fecha_creacion": user_app.get("fecha_creacion"),
     }
 
 def require_admin(current_user: User = Depends(get_current_user)):
