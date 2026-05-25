@@ -526,18 +526,9 @@ async def update_user_app_status_or_login(
 
     return response.json()
 
-async def get_admin_global_stats(
-    token: str,
-) -> Dict[str, Any]:
-    users = await roble_read_records(
-        token=token,
-        table_name="usuarios_app",
-    )
-
-    analyses = await roble_read_records(
-        token=token,
-        table_name="analisis_retina",
-    )
+async def get_admin_global_stats(token: str) -> Dict[str, Any]:
+    users = await roble_read_records(token=token, table_name="usuarios_app")
+    analyses = await roble_read_records(token=token, table_name="analisis_retina")
 
     total_users = len(users)
     active_users = sum(1 for u in users if u.get("activo_app") is not False)
@@ -547,25 +538,85 @@ async def get_admin_global_stats(
     rd_detected = 0
     latest_analysis = None
 
+    severity_counts = {
+        "NO R.D.": 0,
+        "Leve": 0,
+        "Moderado": 0,
+        "Severo": 0,
+        "Proliferativo": 0,
+    }
+
+    model_usage = {}
+    model_latency_sum = {}
+    model_latency_count = {}
+
+    labels = ["NO R.D.", "Leve", "Moderado", "Severo", "Proliferativo"]
+
     for row in analyses:
         result = row.get("result_json") or {}
 
         if isinstance(result, str):
             import json
-            result = json.loads(result)
+            try:
+                result = json.loads(result)
+            except Exception:
+                result = {}
 
         confidence = row.get("confidence_percent") or result.get("confidence_percent")
         if confidence is not None:
             confidences.append(float(confidence))
 
-        predicted_class = result.get("predicted_class")
-        if predicted_class is not None and int(predicted_class) > 0:
+        grade = (
+            result.get("comparison_summary", {}).get("consensus_grade")
+            or result.get("primary_result", {}).get("predicted_class")
+            or result.get("predicted_class")
+            or row.get("predicted_class")
+            or 0
+        )
+
+        try:
+            grade = int(grade)
+        except Exception:
+            grade = 0
+
+        grade = max(0, min(4, grade))
+        severity_counts[labels[grade]] += 1
+
+        if grade > 0:
             rd_detected += 1
 
-        timestamp = row.get("timestamp")
-        if timestamp:
-            if latest_analysis is None or timestamp > latest_analysis:
-                latest_analysis = timestamp
+        timestamp = row.get("timestamp") or result.get("timestamp")
+        if timestamp and (latest_analysis is None or timestamp > latest_analysis):
+            latest_analysis = timestamp
+
+        comparisons = result.get("model_comparisons") or []
+
+        if not comparisons:
+            model_name = (
+                result.get("primary_result", {}).get("model_used")
+                or result.get("model_used")
+                or row.get("model_used")
+                or "Modelo desconocido"
+            )
+            latency = (
+                result.get("primary_result", {}).get("inference_time_ms")
+                or result.get("inference_time_ms")
+                or row.get("inference_time_ms")
+                or 0
+            )
+
+            comparisons = [{
+                "model_name": model_name,
+                "inference_time_ms": latency,
+            }]
+
+        for model in comparisons:
+            model_name = model.get("model_name") or model.get("model_id") or "Modelo desconocido"
+            latency = float(model.get("inference_time_ms") or 0)
+
+            model_usage[model_name] = model_usage.get(model_name, 0) + 1
+            model_latency_sum[model_name] = model_latency_sum.get(model_name, 0) + latency
+            model_latency_count[model_name] = model_latency_count.get(model_name, 0) + 1
 
     total_analyses = len(analyses)
 
@@ -577,6 +628,38 @@ async def get_admin_global_stats(
         "avg_confidence": round(sum(confidences) / len(confidences), 1) if confidences else 0,
         "rd_detected_percent": round((rd_detected / total_analyses) * 100, 1) if total_analyses else 0,
         "latest_analysis": latest_analysis,
+        "severity_distribution": [
+            {"name": key, "value": value}
+            for key, value in severity_counts.items()
+        ],
+        "model_usage": [
+            {"name": key, "value": value}
+            for key, value in model_usage.items()
+        ],
+        "model_latency": [
+            {
+                "name": key,
+                "value": round(model_latency_sum[key] / model_latency_count[key], 1),
+            }
+            for key in model_latency_sum
+        ],
+        "most_used_model": max(
+            model_usage.items(),
+            key=lambda x: x[1],
+            default=("Sin datos", 0),
+        ),
+
+        "fastest_model": min(
+            [
+                (
+                    key,
+                    round(model_latency_sum[key] / model_latency_count[key], 1)
+                )
+                for key in model_latency_sum
+            ],
+            key=lambda x: x[1],
+            default=("Sin datos", 0),
+        ),
     }
     
 async def roble_update_by_column(
