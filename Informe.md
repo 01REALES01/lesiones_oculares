@@ -215,8 +215,6 @@ Para el diseño de la solución se evaluaron alternativas tecnológicas y de enf
 | EfficientNet | **0.67** |
 | DenseNet169 | **0.65** |
 | ResNet50V2 | **0.64** |
-| Xception | **0.62** |
-| MobileNetV3 | **0.43** |
 
  
 ### 7.2 Arquitectura

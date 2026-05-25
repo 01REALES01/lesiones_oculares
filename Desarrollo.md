@@ -20,6 +20,7 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 
 - **Cliente web:** Interfaz interactiva para la carga de imágenes, selección de modelos y visualización de resultados (barras de propabilidades y métricas).
 - **Servidor/API:** Orquestador de inferencias que maneja la lógica de preprocesamiento, trazabilidad y comunicación con los modelos.
+- **Panel de administración:** Gestión de usuarios, roles, métricas globales y auditoría de inferencias.
 
 ## 3. Estructura del repositorio
 
@@ -52,6 +53,7 @@ El proyecto es una solución web de apoyo clínico para el tamizaje de retinopat
 - **Capa de presentación:** Componentes de UI, Hooks de estado (`useAnalysis.js`) y servicios de API en el frontend.
 - **Capa de lógica de negocio:** Endpoints de FastAPI y lógica de orquestación en `backend/main.py`, `backend/ml_manager.py`, `backend/store.py` y `backend/roble_db.py`.
 - **Capa de procesamiento:** Módulos especializados en preprocesamiento de imagen (`backend/preprocessing/`) y carga de modelos TensorFlow.
+- **Capa de administración:** Gestión de usuarios, roles, métricas globales y auditoría de inferencias.
 - **Capa de persistencia:** Gestión de lectura/escritura de datos JSON en el directorio `data/`.
 
 ### 4.2 Relación entre componentes del sistema y código fuente
@@ -147,7 +149,7 @@ Se recomienda trabajar en ramas descriptivas. Los cambios en el modelo de datos 
 
 ### 8.3 Ejecución de pruebas y validaciones
 
-Ejecute los archivos del directorio pruebas, ya sea por componente o el flujo completo.
+Ejecute `pytest` en `backend/tests/` para validar el funcionamiento por componente o del flujo completo.
 
 ### 8.4 Integración de cambios
 
