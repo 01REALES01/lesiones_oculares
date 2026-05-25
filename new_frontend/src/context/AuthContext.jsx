@@ -43,6 +43,13 @@ export const AuthProvider = ({ children }) => {
 
       setToken(data.access_token);
 
+      if (data.first_login) {
+      sessionStorage.setItem('first_login_password_notice', 'true');
+      }
+
+      if (data.first_login) {
+        sessionStorage.setItem('first_login_password_notice', 'true');
+      }
       const me = await authService.me();
       setUser(me);
 

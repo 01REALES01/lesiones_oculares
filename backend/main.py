@@ -33,6 +33,7 @@ from backend.roble_db import roble_delete_all_user_history
 from backend.roble_db import get_user_stats_from_roble
 from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
 from backend.roble_db import roble_read_records
+from backend.roble_db import get_user_app_by_email, update_user_app_status_or_login
 
 from pydantic import BaseModel
 
@@ -215,14 +216,37 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             email=data["user"]["email"],
             role=data["user"]["role"],
             roble_user_id=data["user"]["id"],
+            name=data["user"].get("name"),
         )
 
-        #await ensure_user_exists(access_token, current_user)
+        user_app = await get_user_app_by_email(access_token, current_user.email)
+
+        if not user_app:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuario no registrado en OcularAI. Contacta al administrador.",
+            )
+
+        if user_app.get("activo_app") is False:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Usuario deshabilitado. Contacta al administrador.",
+            )
+
+        is_first_login = not user_app.get("ultimo_login")
+        await update_user_app_status_or_login(
+            token=access_token,
+            email=current_user.email,
+            updates={
+                "ultimo_login": datetime.now(timezone.utc).isoformat(),
+            },
+        )
         
         return {
             "access_token": data["accessToken"],
             "refresh_token": data["refreshToken"],
             "token_type": "bearer",
+            "first_login": is_first_login,
         }
 
     except httpx.RequestError:
@@ -232,12 +256,25 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         )
 
 @app.get("/me")
-async def get_me(current_user: User = Depends(get_current_user)):
+async def get_me(
+    current_user: User = Depends(get_current_user),
+    token: str = Depends(oauth2_scheme),
+):
+    name = current_user.name
+
+    try:
+        user_app = await get_user_app_by_email(token, current_user.email)
+        if user_app:
+            name = user_app.get("nombre") or name
+    except Exception as e:
+        print("No se pudo obtener nombre desde usuarios_app:", str(e))
+
     return {
         "email": current_user.email,
         "username": current_user.username,
         "role": current_user.role,
         "roble_user_id": current_user.roble_user_id,
+        "name": name,
     }
 
 def require_admin(current_user: User = Depends(get_current_user)):
@@ -253,6 +290,14 @@ class AdminCreateUserRequest(BaseModel):
     name: str
     password: str
     role: str = "user"
+    
+    
+class AdminUpdateUserRequest(BaseModel):
+    nombre: Optional[str] = None
+    activo_app: Optional[bool] = None
+    
+class ForgotPasswordRequest(BaseModel):
+    email: str
     
 @app.post("/admin/create-user")
 async def admin_create_user(
@@ -1902,4 +1947,79 @@ async def admin_list_users(
         raise HTTPException(
             status_code=500,
             detail="No se pudieron cargar los usuarios.",
+        )
+@app.put("/admin/users/{email}")
+async def admin_update_user(
+    email: str,
+    payload: AdminUpdateUserRequest,
+    current_user: User = Depends(require_admin),
+    token: str = Depends(oauth2_scheme),
+):
+    try:
+        updates = {}
+
+        if payload.nombre is not None:
+            updates["nombre"] = payload.nombre
+
+        if payload.activo_app is not None:
+            updates["activo_app"] = payload.activo_app
+
+        if not updates:
+            raise HTTPException(
+                status_code=400,
+                detail="No hay cambios para actualizar.",
+            )
+
+        await update_user_app_status_or_login(
+            token=token,
+            email=email,
+            updates=updates,
+        )
+
+        return {
+            "ok": True,
+            "message": "Usuario actualizado correctamente.",
+        }
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        print("ERROR ACTUALIZANDO USUARIO:", str(e))
+
+        raise HTTPException(
+            status_code=500,
+            detail="No se pudo actualizar el usuario.",
+        )
+        
+@app.post("/forgot-password")
+async def forgot_password(payload: ForgotPasswordRequest):
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.roble_auth_base}/{settings.roble_db_name}/forgot-password",
+                json={
+                    "email": payload.email,
+                },
+                timeout=10.0,
+            )
+
+        if response.status_code not in (200, 201):
+            raise HTTPException(
+                status_code=response.status_code,
+                detail=response.text,
+            )
+
+        return {
+            "ok": True,
+            "message": "Si el correo está registrado, recibirás instrucciones para restablecer tu contraseña.",
+        }
+
+    except HTTPException:
+        raise
+
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=503,
+            detail="No se pudo conectar con ROBLE.",
         )

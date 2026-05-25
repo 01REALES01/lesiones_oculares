@@ -502,3 +502,38 @@ async def get_batch_from_roble(
     records.sort(key=lambda x: x.get("timestamp") or "")
 
     return records
+async def get_user_app_by_email(
+    token: str,
+    email: str,
+) -> Optional[Dict[str, Any]]:
+    rows = await roble_read_records(
+        token=token,
+        table_name="usuarios_app",
+        filters={"email": email},
+    )
+
+    return rows[0] if rows else None
+
+
+async def update_user_app_status_or_login(
+    token: str,
+    email: str,
+    updates: Dict[str, Any],
+) -> Dict[str, Any]:
+    async with httpx.AsyncClient() as client:
+        response = await client.put(
+            f"{ROBLE_DATABASE_BASE}/{settings.roble_db_name}/update",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "tableName": "usuarios_app",
+                "idColumn": "email",
+                "idValue": email,
+                "updates": updates,
+            },
+            timeout=15.0,
+        )
+
+    if response.status_code not in (200, 201):
+        raise Exception(f"Error actualizando usuario en ROBLE DB: {response.text}")
+
+    return response.json()

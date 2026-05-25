@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { ScanEye, LogIn, AlertCircle, Eye, EyeOff, Loader2, X, ArrowLeft } from 'lucide-react';
 import TechEyeScene from '../components/landing/EyeScene';
+import { authService } from '../services/api';
 
 export default function Login({ onGoLanding }) {
   const [username, setUsername] = useState('');
@@ -14,6 +15,11 @@ export default function Login({ onGoLanding }) {
   const [passwordError, setPasswordError] = useState(false);
   const [shakeUsername, setShakeUsername] = useState(0);
   const [shakePassword, setShakePassword] = useState(0);
+
+  const [forgotModalOpen, setForgotModalOpen] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotNotice, setForgotNotice] = useState(null);
 
   const [expiredNotice, setExpiredNotice] = useState(() => {
     const expired = sessionStorage.getItem('session_expired');
@@ -56,6 +62,34 @@ export default function Login({ onGoLanding }) {
     if (!result.success) {
       setError(result.error);
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotEmail.trim()) return;
+
+    setForgotLoading(true);
+    setForgotNotice(null);
+
+    try {
+      const result = await authService.forgotPassword(forgotEmail);
+
+      setForgotNotice({
+        type: 'success',
+        message: result.message || 'Correo enviado correctamente.',
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      setForgotNotice({
+        type: 'error',
+        message:
+          error.response?.data?.detail ||
+          'No se pudo procesar la solicitud.',
+      });
+    } finally {
+      setForgotLoading(false);
     }
   };
 
@@ -190,7 +224,19 @@ export default function Login({ onGoLanding }) {
                 </button>
               </motion.div>
             </div>
-
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setForgotModalOpen(true);
+                    setForgotEmail(username || '');
+                    setForgotNotice(null);
+                  }}
+                  className="text-xs font-bold text-primary hover:text-primary-dark transition-colors"
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+              </div>
             <AnimatePresence>
               {error && (
                 <motion.div
@@ -239,6 +285,79 @@ export default function Login({ onGoLanding }) {
           </div>
         </div>
       </motion.div>
+      {forgotModalOpen && (
+        <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5"
+          >
+            <div>
+              <h3 className="text-2xl font-black text-slate-900">
+                Recuperar contraseña
+              </h3>
+
+              <p className="text-sm text-slate-500 mt-1">
+                Ingresa tu correo y recibirás instrucciones para restablecer tu contraseña.
+              </p>
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">
+                Correo electrónico
+              </label>
+
+              <input
+                type="email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                placeholder="correo@ejemplo.com"
+                className="mt-2 w-full px-5 py-3.5 rounded-xl bg-white border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm"
+              />
+            </div>
+
+            <AnimatePresence>
+              {forgotNotice && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className={`p-4 rounded-xl text-sm font-medium border ${
+                    forgotNotice.type === 'success'
+                      ? 'bg-emerald-500/10 text-emerald-700 border-emerald-500/20'
+                      : 'bg-red-500/10 text-red-700 border-red-500/20'
+                  }`}
+                >
+                  {forgotNotice.message}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setForgotModalOpen(false);
+                  setForgotNotice(null);
+                }}
+                className="px-5 py-3 rounded-2xl border border-slate-200 bg-white text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
+              >
+                Cancelar
+              </button>
+
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={forgotLoading || !forgotEmail.trim()}
+                className="px-5 py-3 rounded-2xl bg-gradient-to-r from-primary to-primary-dark text-white font-bold text-sm hover:shadow-lg transition-all disabled:opacity-50"
+              >
+                {forgotLoading ? 'Enviando...' : 'Enviar'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

@@ -11,11 +11,11 @@ import AdminPanel from './pages/AdminPanel';
 import { useAnalysis } from './hooks/useAnalysis';
 import { LayoutDashboard, History, Settings, HelpCircle, Shield } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { analysisService } from './services/api';
+import { analysisService, authService } from './services/api';
 
 function AppContent() {
-  const { token, user, loadingUser } = useAuth();
-  const [showLanding, setShowLanding] = useState(() => {
+    const { token, user, loadingUser, logout } = useAuth();  
+    const [showLanding, setShowLanding] = useState(() => {
     const screen = sessionStorage.getItem('screen');
     if (screen === 'landing') return true;
     if (screen === 'demo') return false;
@@ -40,6 +40,9 @@ function AppContent() {
     return sessionStorage.getItem('view') || 'main'; // main | detail
   });
   const [forceHideImage, setForceHideImage] = useState(false);
+
+  const [firstLoginModalOpen, setFirstLoginModalOpen] = useState(false);
+  const [sendingResetEmail, setSendingResetEmail] = useState(false);
   const analysisState = useAnalysis();
 
   // Reset to dashboard if reloaded while viewing recent analysis detail
@@ -58,7 +61,14 @@ function AppContent() {
       setActiveTab('dashboard');
     }
   }, [token]);
-    const { logout } = useAuth();
+
+  useEffect(() => {
+    const flag = sessionStorage.getItem('first_login_password_notice');
+
+    if (token && user?.email && flag === 'true') {
+      setFirstLoginModalOpen(true);
+    }
+  }, [token, user]);
 
   // Persistencia de estado
   useEffect(() => {
@@ -168,6 +178,22 @@ function AppContent() {
     }
   };
 
+  const handleFirstLoginPasswordReset = async () => {
+    if (!user?.email) return;
+
+    setSendingResetEmail(true);
+
+    try {
+      await authService.forgotPassword(user.email);
+    } catch (error) {
+      console.error('Error enviando recuperación:', error);
+    } finally {
+      sessionStorage.removeItem('first_login_password_notice');
+      setSendingResetEmail(false);
+      setFirstLoginModalOpen(false);
+      await logout();
+    }
+  };
   const navLinks = [
     { 
       key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, 
@@ -196,6 +222,7 @@ function AppContent() {
   ];
 
   return (
+
     <div className="flex h-screen overflow-hidden bg-f0f4f8">
       <Sidebar 
         isOpen={sidebarOpen} 
@@ -206,6 +233,33 @@ function AppContent() {
       />
       
       <main className="flex-1 overflow-y-auto relative">
+        {firstLoginModalOpen && (
+          <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5 text-center">
+              <div>
+                <h3 className="text-2xl font-black text-ocular-text-main">
+                  Cuenta nueva detectada
+                </h3>
+                <p className="text-sm text-ocular-text-muted mt-2 leading-relaxed">
+                  Estás iniciando sesión por primera vez con una contraseña temporal.
+                  Por seguridad, enviaremos un enlace de restablecimiento a tu correo.
+                </p>
+                <p className="text-sm font-bold text-primary mt-3">
+                  {user?.email}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleFirstLoginPasswordReset}
+                disabled={sendingResetEmail}
+                className="w-full rounded-2xl bg-primary text-white font-black py-3 hover:bg-primary-dark transition-all disabled:opacity-50"
+              >
+                {sendingResetEmail ? 'Enviando correo...' : 'Enviar enlace y cerrar sesión'}
+              </button>
+            </div>
+          </div>
+        )}        
         <div className={`mx-auto p-6 md:p-10 transition-all duration-300 ${view === 'detail' ? 'max-w-[1600px] w-full' : 'max-w-7xl'}`}>
           <AnimatePresence mode="wait">
             {view === 'main' ? (

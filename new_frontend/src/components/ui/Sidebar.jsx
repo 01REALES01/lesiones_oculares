@@ -4,7 +4,7 @@ import { LogOut, ChevronLeft, ChevronRight, User, House, ScanEye } from 'lucide-
 import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   return (
     <motion.aside
@@ -109,8 +109,13 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
                 exit={{ opacity: 0 }}
                 className="flex flex-col truncate"
               >
-                <span className="text-sm font-bold text-white">Dr. Rodmoli</span>
-                <span className="text-xs text-slate-400">Admin User</span>
+                <span className="text-sm font-bold text-white">
+                  {user?.name || user?.username || user?.email || 'Usuario'}
+                </span>
+
+                <span className="text-xs text-slate-400">
+                  {user?.role === 'admin' ? 'Administrador' : 'Médico'}
+                </span>
               </motion.div>
             )}
           </AnimatePresence>
