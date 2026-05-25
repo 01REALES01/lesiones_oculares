@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search, Loader2 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import api, { analysisService } from '../services/api';
@@ -174,6 +174,7 @@ export default function AnalysisDetail({
   showReportId = true,
   onDelete,
   hideImage = false,
+  onJumpToIndex,
 }) {
 
   const [usarOriginal, setUsarOriginal] = useState(false);
@@ -183,6 +184,7 @@ export default function AnalysisDetail({
   };
   const reportRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
 
   if (!result) return null;
 
@@ -301,6 +303,53 @@ export default function AnalysisDetail({
     }, 150);
   };
 
+  const handlePrintBatch = async () => {
+    if (!batch || batch.length === 0 || !reportRef.current) return;
+
+    setIsGeneratingPdf(true);
+    setPdfModalOpen(false);
+
+    const originalIndex = currentIndex;
+
+    try {
+      let pdf = null;
+
+      for (let i = 0; i < batch.length; i++) {
+        onJumpToIndex?.(i);
+
+        await new Promise(resolve => setTimeout(resolve, 450));
+
+        const canvas = await html2canvas(reportRef.current, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        if (!pdf) {
+          pdf = new jsPDF({
+            orientation: canvas.width > canvas.height ? 'l' : 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height],
+          });
+        } else {
+          pdf.addPage([canvas.width, canvas.height], canvas.width > canvas.height ? 'l' : 'p');
+        }
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      }
+
+      const batchId = batch[0]?.batch_id || 'lote';
+      pdf.save(`OcularAI_lote_${batchId}.pdf`);
+    } catch (err) {
+      console.error('Error generando PDF del lote:', err);
+    } finally {
+      onJumpToIndex?.(originalIndex);
+      setIsGeneratingPdf(false);
+    }
+  };
+
   const handleExportJSON = () => {
     const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(result, null, 2))}`;
     const anchor = document.createElement('a');
@@ -377,10 +426,26 @@ export default function AnalysisDetail({
         {showActions && (
           <div className="flex gap-3">
             <button 
-              onClick={handlePrint} 
+              onClick={() => {
+                if (isBatch) {
+                  setPdfModalOpen(true);
+                } else {
+                  handlePrint();
+                }
+              }} 
               className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide"
             >
-              <Printer size={18} /> Imprimir / Guardar PDF
+              {isGeneratingPdf ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  Generando PDF...
+                </>
+              ) : (
+                <>
+                  <Printer size={18} />
+                  Imprimir / Guardar PDF
+                </>
+              )}
             </button>
             <button onClick={handleExportExcel} className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase">
               {isBatch ? <FileSpreadsheet size={18} /> : <FileDown size={18} />}
@@ -715,6 +780,51 @@ export default function AnalysisDetail({
           </div>
         </motion.div>
       </AnimatePresence>
+        {pdfModalOpen && (
+          <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5 text-center">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">
+                  Exportar PDF
+                </h3>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  Este análisis pertenece a un lote de {batch.length} imágenes.
+                  ¿Deseas exportar solo el análisis actual o todo el lote?
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPdfModalOpen(false);
+                    handlePrint();
+                  }}
+                  className="w-full rounded-2xl border border-slate-200 bg-white text-slate-700 font-black py-3 hover:bg-slate-50 transition-all"
+                >
+                  Solo este análisis
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrintBatch}
+                  disabled={isGeneratingPdf}
+                  className="w-full rounded-2xl bg-primary text-white font-black py-3 hover:bg-primary-dark transition-all disabled:opacity-50"
+                >
+                  {isGeneratingPdf ? 'Generando lote...' : 'Todo el lote'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPdfModalOpen(false)}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest mt-1"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   );
 }

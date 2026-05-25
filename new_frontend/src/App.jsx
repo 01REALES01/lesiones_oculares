@@ -293,6 +293,7 @@ function AppContent() {
                   currentIndex={currentIndex}
                   onNext={nextResult}
                   onPrev={prevResult}
+                  onJumpToIndex={(index) => setCurrentIndex(index)}
                   onBack={() => setView('main')} 
                   onDelete={handleDeleteDetail}
                   hideImage={activeTab === 'history'}
