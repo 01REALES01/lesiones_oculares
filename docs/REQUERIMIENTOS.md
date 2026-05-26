@@ -5,7 +5,7 @@
 | Id | Descripción | Prioridad |
 |----|-------------|-----------|
 | RF01 | Carga de imagen de retinografía (formatos habituales: jpg, png) | Alta |
-| RF02 | Selección de los modelos de IA (DenseNet169, MobileNetV3, Xception) antes de ejecutar el análisis | Alta |
+| RF02 | Selección de los modelos de IA (DenseNet169, ResNet50, EfficientNetB0) antes de ejecutar el análisis | Alta |
 | RF03 | Ejecución de inferencia concurrente con los modelos seleccionados | Alta |
 | RF04 | Visualización de resultados: Diagnóstico de Retinopatía Diabética, severidad (APTOS) y confianza del modelo | Alta |
 | RF05 | Historial básico: listado de análisis recientes con posibilidad de ver detalle de cada uno | Alta |

@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils';
-import { LogOut, ChevronLeft, ChevronRight, User, House, ScanEye } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, User, House } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {

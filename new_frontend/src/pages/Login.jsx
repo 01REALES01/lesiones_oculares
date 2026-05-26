@@ -66,7 +66,10 @@ export default function Login({ onGoLanding }) {
   };
 
   const handleForgotPassword = async () => {
-    if (!forgotEmail.trim()) return;
+    if (!forgotEmail.trim()) {
+      setForgotNotice({ type: 'error', message: 'Por favor ingresa tu correo electrónico.' });
+      return;
+    }
 
     setForgotLoading(true);
     setForgotNotice(null);

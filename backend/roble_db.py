@@ -637,8 +637,12 @@ async def get_admin_global_stats(
                 "inference_time_ms": latency,
             }]
 
-        for model in comparisons:
+        KNOWN_MODELS = {"DenseNet169", "ResNet50", "EfficientNetB0"}
+
+    for model in comparisons:
             model_name = model.get("model_name") or model.get("model_id") or "Modelo desconocido"
+            if model_name not in KNOWN_MODELS:
+                continue
             latency = float(model.get("inference_time_ms") or 0)
 
             model_usage[model_name] = model_usage.get(model_name, 0) + 1

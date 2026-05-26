@@ -2,7 +2,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useRef, useEffect, useMemo } from 'react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
-import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search, X, Plus, Minus, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Activity, ShieldCheck, Eye, Info, ClipboardList, ChevronLeft, ChevronRight, Printer, FileDown, Trash2, FileSpreadsheet, Search, X, Plus, Minus, RotateCcw, Loader2 } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { cn } from '../utils';
 import api, { analysisService } from '../services/api';
@@ -310,6 +310,7 @@ export default function AnalysisDetail({
   const [popupOpen, setPopupOpen] = useState(false);
   const [popupSrc, setPopupSrc] = useState(null);
   const [popupAlt, setPopupAlt] = useState('Imagen ampliada');
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const openImagePopup = (src, alt = 'Imagen ampliada') => {
     if (!src) return;
@@ -555,6 +556,53 @@ const calculatedConsensusGrade = useMemo(() => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {deleteConfirmOpen && (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="relative z-10 w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            >
+              <div className="w-20 h-20 bg-rose-50 rounded-3xl flex items-center justify-center mx-auto text-rose-600">
+                <Trash2 size={40} />
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-2xl font-black text-slate-800 tracking-tight">¿Eliminar Análisis?</h4>
+                <p className="text-sm text-slate-500 font-medium">
+                  Esta acción eliminará el análisis de forma permanente. No se puede deshacer.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setDeleteConfirmOpen(false)}
+                  className="px-6 py-4 rounded-2xl border border-slate-200 bg-white text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDeleteConfirmOpen(false);
+                    onDelete?.(result.inference_id);
+                  }}
+                  className="px-6 py-4 rounded-2xl bg-rose-600 text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-rose-600/20 uppercase tracking-widest"
+                >
+                  Sí, eliminar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="space-y-8 animate-in slide-in-from-bottom-5 duration-500 pb-12 print:p-0">
         <div className="flex items-center justify-between print:hidden">
           <div className="flex items-center gap-4">
@@ -592,16 +640,18 @@ const calculatedConsensusGrade = useMemo(() => {
             <div className="flex gap-3">
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase"
+                disabled={isGeneratingPdf}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Printer size={18} /> Imprimir / Guardar PDF
+                {isGeneratingPdf ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
+                {isGeneratingPdf ? 'Generando PDF...' : 'Imprimir / Guardar PDF'}
               </button>
-              <button onClick={handleExportExcel} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide">
+              <button onClick={isBatch ? handleExportExcel : handleExportJSON} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide">
                 {isBatch ? <FileSpreadsheet size={18} /> : <FileDown size={18} />}
-                {isBatch ? 'Exportar Excel' : 'Exportar Datos'}
+                {isBatch ? 'Exportar Excel' : 'Exportar JSON'}
               </button>
               <button
-                onClick={() => onDelete?.(result.inference_id)}
+                onClick={() => setDeleteConfirmOpen(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-rose-100 text-rose-600 rounded-xl hover:bg-rose-50 hover:shadow-md transition-all font-semibold text-sm uppercase shadow-sm"
                 title="Eliminar este analisis"
               >

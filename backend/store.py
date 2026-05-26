@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
-import shutil
+
 
 # En memoria; clave = inference_id, valor = registro completo
 _inference_store: Dict[str, Dict[str, Any]] = {}
@@ -44,15 +44,6 @@ def save_image_to_disk2(img_bytes: bytes, filename: str) -> str:
     file_path = _IMAGES_DIR / file_id
     file_path.write_bytes(img_bytes)
     return file_id
-
-
-def clear_images_dir() -> None:
-    _ensure_data_dir()
-    for item in _IMAGES_DIR.iterdir():
-        if item.is_file():
-            item.unlink()
-        elif item.is_dir():
-            shutil.rmtree(item)
 
 
 def _load_from_file() -> None:

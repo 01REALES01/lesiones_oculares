@@ -190,14 +190,6 @@ export const analysisService = {
     return response.data;
   },
 
-  analyzeDenseNet: async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await api.post('/analyze-densenet/', formData);
-    return response.data;
-  },
-
   getHistory: async (limit = 20, offset = 0) => {
     const response = await api.get(`/history?limit=${limit}&offset=${offset}`);
     return response.data.inferences || [];
@@ -208,13 +200,6 @@ export const analysisService = {
     return response.data;
   },
 
-  exportInferencePDF: async (inferenceId) => {
-    const response = await api.get(`/export-pdf/${inferenceId}`, {
-      responseType: 'blob'
-    });
-    return response.data;
-  },
-  
   clearHistory: async () => {
     const response = await api.delete('/history');
     return response.data;

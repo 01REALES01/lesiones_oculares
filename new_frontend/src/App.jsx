@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/ui/Sidebar';
 import Landing from './pages/Landing';
@@ -12,7 +12,7 @@ import Profile from './pages/Profile';
 import { useAnalysis } from './hooks/useAnalysis';
 import Suggestions from './pages/Suggestions';
 import AdminSuggestions from './pages/AdminSuggestions';
-import { LayoutDashboard, History, Settings, HelpCircle, Shield, User, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, History, Shield, User, MessageSquare } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { analysisService, authService } from './services/api';
 

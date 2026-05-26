@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Calendar, ChevronRight, FileText, Loader2, Trash2, AlertCircle } from 'lucide-react';
+import { Search, Calendar, ChevronRight, FileText, Loader2, Trash2, AlertCircle, X } from 'lucide-react';
 import { GlassCard } from '../components/ui/GlassCard';
 import { ModalPortal } from '../components/ui/ModalPortal';
 import { analysisService } from '../services/api';
@@ -493,11 +493,11 @@ export default function HistoryPage({ onViewDetail }) {
                     className="bg-white/70 border border-slate-200 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary transition-all w-48 font-bold text-ocular-text-main shadow-sm"
                   />
                   {dateFilter && (
-                    <button
+                      <button
                       onClick={(e) => { e.preventDefault(); setDateFilter(""); }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-sm font-black text-ocular-error uppercase hover:scale-105 transition-transform"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 text-ocular-error hover:scale-105 transition-transform"
                     >
-                      ×
+                      <X size={14} />
                     </button>
                   )}
                 </div>
@@ -517,6 +517,28 @@ export default function HistoryPage({ onViewDetail }) {
             </div>
           </div>
         </div>
+
+        {filteredHistory.length > 0 && totalPages > 1 && !loading && (
+          <div className="flex items-center justify-center gap-4 py-4">
+            <button
+              onClick={() => setPage(p => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="px-4 py-2 rounded-xl bg-white/40 text-ocular-text-main font-bold border border-white/60 hover:bg-white hover:text-primary transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Anterior
+            </button>
+            <span className="text-sm font-bold text-ocular-text-muted">
+              Página {page + 1} de {totalPages}
+            </span>
+            <button
+              onClick={() => setPage(p => p + 1)}
+              disabled={!hasMore}
+              className="px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-dark transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          </div>
+        )}
 
         {/* History Grid */}
         {loading ? (

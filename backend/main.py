@@ -13,7 +13,7 @@ import uuid
 import copy
 import math
 from typing import Any, List, Optional
-from datetime import timedelta, datetime, timezone
+from datetime import datetime, timezone
 
 import numpy as np
 import cv2
@@ -23,23 +23,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.staticfiles import StaticFiles
 
-from backend.roble_db import roble_insert
-from backend.roble_db import ensure_user_exists
-from backend.roble_db import save_analysis_to_roble
-from backend.roble_db import roble_delete_record
-from backend.roble_db import list_user_analyses_from_roble
-from backend.roble_db import roble_delete_batch
-from backend.roble_db import roble_delete_all_user_history
-from backend.roble_db import get_user_stats_from_roble
-from backend.roble_db import get_analysis_from_roble, get_batch_from_roble
-from backend.roble_db import roble_read_records
-from backend.roble_db import get_user_app_by_email, update_user_app_status_or_login
-from backend.roble_db import get_admin_global_stats
 from backend.roble_db import (
+    roble_insert,
+    save_analysis_to_roble,
+    roble_delete_record,
+    list_user_analyses_from_roble,
+    roble_delete_batch,
+    roble_delete_all_user_history,
+    get_user_stats_from_roble,
+    get_analysis_from_roble,
+    get_batch_from_roble,
+    roble_read_records,
+    get_user_app_by_email,
+    update_user_app_status_or_login,
+    get_admin_global_stats,
     create_suggestion,
     get_all_suggestions,
     update_suggestion_status,
-    delete_suggestion
+    delete_suggestion,
 )
 
 from pydantic import BaseModel
@@ -76,23 +77,16 @@ from backend.store import (
     save_image_to_disk2,
     save_inference,
     save_inferences_batch,
-    get_inference,
     list_inferences,
     get_global_stats,
     save_image_to_disk,
-    get_batch,
-    clear_history,
-    delete_batch,
     IMAGES_DIR,
 )
 from backend.ml_manager import ml_manager
 from backend.agents import brain_agent, AgentAnalysisResponse
 from contextlib import asynccontextmanager
 # Auth imports
-from backend.auth import (
-    Token, User, get_current_user, create_access_token, 
-    get_user, verify_password, oauth2_scheme, ACCESS_TOKEN_EXPIRE_MINUTES
-)
+from backend.auth import User, get_current_user, oauth2_scheme
 
 
 import httpx
@@ -335,8 +329,8 @@ async def admin_create_user(
 
         if response.status_code not in (200, 201):
             raise HTTPException(
-                status_code=response.status_code,
-                detail=response.text,
+                status_code=400,
+                detail="No se pudo crear el usuario en ROBLE.",
             )
 
         data = response.json()
@@ -375,7 +369,7 @@ async def admin_create_user(
         print("ERROR CREANDO USUARIO:", str(e))
 
         raise HTTPException(
-            status_code=500,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="No se pudo crear el usuario.",
         )
         
@@ -2021,8 +2015,8 @@ async def forgot_password(payload: ForgotPasswordRequest):
 
         if response.status_code not in (200, 201):
             raise HTTPException(
-                status_code=response.status_code,
-                detail=response.text,
+                status_code=400,
+                detail="No se pudo procesar la solicitud. Intente nuevamente.",
             )
 
         return {

@@ -13,7 +13,6 @@ import {
   Trash2,
   Layers,
   Radio,
-  ScanEye,
   ChevronRight,
   Zap,
   FileSpreadsheet,
@@ -48,6 +47,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   const [clearModalOpen, setClearModalOpen] = useState(false);
   const [historyNotice, setHistoryNotice] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
   const [resultsVisible, setResultsVisible] = useState(true);
   const [globalStats, setGlobalStats] = useState({
     total_analyses: 0,
@@ -348,14 +348,23 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
 
                 <div
+                  onDragEnter={(e) => {
+                    if (interactionLocked) return;
+                    e.preventDefault();
+                    dragCounter.current += 1;
+                    setIsDragging(true);
+                  }}
                   onDragOver={(e) => {
                     if (interactionLocked) return;
                     e.preventDefault();
-                    setIsDragging(true);
                   }}
                   onDragLeave={() => {
                     if (interactionLocked) return;
-                    setIsDragging(false);
+                    dragCounter.current -= 1;
+                    if (dragCounter.current <= 0) {
+                      dragCounter.current = 0;
+                      setIsDragging(false);
+                    }
                   }}
                   onDrop={handleDrop}
                   className={`

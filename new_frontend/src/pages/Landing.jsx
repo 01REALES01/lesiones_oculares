@@ -6,7 +6,6 @@ import {
   CloudUpload,
   FlaskConical,
   Eye,
-  FileText,
   Layers,
   ShieldCheck,
   Sparkles,
