@@ -12,7 +12,10 @@ import {
   UserX,
   Cpu,
   Zap,
-} from 'lucide-react';import { GlassCard } from '../components/ui/GlassCard';
+  Eye,
+  EyeOff,
+} from 'lucide-react';
+import { GlassCard } from '../components/ui/GlassCard';
 import { adminService } from '../services/api';
 
 
@@ -27,6 +30,7 @@ export default function AdminPanel() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [stats, setStats] = useState(null);
   const [adminTab, setAdminTab] = useState('users');
+  const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -338,15 +342,24 @@ export default function AdminPanel() {
               <label className="text-xs font-bold text-ocular-text-muted uppercase">
                 Contraseña temporal
               </label>
-              <input
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                required
-                type="password"
-                placeholder="Ej: Prueba123!"
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none focus:border-primary"
-              />
+              <div className="relative mt-1">
+                <input
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Ej: Prueba123!"
+                  className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 pr-12 text-sm outline-none focus:border-primary"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-primary transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
               <p className="text-[10px] text-ocular-text-muted mt-1">
                 Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo.
               </p>
