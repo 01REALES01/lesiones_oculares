@@ -420,13 +420,10 @@ export default function AnalysisDetail({
     anchor.remove();
   };
 
-  // PONDERADO:
+  // --- CONSENSO PONDERADO ---
 
-
-
-const calculo_ponderado_total = () => {
-  const items = Object.values(comparisonModels);
-
+const calcWeightedConsensus = (models) => {
+  const items = Object.values(models);
   if (items.length === 0) return { probabilidades: [0, 0, 0, 0, 0], grado: 0 };
 
   if (items.length === 1) {
@@ -444,14 +441,13 @@ const calculo_ponderado_total = () => {
   items.forEach((item) => {
     const clase = Number(item.predicted_class);
     const confianza = Number(item.confidence_percent) || 0;
-    
     const otros = items.filter(i => i !== item).map(i => Number(i.predicted_class));
     const promedioOtros = otros.length > 0 ? otros.reduce((a, b) => a + b, 0) / otros.length : clase;
     const distancia = Math.abs(clase - promedioOtros);
-    
+
     let pesoFinal = confianza;
-    if (distancia >= 2) pesoFinal *= 0.5; 
-    
+    if (distancia >= 2) pesoFinal *= 0.5;
+
     predictedClasses.push(clase);
     pesos.push(pesoFinal);
   });
@@ -460,29 +456,23 @@ const calculo_ponderado_total = () => {
   const centroGravedad = predictedClasses.reduce((acc, clase, i) => acc + (clase * pesos[i]), 0) / (sumaPesos || 1);
   const gradoFinal = Math.round(centroGravedad);
 
-  // --- NUEVA LÓGICA DE CONCENTRACIÓN ---
   const numCoincidencias = predictedClasses.filter(c => c === gradoFinal).length;
-  // Si hay más coincidencias, el exponente es mayor y la barra es más alta
-  const factorSharp = numCoincidencias + 1.5; 
+  const factorSharp = numCoincidencias + 1.5;
 
   let probs = [0, 0, 0, 0, 0];
   for (let i = 0; i < 5; i++) {
     const distanciaAlCentro = Math.abs(i - centroGravedad);
-    // Usamos una potencia mayor para que el pico sea mucho más claro
     probs[i] = 1 / Math.pow(1 + distanciaAlCentro, factorSharp);
   }
 
   const sumaProbs = probs.reduce((a, b) => a + b, 0);
   const probabilidadesFinales = probs.map(p => (p / (sumaProbs || 1)) * 100);
 
-  return {
-    probabilidades: probabilidadesFinales,
-    grado: gradoFinal
-  };
+  return { probabilidades: probabilidadesFinales, grado: gradoFinal };
 };
 
-const resultadoConsenso = useMemo(() => 
-  (hasComparison ? calculo_ponderado_total() : null), 
+const resultadoConsenso = useMemo(() =>
+  (hasComparison ? calcWeightedConsensus(comparisonModels) : null),
   [comparisonModels, hasComparison]
 );
 
@@ -495,11 +485,6 @@ const calculatedConsensusGrade = useMemo(() => {
   return summary.consensus_grade ?? primaryResult.predicted_class ?? result.predicted_class ?? 0;
 }, [hasComparison, resultadoConsenso, primaryResult, result, summary]);
 
-
-
-
-
-  // HASTA AQUÍ NUEVO PONDERADO
   const handleExportExcel = async () => {
     if (!isBatch || !batch[0]?.batch_id) return;
     try {
@@ -514,9 +499,10 @@ const calculatedConsensusGrade = useMemo(() => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting Excel:', error);
-      // Optionally show a toast or alert
     }
-  }; return (
+  };
+
+  return (
     <>
       <AnimatePresence>
         {popupOpen && (

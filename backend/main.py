@@ -669,6 +669,43 @@ async def get_batch_by_id(
 
     return records
 
+def _weighted_consensus(model_comparisons: list) -> tuple:
+    items = model_comparisons or []
+    if len(items) == 0:
+        return ([0, 0, 0, 0, 0], 0)
+
+    if len(items) == 1:
+        raw = items[0].get("raw_probabilities", [0, 0, 0, 0, 0])
+        grado = int(items[0].get("predicted_class", 0))
+        return (raw, grado)
+
+    predicted_classes = []
+    pesos = []
+
+    for item in items:
+        clase = int(item.get("predicted_class", 0))
+        confianza = float(item.get("confidence_percent", 0) or 0)
+        otros = [int(x.get("predicted_class", 0)) for x in items if x is not item]
+        promedio_otros = sum(otros) / len(otros) if otros else clase
+        distancia = abs(clase - promedio_otros)
+        peso_final = confianza * 0.5 if distancia >= 2 else confianza
+        predicted_classes.append(clase)
+        pesos.append(peso_final)
+
+    suma_pesos = sum(pesos) or 1
+    centro_gravedad = sum(c * p for c, p in zip(predicted_classes, pesos)) / suma_pesos
+    grado_final = round(centro_gravedad)
+
+    num_coincidencias = sum(1 for c in predicted_classes if c == grado_final)
+    factor_sharp = num_coincidencias + 1.5
+
+    probs = [1 / (1 + abs(i - centro_gravedad)) ** factor_sharp for i in range(5)]
+    suma_probs = sum(probs) or 1
+    probabilidades = [p / suma_probs * 100 for p in probs]
+
+    return (probabilidades, grado_final)
+
+
 @app.get("/export/batch/{batch_id}/excel")
 async def export_batch_to_excel(
     batch_id: str,
@@ -684,45 +721,38 @@ async def export_batch_to_excel(
 
     if not records:
         raise HTTPException(status_code=404, detail="Batch not found")
-    
-    # Procesar los datos según la lógica proporcionada
-    json_main = {}
+
     all_models = set()
+    file_data = []
     for record in records:
         result = record.get("result", {})
-        filename = result.get("filename", "unknown")
-        model_comparisons = result.get("model_comparisons", [])
-        
-        dic_per_infe = {}
-        for comparison in model_comparisons:
-            comparison_model_name = comparison.get("model_id", "unknown")
-            comparison_probs = comparison.get("raw_probabilities", [])
-            dic_per_infe[comparison_model_name] = comparison_probs
-            all_models.add(comparison_model_name)
-        
-        json_main[filename] = dic_per_infe
-    
-    models = sorted(list(all_models))
-    
-    # Obtener fecha del batch
+        comparisons = result.get("model_comparisons", [])
+        for comp in comparisons:
+            all_models.add(comp.get("model_name") or comp.get("model_id", "unknown"))
+        file_data.append(result)
+
+    models_sorted = sorted(all_models)
+
     if records:
         batch_timestamp = records[0]["timestamp"]
         batch_date = datetime.fromisoformat(batch_timestamp).strftime('%Y-%m-%d %H:%M:%S')
     else:
         batch_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
-    # Etiquetas para grados
+
     grade_labels = ["NO R.D", "Leve", "Moderado", "Severo", "Proliferativo"]
-    
-    # Crear el Excel
+
     wb = openpyxl.Workbook()
     ws = wb.active
-    ws.title = "Batch Data"
-    
-    num_columns = len(models) + 1  # Nombre + models
+    ws.title = "Consenso por lote"
+
+    headers = ["Nombre"]
+    for m in models_sorted:
+        headers.append(f"{m}")
+    headers += ["Grados Ponderados", "Consenso"]
+
+    num_columns = len(headers)
     last_col = openpyxl.utils.get_column_letter(num_columns)
-    
-    # Info del batch
+
     ws.merge_cells(f'A1:{last_col}1')
     cell = ws['A1']
     cell.value = "OCULAR-AI"
@@ -730,50 +760,64 @@ async def export_batch_to_excel(
     cell.alignment = Alignment(horizontal='center', vertical='center')
     ws.merge_cells(f'A2:{last_col}2')
     cell = ws['A2']
-    cell.value = f"Lote de {len(json_main)} archivos - {batch_date}"
+    cell.value = f"Lote de {len(file_data)} archivos - {batch_date}"
     cell.font = Font(size=12, bold=True)
     cell.alignment = Alignment(horizontal='center', vertical='center')
     ws.append([])
-    
-    # Encabezados
-    headers = ["Nombre"] + models
-    ws.append(headers)
-    
-    # Aplicar color azul a los encabezados
-    fill = PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")
-    for col_num in range(1, num_columns + 1):
-        cell = ws.cell(row=4, column=col_num)
-        cell.fill = fill
+
+    header_row = 4
+    for col_num, h in enumerate(headers, 1):
+        cell = ws.cell(row=header_row, column=col_num, value=h)
+        cell.fill = PatternFill(start_color="ADD8E6", end_color="ADD8E6", fill_type="solid")
         cell.alignment = Alignment(horizontal='center', vertical='center')
-    
-    # Datos
-    for filename, model_data in json_main.items():
+
+    for data in file_data:
+        filename = data.get("filename", "unknown")
+        comparisons = data.get("model_comparisons", [])
+        consenso_probs, consenso_grado = _weighted_consensus(comparisons)
+
         row = [filename]
-        for model in models:
-            probs = model_data.get(model, [0]*5)
-            # Formatear como texto con etiquetas y porcentajes
-            formatted = "\n".join([
-                f"{label}: {prob}%" for label, prob in zip(grade_labels, probs[:5])
-            ])
-            row.append(formatted)
+        for model_name in models_sorted:
+            comp = next(
+                (c for c in comparisons if (c.get("model_name") or c.get("model_id")) == model_name),
+                None
+            )
+            if comp:
+                grade = int(comp.get("predicted_class", 0))
+                conf = round(float(comp.get("confidence_percent", 0) or 0), 2)
+                grade_name = grade_labels[grade] if 0 <= grade < 5 else f"Grado {grade}"
+                row.append(f"{grade_name}: {conf}%")
+            else:
+                row.append("")
+
+        grados_ponderados_txt = "\n".join(
+            f"{grade_labels[i]}: {round(consenso_probs[i], 2)}%"
+            for i in range(5)
+        )
+        row.append(grados_ponderados_txt)
+
+        consenso_nombre = grade_labels[consenso_grado] if 0 <= consenso_grado < 5 else f"Grado {consenso_grado}"
+        row.append(consenso_nombre)
         ws.append(row)
-    
-    # Centrar todas las celdas y ajustar formato
+
     for row in ws.iter_rows():
         for cell in row:
             if cell.value is not None:
                 cell.alignment = Alignment(horizontal='center', vertical='center', wrap_text=True)
-    
-    # Ajustar ancho de columnas
+
     for col_num in range(1, num_columns + 1):
         col_letter = openpyxl.utils.get_column_letter(col_num)
-        ws.column_dimensions[col_letter].width = 25
-    
-    # Guardar en BytesIO
+        if col_num == 1:
+            ws.column_dimensions[col_letter].width = 30
+        elif col_num == num_columns - 1:
+            ws.column_dimensions[col_letter].width = 28
+        else:
+            ws.column_dimensions[col_letter].width = 24
+
     bio = BytesIO()
     wb.save(bio)
     bio.seek(0)
-    
+
     return StreamingResponse(
         bio,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
