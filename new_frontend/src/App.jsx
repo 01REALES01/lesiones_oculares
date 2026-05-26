@@ -160,6 +160,12 @@ function AppContent() {
     }
   };
 
+  const jumpToIndex = (index) => {
+    if (index >= 0 && index < resultBatch.length) {
+      setCurrentIndex(index);
+    }
+  };
+
   const handleDeleteDetail = async (inference_id) => {
     try {
       await analysisService.deleteAnalysis(inference_id);
@@ -311,6 +317,7 @@ function AppContent() {
                   onBack={() => setView('main')} 
                   onDelete={handleDeleteDetail}
                   hideImage={activeTab === 'history' || forceHideImage}
+                  onJumpToIndex={jumpToIndex}
                 />
               </motion.div>
             )}

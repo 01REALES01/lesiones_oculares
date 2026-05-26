@@ -302,6 +302,7 @@ export default function AnalysisDetail({
   showReportId = true,
   onDelete,
   hideImage = false,
+  onJumpToIndex,
 }) {
   const reportRef = useRef(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -311,6 +312,7 @@ export default function AnalysisDetail({
   const [popupSrc, setPopupSrc] = useState(null);
   const [popupAlt, setPopupAlt] = useState('Imagen ampliada');
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pdfModalOpen, setPdfModalOpen] = useState(false);
 
   const openImagePopup = (src, alt = 'Imagen ampliada') => {
     if (!src) return;
@@ -411,6 +413,53 @@ export default function AnalysisDetail({
     }, 150);
   };
 
+  const handlePrintBatch = async () => {
+    if (!batch || batch.length === 0 || !reportRef.current) return;
+
+    setIsGeneratingPdf(true);
+    setPdfModalOpen(false);
+
+    const originalIndex = currentIndex;
+
+    try {
+      let pdf = null;
+
+      for (let i = 0; i < batch.length; i++) {
+        onJumpToIndex?.(i);
+
+        await new Promise(resolve => setTimeout(resolve, 450));
+
+        const canvas = await html2canvas(reportRef.current, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+
+        if (!pdf) {
+          pdf = new jsPDF({
+            orientation: canvas.width > canvas.height ? 'l' : 'p',
+            unit: 'px',
+            format: [canvas.width, canvas.height],
+          });
+        } else {
+          pdf.addPage([canvas.width, canvas.height], canvas.width > canvas.height ? 'l' : 'p');
+        }
+
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+      }
+
+      const batchId = batch[0]?.batch_id || 'lote';
+      pdf.save(`OcularAI_lote_${batchId}.pdf`);
+    } catch (err) {
+      console.error('Error generando PDF del lote:', err);
+    } finally {
+      onJumpToIndex?.(originalIndex);
+      setIsGeneratingPdf(false);
+    }
+  };
+
   const handleExportJSON = () => {
     const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(result, null, 2))}`;
     const anchor = document.createElement('a');
@@ -487,16 +536,30 @@ const calculatedConsensusGrade = useMemo(() => {
 }, [hasComparison, resultadoConsenso, primaryResult, result, summary]);
 
   const handleExportExcel = async () => {
-    if (!isBatch || !batch[0]?.batch_id) return;
     try {
-      const blob = await analysisService.exportBatchExcel(batch[0].batch_id);
+      let blob;
+
+      if (isBatch && batch[0]?.batch_id) {
+        blob = await analysisService.exportBatchExcel(batch[0].batch_id);
+      } else if (result?.batch_id) {
+        blob = await analysisService.exportBatchExcel(result.batch_id);
+      } else {
+        console.error('No hay batch_id para exportar Excel');
+        return;
+      }
+
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
+
       anchor.href = url;
-      anchor.download = `batch_${batch[0].batch_id}.xlsx`;
+      anchor.download = isBatch
+        ? `batch_${batch[0].batch_id}.xlsx`
+        : `analisis_${result.inference_id || result.batch_id}.xlsx`;
+
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
+
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error exporting Excel:', error);
@@ -551,6 +614,64 @@ const calculatedConsensusGrade = useMemo(() => {
                   className="h-full w-full border border-slate-200 bg-white"
                   showControls
                 />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {pdfModalOpen && (
+          <motion.div
+            className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5 text-center"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            >
+              <div>
+                <h3 className="text-2xl font-black text-slate-900">
+                  Exportar PDF
+                </h3>
+                <p className="text-sm text-slate-500 mt-2 leading-relaxed">
+                  Este análisis pertenece a un lote de {batch.length} imágenes.
+                  ¿Deseas exportar solo el análisis actual o todo el lote?
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPdfModalOpen(false);
+                    handlePrint();
+                  }}
+                  className="w-full rounded-2xl border border-slate-200 bg-white text-slate-700 font-black py-3 hover:bg-slate-50 transition-all"
+                >
+                  Solo este análisis
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handlePrintBatch}
+                  disabled={isGeneratingPdf}
+                  className="w-full rounded-2xl bg-primary text-white font-black py-3 hover:bg-primary-dark transition-all disabled:opacity-50"
+                >
+                  {isGeneratingPdf ? 'Generando lote...' : 'Todo el lote'}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setPdfModalOpen(false)}
+                  className="text-xs font-bold text-slate-400 hover:text-slate-600 uppercase tracking-widest mt-1"
+                >
+                  Cancelar
+                </button>
               </div>
             </motion.div>
           </motion.div>
@@ -639,16 +760,31 @@ const calculatedConsensusGrade = useMemo(() => {
           {showActions && (
             <div className="flex gap-3">
               <button
-                onClick={handlePrint}
-                disabled={isGeneratingPdf}
-                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  if (isBatch) {
+                    setPdfModalOpen(true);
+                  } else {
+                    handlePrint();
+                  }
+                }}
+                className="flex items-center gap-2 px-4 py-2 bg-white text-slate-700 rounded-xl border border-slate-200 shadow-sm hover:bg-slate-50 hover:shadow-md transition-all font-semibold text-sm uppercase"
               >
-                {isGeneratingPdf ? <Loader2 size={18} className="animate-spin" /> : <Printer size={18} />}
-                {isGeneratingPdf ? 'Generando PDF...' : 'Imprimir / Guardar PDF'}
+                {isGeneratingPdf ? (
+                  <>
+                    <Loader2 size={18} className="animate-spin" />
+                    Generando PDF...
+                  </>
+                ) : (
+                  <>
+                    <Printer size={18} />
+                    Imprimir / Guardar PDF
+                  </>
+                )}
               </button>
-              <button onClick={isBatch ? handleExportExcel : handleExportJSON} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide">
+              <button onClick={handleExportExcel} className="flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-primary to-primary-dark text-white rounded-xl shadow-md shadow-primary/20 hover:shadow-primary/45 hover:scale-[1.01] active:scale-[0.98] transition-all font-semibold text-sm uppercase tracking-wide
+">
                 {isBatch ? <FileSpreadsheet size={18} /> : <FileDown size={18} />}
-                {isBatch ? 'Exportar Excel' : 'Exportar JSON'}
+                {isBatch ? 'Exportar Excel' : 'Exportar Excel'}
               </button>
               <button
                 onClick={() => setDeleteConfirmOpen(true)}

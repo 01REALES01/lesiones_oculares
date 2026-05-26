@@ -83,7 +83,6 @@ from backend.store import (
     IMAGES_DIR,
 )
 from backend.ml_manager import ml_manager
-from backend.agents import brain_agent, AgentAnalysisResponse
 from contextlib import asynccontextmanager
 # Auth imports
 from backend.auth import User, get_current_user, oauth2_scheme
@@ -1781,7 +1780,7 @@ async def analyze_retina(
 # Agente Cerebro: orquestador LLM que decide dinámicamente qué modelos usar
 # ---------------------------------------------------------------------------
 
-@app.post("/analyze-agent/", response_model=AgentAnalysisResponse)
+@app.post("/analyze-agent/")
 async def analyze_agent(
     file: UploadFile = File(...),
     analysis_request: str = Query(
@@ -1800,6 +1799,7 @@ async def analyze_agent(
     Endpoint del agente cerebro. Claude orquesta los modelos A/B/C dinámicamente
     según la solicitud de análisis. Los resultados se guardan en el store para trazabilidad.
     """
+    from backend.agents import brain_agent
     try:
         image_bytes = await file.read()
 
