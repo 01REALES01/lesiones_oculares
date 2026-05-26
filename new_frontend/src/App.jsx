@@ -132,8 +132,9 @@ function AppContent() {
 
   if (loadingUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-ocular-text-muted font-bold">
-        Cargando sesión...
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-ocular-text-muted font-bold">
+        <div className="w-10 h-10 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        <p className="animate-pulse">Cargando sesión...</p>
       </div>
     );
   }
@@ -225,15 +226,7 @@ function AppContent() {
           icon: Shield,
           onClick: () => { setActiveTab('admin'); setView('main'); }
         }]
-      : []),
-    { 
-      key: 'settings', label: 'Configuración', icon: Settings, 
-      onClick: () => {} 
-    },
-    { 
-      key: 'help', label: 'Sugerencia Médica', icon: HelpCircle, 
-      onClick: () => {} 
-    },
+      : [])
   ];
 
   return (

@@ -323,7 +323,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatsCard title="Analisis totales" value={globalStats.total_analyses.toString()} icon={Activity} classname="text-5xl font-bold" />
+          <StatsCard title="Analisis totales" value={globalStats.total_analyses.toString()} icon={Activity}  />
           <StatsCard title="RD detectada" value={`${globalStats.rd_detected_rate}%`} icon={AlertCircle} delay={0.1} />
           <StatsCard title="Confianza" value={`${globalStats.avg_confidence}%`} icon={CheckCircle2} delay={0.2} />
         </div>
@@ -670,7 +670,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                           ? new Date(h.timestamp).toLocaleDateString()
                           : (h.summary?.headline || new Date(h.timestamp).toLocaleDateString());
                       })()
-                      : '—'}
+                      : ''}
                   </p>
                 </div>
                 <ChevronRight className="h-5 w-5 shrink-0 text-slate-300" />

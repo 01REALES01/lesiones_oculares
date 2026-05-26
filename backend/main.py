@@ -1313,7 +1313,7 @@ async def analyze_densenet(
     except Exception as e:
         return JSONResponse(
             status_code=400,
-            content={"detail": f"Error procesando imagen: {str(e)}"}
+            content={"detail": "Error procesando la imagen. Verifica que el archivo sea una imagen válida."}
         )
 
 
@@ -1339,7 +1339,7 @@ async def analyze_rd_comparison(
         print(f"[analyze-rd-comparison] Error: {e}\n{tb}", flush=True)
         return JSONResponse(
             status_code=500,
-            content={"detail": f"Error en el servidor al procesar el lote: {str(e)}"},
+            content={"detail": "Error en el servidor al procesar el lote. Intente nuevamente."},
         )
 
 
@@ -1513,7 +1513,7 @@ async def _analyze_rd_comparison_impl(
         except Exception as e:
             final_results.append({
                 "filename": file.filename,
-                "error": f"Error interno procesando archivo: {str(e)}",
+                "error": "Error interno procesando archivo.",
                 "success": False,
             })
 
@@ -1606,7 +1606,7 @@ async def analyze_demo(
     except Exception as e:
         return JSONResponse(
             status_code=400,
-            content={"detail": f"Error procesando imagen: {str(e)}"},
+            content={"detail": "Error procesando la imagen. Verifica que el archivo sea una imagen válida."},
         )
 
 
@@ -1686,7 +1686,7 @@ async def analyze_retina(
             except Exception as e:
                 final_results.append({
                     "filename": file.filename,
-                    "error": str(e),
+                    "error": "No se pudo leer la imagen. Verifica que el archivo sea una imagen válida.",
                     "success": False
                 })
                 continue
@@ -1776,7 +1776,7 @@ async def analyze_retina(
         except Exception as e:
             final_results.append({
                 "filename": file.filename,
-                "error": f"Error interno procesando archivo: {str(e)}",
+                "error": "Error interno procesando archivo.",
                 "success": False
             })
 
@@ -1844,7 +1844,7 @@ async def analyze_agent(
         if anthropic_sdk is not None and isinstance(e, anthropic_sdk.APIStatusError):
             return JSONResponse(
                 status_code=502,
-                content={"detail": f"Error de API Anthropic ({e.status_code}): {e.message}"},
+                content={"detail": "Error de comunicación con la API de Anthropic. Verifica que el modelo y la clave API sean correctos."},
             )
         if isinstance(e, ModuleNotFoundError) and getattr(e, "name", None) == "anthropic":
             return JSONResponse(
@@ -1855,7 +1855,7 @@ async def analyze_agent(
             )
         return JSONResponse(
             status_code=500,
-            content={"detail": f"Error interno del agente cerebro: {str(e)}"},
+            content={"detail": "Error interno del agente cerebro. Intente nuevamente."},
         )
 
 @app.post("/logout")

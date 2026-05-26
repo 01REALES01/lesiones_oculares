@@ -51,6 +51,7 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
               onClick={link.onClick}
               className={cn(
                 "flex items-center gap-3 p-3 rounded-2xl transition-all group overflow-hidden active:scale-95",
+                !isOpen && "justify-center",
                 isActive
                   ? "bg-primary text-white shadow-lg shadow-primary/20"
                   : "text-slate-200 font-semibold hover:bg-white/10 hover:text-white"

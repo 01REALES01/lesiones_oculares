@@ -14,9 +14,9 @@ scikit-image>=0.22.0
 # ML / Deep Learning
 tensorflow>=2.15.0
 tf_keras>=2.15.0
-keras>=2.15.0,<2.16
-protobuf>=3.20.3,<6.0.0
-tensorboard>=2.15.0,<2.16.0
+keras>=2.15.0
+protobuf>=3.20.3
+tensorboard>=2.15.0
 
 # Utilidades
 python-multipart>=0.0.9
