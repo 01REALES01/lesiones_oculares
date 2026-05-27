@@ -979,8 +979,7 @@ const calculatedConsensusGrade = useMemo(() => {
                                   </div>
 
                                   <SwitchToggle active={!usarOriginal} onToggle={handleToggle} />
-                                </div>
-                              </div>
+                                </div>                              </div>
                               <p className="text-xs font-light text-slate-900">Haz clic en la imagen para ampliarla.</p>
                             </div>
                             <div className="relative rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center w-full h-[260px] max-h-[280px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
