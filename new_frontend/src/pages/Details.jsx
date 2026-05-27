@@ -962,7 +962,22 @@ const calculatedConsensusGrade = useMemo(() => {
                               <div className="flex items-center justify-between">
                                 <p className="text-sm font-bold text-slate-800 uppercase">Retinografía analizada</p>
                                 <div className="flex items-center gap-2">
-                                  <p className="text-xs font-semibold text-slate-600 uppercase">Aplicar Filtro Ben-Graham</p>
+                                  <div className="flex items-center gap-1">
+                                    <p className="text-xs font-semibold text-slate-600 uppercase">
+                                      Aplicar Filtro Ben-Graham
+                                    </p>
+
+                                    <div className="relative group">
+                                      <div className="w-4 h-4 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center cursor-pointer hover:bg-primary/20 transition-all">
+                                        <span className="text-[10px] font-black text-primary">?</span>
+                                      </div>
+
+                                      <div className="absolute right-0 top-6 z-50 w-64 rounded-2xl bg-slate-900 text-white text-[11px] leading-relaxed p-3 shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
+                                        El filtro Ben-Graham mejora el contraste y resalta vasos sanguíneos y lesiones retinales para facilitar la visualización clínica.
+                                      </div>
+                                    </div>
+                                  </div>
+
                                   <SwitchToggle active={!usarOriginal} onToggle={handleToggle} />
                                 </div>
                               </div>
