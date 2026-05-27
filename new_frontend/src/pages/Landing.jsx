@@ -325,7 +325,7 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                 <div className="max-w-2xl">
                   <p className="text-xs font-black uppercase tracking-[0.3em] text-sky-100">Acceso Seguro</p>
                   <h2 className="mt-4 text-3xl font-black tracking-tight md:text-5xl">Comience el análisis de retinografías hoy mismo.</h2>
-                  <p className="mt-4 text-base leading-7 text-sky-50/90 md:text-lg">Inicie sesión de manera segura con sus credenciales autorizadas de la Universidad del Norte para acceder al panel médico y consultar el historial.</p>
+                  <p className="mt-4 text-base leading-7 text-sky-50/90 md:text-lg">Inicie sesión de manera segura con sus credenciales autorizadas para acceder al panel médico y consultar el historial.</p>
                 </div>
 
                 <button
