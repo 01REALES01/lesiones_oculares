@@ -412,8 +412,8 @@ export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
         {/* Header & Controls */}
         <div className="space-y-6 border-b border-slate-200/50 pb-6 mb-2">
           <div>
-            <h1 className="text-3xl font-bold text-ocular-text-main">Historial de Evaluaciones</h1>
-            <p className="text-ocular-text-muted mt-1">Gestión y consulta de todos los análisis realizados por la plataforma.</p>
+            <h1 className="text-3xl font-bold text-slate-800 dark:text-white">Historial de Evaluaciones</h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-1">Gestión y consulta de todos los análisis realizados por la plataforma.</p>
           </div>
 
           <div className="flex flex-col gap-4 w-full">
@@ -427,7 +427,7 @@ export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
                 onChange={(e) => setSearch(e.target.value)}
                 onFocus={() => setShowSuggestions(true)}
                 onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                className="bg-white/50 border border-slate-200 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-primary transition-all w-full shadow-md font-medium text-ocular-text-main"
+                className="bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-white/20 pl-10 pr-4 py-3 rounded-xl text-sm outline-none focus:border-primary dark:focus:border-primary transition-all w-full shadow-md font-medium text-slate-800 dark:text-white"
               />
               <AnimatePresence>
                 {showSuggestions && search.trim() && (
@@ -435,7 +435,7 @@ export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 5 }}
-                    className="absolute left-0 right-0 mt-2 z-[99] rounded-2xl border border-slate-200 bg-white/95 backdrop-blur-xl shadow-2xl overflow-hidden py-1.5 max-h-80 overflow-y-auto w-full"
+                    className="absolute left-0 right-0 mt-2 z-[99] rounded-2xl border border-slate-200 dark:border-white/20 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl shadow-2xl overflow-hidden py-1.5 max-h-80 overflow-y-auto w-full"
                   >
                     {getSuggestions().length > 0 ? (
                       <>
@@ -482,7 +482,7 @@ export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
             {/* Fila inferior de filtros */}
             <div className="flex flex-wrap items-center justify-between gap-4 w-full">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex bg-white/50 p-1 rounded-xl border border-slate-200/80 shadow-sm shrink-0">
+                <div className="flex bg-white/50 dark:bg-slate-800/50 p-1 rounded-xl border border-slate-200/80 dark:border-white/10 shadow-sm shrink-0">
                   {['all', 'high', 'medium', 'low', 'mixed'].map((f) => (
                     <button
                       key={f}
@@ -503,7 +503,7 @@ export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
                     type="date"
                     value={dateFilter}
                     onChange={(e) => setDateFilter(e.target.value)}
-                    className="bg-white/70 border border-slate-200 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary transition-all w-48 font-bold text-ocular-text-main shadow-sm"
+                    className="bg-white/70 dark:bg-slate-800/70 border border-slate-200 dark:border-white/10 pl-10 pr-4 py-2 rounded-xl text-sm outline-none focus:border-primary transition-all w-48 font-bold text-slate-800 dark:text-slate-300 shadow-sm"
                   />
                   {dateFilter && (
                       <button
@@ -575,8 +575,8 @@ export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
             </AnimatePresence>
           </div>
         ) : (
-          <GlassCard className="py-20 text-center border border-slate-200 shadow-md shadow-slate-200/50">
-            <Search className="w-12 h-12 text-ocular-text-muted/20 mx-auto mb-4" />
+          <GlassCard className="py-20 text-center border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/50 dark:shadow-none bg-white/80 dark:bg-slate-800/80">
+            <Search className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-4" />
             <h3 className="text-xl font-bold text-ocular-text-main">No se encontraron resultados</h3>
             <p className="text-ocular-text-muted">Ajusta los filtros o intenta con otra búsqueda.</p>
             <button onClick={() => { setSearch(""); setRiskFilter("all"); setDateFilter(""); }} className="mt-4 text-primary font-bold hover:underline">Limpiar búsqueda y filtros</button>
@@ -780,7 +780,7 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
       transition={{ delay: transitionDelay }}
     >
       <GlassCard
-        className="group hover:border-primary/50 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-0 overflow-hidden h-full flex flex-col bg-gradient-to-br from-white via-white to-slate-50/70 border border-slate-200 shadow-md shadow-slate-200/80"
+        className="group hover:border-primary/50 hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-300 cursor-pointer p-0 overflow-hidden h-full flex flex-col bg-gradient-to-br from-white via-white to-slate-50/70 dark:from-slate-900/80 dark:via-slate-800/80 dark:to-slate-900/80 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/80 dark:shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)]"
         onClick={onClick}
       >
         <div className="p-5 flex-1 flex flex-col gap-4">
@@ -788,12 +788,12 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
             <div className={cn("px-3 py-1 rounded-full text-xs font-medium tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]", getRiskBadgeStyle(riskLevel))}>
               {riskText}
             </div>
-            <span className="text-xs text-slate-700 font-medium flex items-center gap-1">
+            <span className="text-xs text-slate-700 dark:text-slate-300 font-medium flex items-center gap-1">
               <Calendar size={12} /> {new Date(item.timestamp).toLocaleDateString()}
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); onDelete(e); }}
-              className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
+              className="p-1.5 rounded-lg bg-slate-50 dark:bg-slate-800 text-slate-400 hover:bg-red-50 dark:hover:bg-red-500/20 hover:text-red-500 transition-all opacity-0 group-hover:opacity-100"
               title="Eliminar este análisis"
             >
               <Trash2 size={14} />
@@ -801,16 +801,16 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
           </div>
 
           <div className="space-y-1">
-            <h3 className="font-bold text-ocular-text-main group-hover:text-primary transition-colors flex items-center gap-2">
+            <h3 className="font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors flex items-center gap-2">
               <FileText size={16} className="text-primary" />
               {item.is_batch ? `Lote # ${(item.batch_id || 'N/A').substring(0, 8)}` : `Archivo: ${summary?.filename || item.filename || 'Sin nombre'}`}
             </h3>
             {item.is_batch && (
-              <p className="text-xs text-slate-700 font-medium truncate uppercase tracking-widest">
+              <p className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate uppercase tracking-widest">
                 Contiene <span className="text-primary">{item.batch_size} imágenes</span>
               </p>
             )}
-            <p className="text-xs text-ocular-text-main font-medium mt-1">
+            <p className="text-xs text-slate-800 dark:text-slate-200 font-medium mt-1">
               {item.is_batch
                 ? `Altos: ${highCount} · Medios: ${mediumCount} · Bajos: ${lowCount} · NO R.D.: ${noRdCount}`
                 : (summary?.headline || item.diagnosis || 'Comparaci?n de modelos RD')}
@@ -820,14 +820,14 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
 
           {!item.is_batch && (
             <div className="grid grid-cols-2 gap-3 mt-2">
-              <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
-                <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Modelos Positivos</p>
-                <p className="text-sm font-black text-ocular-text-main mt-0.5">
+              <div className="bg-slate-100/50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200/40 dark:border-white/10 transition-colors">
+                <p className="text-[8px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Modelos Positivos</p>
+                <p className="text-sm font-black text-slate-800 dark:text-white mt-0.5">
                   {summary?.positive_models ?? 0}/{summary?.total_models ?? item.models_used?.length ?? 0}
                 </p>
               </div>
-              <div className="bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/40 transition-colors">
-                <p className="text-[8px] font-extrabold text-ocular-text-muted uppercase tracking-wider">Diagnóstico</p>
+              <div className="bg-slate-100/50 dark:bg-slate-900/60 p-2.5 rounded-xl border border-slate-200/40 dark:border-white/10 transition-colors">
+                <p className="text-[8px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Diagnóstico</p>
                 <p className="text-xs font-black text-primary mt-0.5 truncate uppercase tracking-tight">
                   {summary?.primary_grade !== undefined && summary?.primary_grade !== null
                     ? ['NO R.D.', 'Leve', 'Moderado', 'Severo', 'Proliferativo'][summary.primary_grade] || 'N/A'
@@ -838,7 +838,7 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
           )}
         </div>
 
-        <div className="bg-primary/5 p-3.5 flex justify-between items-center group-hover:bg-gradient-to-r group-hover:from-sky-500/10 group-hover:to-primary/5 border-t border-slate-100/50 transition-all duration-300">
+        <div className="bg-primary/5 dark:bg-primary/10 p-3.5 flex justify-between items-center group-hover:bg-gradient-to-r group-hover:from-sky-500/10 group-hover:to-primary/5 border-t border-slate-100/50 dark:border-white/10 transition-all duration-300">
           <span className="text-[10px] font-bold text-primary uppercase tracking-wide">Ver Informe Detallado</span>
           <ChevronRight size={16} className="text-primary group-hover:translate-x-1.5 transition-transform" />
         </div>

@@ -39,11 +39,11 @@ export default function Profile() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div>
-        <h1 className="text-3xl font-bold text-ocular-text-main flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
           <User className="text-primary" />
           Mi Perfil
         </h1>
-        <p className="text-ocular-text-muted mt-1">
+        <p className="text-slate-500 dark:text-slate-400 mt-1">
           Consulta la información asociada a tu cuenta en OcularAI.
         </p>
       </div>
@@ -58,7 +58,7 @@ export default function Profile() {
         </div>
       )}
 
-      <GlassCard className="p-6 border border-slate-200 shadow-md shadow-slate-200/60 max-w-3xl">
+      <GlassCard className="p-6 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/60 dark:shadow-none bg-white/80 dark:bg-slate-800/80 max-w-3xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <ProfileField icon={User} label="Nombre" value={user?.name || 'No registrado'} />
           <ProfileField icon={Mail} label="Correo" value={user?.email || 'No registrado'} />
@@ -74,7 +74,7 @@ export default function Profile() {
           />
         </div>
 
-        <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-800">
+        <div className="mt-6 rounded-2xl border border-amber-200 dark:border-amber-500/20 bg-amber-50/80 dark:bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-400">
           Si deseas modificar tu información personal, contacta con el administrador de la plataforma.
         </div>
 
@@ -97,10 +97,10 @@ export default function Profile() {
 function ProfileField({ icon: Icon, label, value }) {
   return (
     <div>
-      <label className="text-xs font-bold text-ocular-text-muted uppercase">
+      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
         {label}
       </label>
-      <div className="mt-1 flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-100/70 px-4 py-3 text-sm text-slate-600">
+      <div className="mt-1 flex items-center gap-3 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100/70 dark:bg-slate-900/60 px-4 py-3 text-sm text-slate-600 dark:text-slate-300">
         <Icon size={18} className="text-primary" />
         <span className="font-semibold">{value}</span>
       </div>

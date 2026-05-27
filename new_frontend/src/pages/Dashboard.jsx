@@ -317,18 +317,18 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
       )}
 
       <div className="space-y-8 animate-in fade-in duration-500 min-h-0">
-        <div className="relative overflow-hidden rounded-3xl border-l-[6px] border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50/40 px-6 py-7 shadow-[0_10px_30px_-10px_rgba(15,23,42,0.05)] sm:px-8 sm:py-8 border-l-primary">
+        <div className="relative overflow-hidden rounded-3xl border-l-[6px] border border-slate-200 dark:border-white/10 bg-gradient-to-br from-white via-white to-slate-50/40 dark:from-slate-900/80 dark:via-slate-800/80 dark:to-slate-900/80 px-6 py-7 shadow-[0_10px_30px_-10px_rgba(15,23,42,0.05)] sm:px-8 sm:py-8 border-l-primary">
           <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_40%_at_10%_0%,rgba(14,165,233,0.05),transparent_50%)]" />
           <div className="relative flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h1 className="text-2xl font-black tracking-tight text-slate-800 sm:text-3xl">
+              <h1 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white sm:text-3xl">
                 Analizar Nueva Retinografía
               </h1>
-              <p className="mt-1.5 max-w-xl text-xs font-semibold leading-relaxed text-slate-500 sm:text-sm">
+              <p className="mt-1.5 max-w-xl text-xs font-semibold leading-relaxed text-slate-500 dark:text-slate-400 sm:text-sm">
                 Inicialice el pipeline de diagnóstico ocular en alta resolución. Compare uno, dos o tres modelos de retinopatía diabética en una sola ejecución.
               </p>
             </div>
-            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.25em] text-slate-700 bg-slate-100 px-3 py-1 rounded-full border border-slate-200/50">
+            <p className="shrink-0 text-[10px] font-black uppercase tracking-[0.25em] text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200/50 dark:border-white/10">
               {globalStats.total_analyses} análisis en sistema
             </p>
           </div>
@@ -342,7 +342,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-7 xl:col-span-8">
-            <GlassCard className="border border-slate-200/60 bg-white/85 p-0 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
+            <GlassCard className="border border-slate-200/60 dark:border-white/10 bg-white/85 dark:bg-slate-800/80 p-0 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
               <div className="space-y-0 p-6 sm:p-8">
                 {/* Tip de uso clínico reubicado */}
                 <GlassCard className="bg-slate-900 border border-slate-800 p-5 shadow-xl rounded-3xl relative overflow-hidden mb-6">
@@ -386,8 +386,8 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     ${isDragging
                       ? 'border-primary bg-primary/10 scale-[1.01] shadow-[0_12px_40px_rgba(14,165,233,0.12),inset_0_0_0_1px_rgba(14,165,233,0.1)]'
                       : files.length > 0
-                        ? 'border-primary/50 bg-primary/5 shadow-[0_8px_30px_rgb(14,165,233,0.05)]'
-                        : 'border-slate-200 bg-slate-50/20 hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_8px_30px_rgb(14,165,233,0.03)]'
+                        ? 'border-primary/50 bg-primary/5 dark:bg-primary/10 shadow-[0_8px_30px_rgb(14,165,233,0.05)]'
+                        : 'border-slate-200 dark:border-white/10 bg-slate-50/20 dark:bg-slate-900/50 hover:border-primary/40 hover:bg-primary/5 hover:shadow-[0_8px_30px_rgb(14,165,233,0.03)]'
                     }
                   `}
                 >
@@ -415,17 +415,17 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                       flex h-16 w-16 items-center justify-center rounded-2xl border transition-all duration-300
                       ${files.length > 0
                         ? 'text-primary bg-primary/10 border-primary/20 shadow-[0_8px_20px_rgba(14,165,233,0.15)] scale-110'
-                        : 'text-slate-400 bg-white border-slate-200 shadow-sm hover:scale-105 hover:text-primary hover:border-primary/30'
+                        : 'text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 border-slate-200 dark:border-white/10 shadow-sm hover:scale-105 hover:text-primary hover:border-primary/30'
                       }
                     `}
                   >
                     <Upload className="h-7 w-7" />
                   </div>
                   <div>
-                    <p className="text-base font-black text-slate-800 tracking-tight sm:text-lg">
+                    <p className="text-base font-black text-slate-800 dark:text-white tracking-tight sm:text-lg">
                       {files.length > 0 ? `${files.length} imágenes listas` : 'Arrastre sus retinografías aquí'}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500 font-medium sm:text-sm">Compatible con JPEG, PNG o carpetas completas.</p>
+                    <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 font-medium sm:text-sm">Compatible con JPEG, PNG o carpetas completas.</p>
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5">
@@ -450,7 +450,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                           key={i}
                           className="group/item flex max-w-full items-center gap-2 rounded-xl border border-slate-200/80 bg-white/90 px-2.5 py-1.5 pr-1 shadow-sm transition"
                         >
-                          <span className="truncate text-[10px] font-bold text-slate-700 sm:max-w-[140px]">
+                          <span className="truncate text-[10px] font-bold text-slate-700 dark:text-slate-300 sm:max-w-[140px]">
                             {f.name}
                           </span>
                           <button
@@ -461,7 +461,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                               removeFile(i);
                             }}
                             disabled={interactionLocked}
-                            className={`rounded-lg p-1 transition ${interactionLocked ? 'cursor-not-allowed text-slate-300' : 'text-slate-400 hover:bg-red-50 hover:text-ocular-error'}`}
+                            className={`rounded-lg p-1 transition ${interactionLocked ? 'cursor-not-allowed text-slate-300' : 'text-slate-400 dark:text-slate-500 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-ocular-error'}`}
                           >
                             <X size={14} />
                           </button>
@@ -471,7 +471,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   )}
                 </div>
 
-                <div className="mt-0 flex items-center justify-between border-t border-slate-100/80 px-1 py-3 text-[10px] font-black uppercase tracking-widest text-primary">
+                <div className="mt-0 flex items-center justify-between border-t border-slate-100/80 dark:border-white/10 px-1 py-3 text-[10px] font-black uppercase tracking-widest text-primary">
                   <span>
                     Estado:{' '}
                     {loading
@@ -499,7 +499,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
             </GlassCard>
 
             <div ref={resultsRef}>
-              <GlassCard className="border border-slate-200/50 bg-white/60 p-4 sm:p-6">
+              <GlassCard className="border border-slate-200/50 dark:border-white/10 bg-white/60 dark:bg-slate-800/80 p-4 sm:p-6">
                 <AnimatePresence mode="wait">
                   {results && (
                     <motion.div
@@ -519,7 +519,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                           <div className="flex items-center justify-between px-1">
                             <div className="flex items-center gap-2">
                               <CheckCircle2 size={18} className="text-ocular-success" />
-                              <h3 className="text-lg font-bold text-ocular-text-main">Resultados del Análisis</h3>
+                              <h3 className="text-lg font-bold text-slate-800 dark:text-white">Resultados del Análisis</h3>
                             </div>
                             <div className="flex gap-2">
                               {results?.[0]?.batch_id && (
@@ -532,7 +532,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                               )}
                               <button
                                 onClick={() => setResultsVisible(false)}
-                                className="flex items-center gap-2 px-4 py-2 bg-white/50 border border-white/60 rounded-xl text-[10px] font-bold text-ocular-text-muted hover:text-primary hover:border-primary/30 transition-all uppercase tracking-widest shadow-sm"
+                                className="flex items-center gap-2 px-4 py-2 bg-white/50 dark:bg-slate-700/50 border border-slate-200/60 dark:border-white/20 rounded-xl text-[10px] font-bold text-slate-500 dark:text-slate-300 hover:text-primary dark:hover:text-primary hover:border-primary/30 transition-all uppercase tracking-widest shadow-sm"
                               >
                                 <X size={14} /> Ocultar
                               </button>
@@ -554,7 +554,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                         >
                           <button
                             onClick={() => setResultsVisible(true)}
-                            className="w-full p-4 bg-white/40 border border-white/60 border-dashed rounded-3xl flex items-center justify-center gap-3 text-ocular-text-muted hover:text-primary hover:bg-white/60 transition-all group"
+                            className="w-full p-4 bg-white/40 dark:bg-slate-800/40 border border-slate-200 dark:border-white/20 border-dashed rounded-3xl flex items-center justify-center gap-3 text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary hover:bg-white/60 dark:hover:bg-slate-800/80 transition-all group"
                           >
                             <Plus className="group-hover:rotate-90 transition-transform" />
                             <span className="text-sm font-bold uppercase tracking-widest">Mostrar resultados del último análisis ({results.length})</span>
@@ -573,10 +573,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
 
 
           <div className="space-y-4 lg:col-span-5 xl:col-span-4">
-            <GlassCard className="border border-slate-200/60 bg-white/85 p-6 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-7 overflow-hidden">
-              <div className="flex items-center gap-2 mb-5 border-b border-slate-100 pb-3">
+            <GlassCard className="border border-slate-200/60 dark:border-white/10 bg-white/85 dark:bg-slate-800/80 p-6 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:p-7 overflow-hidden">
+              <div className="flex items-center gap-2 mb-5 border-b border-slate-100 dark:border-white/10 pb-3">
                 <Layers className="h-5 w-5 text-primary" />
-                <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider">
+                <h3 className="font-extrabold text-slate-800 dark:text-white text-sm uppercase tracking-wider">
                   Modelos a Ejecutar
                 </h3>
               </div>
@@ -656,8 +656,8 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
             >
               <GlassCard
                 className={`
-                flex w-full items-center gap-3 border border-slate-200/60 bg-white/90 p-4 transition-all duration-200
-                ${recentHistory[0] ? 'hover:border-primary/50 hover:shadow-md hover:scale-[1.01]' : 'opacity-60'}
+                flex w-full items-center gap-3 border border-slate-200/60 dark:border-white/10 bg-white/90 dark:bg-slate-800/90 p-4 transition-all duration-200
+                ${recentHistory[0] ? 'hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md hover:scale-[1.01]' : 'opacity-60'}
               `}
               >
                 <div className="h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-primary/20 bg-primary/10 flex items-center justify-center text-primary shadow-inner">
@@ -665,7 +665,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[9px] font-medium uppercase tracking-widest text-primary">Referencia reciente</p>
-                  <p className="truncate text-sm font-bold text-slate-800">
+                  <p className="truncate text-sm font-bold text-slate-800 dark:text-white">
                     {recentHistory[0]
                       ? (() => {
                         const h = recentHistory[0];
@@ -693,19 +693,19 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               </GlassCard>
             </button>
 
-            <GlassCard className="p-6 border border-slate-200/60 bg-white/85 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
-              <div className="flex items-center justify-between mb-6 border-b border-slate-100 pb-3">
+            <GlassCard className="p-6 border border-slate-200/60 dark:border-white/10 bg-white/85 dark:bg-slate-800/80 shadow-[0_10px_35px_-10px_rgba(15,23,42,0.08)] backdrop-blur-xl overflow-hidden">
+              <div className="flex items-center justify-between mb-6 border-b border-slate-100 dark:border-white/10 pb-3">
                 <div className="flex items-center gap-2">
                   <Clock size={18} className="text-primary" />
-                  <h3 className="font-extrabold text-slate-800 text-sm uppercase tracking-wider">Historial Reciente</h3>
+                  <h3 className="font-extrabold text-slate-800 dark:text-white text-sm uppercase tracking-wider">Historial Reciente</h3>
                 </div>
                 <div className="flex items-center gap-3">
                   {hasHistoryToClear && (
-                    <button
+                      <button
                       type="button"
                       onClick={() => setClearModalOpen(true)}
                       disabled={clearingHistory}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-white/60 bg-white/80 text-[10px] font-bold uppercase tracking-wider text-slate-600 hover:border-ocular-error/40 hover:text-ocular-error transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-white/20 bg-white/80 dark:bg-slate-800 text-[10px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-ocular-error/40 hover:text-ocular-error transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <Trash2 size={12} />
                       {clearingHistory ? 'Limpiando...' : 'Limpiar'}
@@ -748,12 +748,12 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="text-sm font-bold text-ocular-text-main group-hover:text-primary transition-colors">
+                              <p className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-primary dark:group-hover:text-primary transition-colors">
                                 {isBatchItem && item.batch_id
                                   ? `Lote #${item.batch_id.substring(0, 6)}`
                                   : `Analisis #${item.inference_id.substring(0, 5)}`}
                               </p>
-                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide ${isBatchItem ? 'bg-primary/10 text-primary' : 'bg-slate-200/70 text-slate-600'}`}>
+                              <span className={`px-2 py-0.5 rounded-full text-[9px] font-medium uppercase tracking-wide ${isBatchItem ? 'bg-primary/10 text-primary' : 'bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300'}`}>
                                 {isBatchItem ? `Lote${item.batch_size ? ` (${item.batch_size})` : ''}` : 'Individual'}
                               </span>
                             </div>
@@ -900,22 +900,22 @@ function ModelRow({ id, labelId, icon: Icon, title, sub, active, onToggle }) {
     <li
       className={`
         flex items-center gap-3 rounded-2xl border p-3 transition-all
-        ${active ? 'border-sky-200/80 bg-sky-50/50 shadow-sm' : 'border-slate-200/60 bg-slate-50/40'}
+        ${active ? 'border-sky-200/80 bg-sky-50/50 dark:bg-sky-500/10 shadow-sm' : 'border-slate-200/60 dark:border-white/10 bg-slate-50/40 dark:bg-slate-900/40'}
       `}
     >
       <div
         className={`
           flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border
-          ${active ? 'border-sky-200/80 bg-white text-sky-600' : 'border-slate-200/80 bg-white/80 text-slate-400'}
+          ${active ? 'border-sky-200/80 bg-white dark:bg-slate-800 text-sky-600' : 'border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-800/80 text-slate-400'}
         `}
       >
         <Icon className="h-5 w-5" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-bold text-slate-900" id={labelId}>
+        <p className="text-sm font-bold text-slate-900 dark:text-white" id={labelId}>
           {title}
         </p>
-        <p className="text-[11px] text-slate-500">{sub}</p>
+        <p className="text-[11px] text-slate-500 dark:text-slate-400">{sub}</p>
       </div>
       <SwitchToggle id={id} labelId={labelId} active={active} onToggle={onToggle} />
     </li>
@@ -931,7 +931,7 @@ function ResultMiniCard({ result, onClick }) {
       type="button"
       onClick={onClick}
       className={cn(
-        "glass-panel p-4 flex items-center justify-between group transition-all border-white/40",
+        "glass-panel p-4 flex items-center justify-between group transition-all border-white/40 dark:border-white/10 dark:bg-slate-800",
         isError ? "hover:border-red-400/40" : "hover:border-primary/40"
       )}
     >
@@ -943,10 +943,10 @@ function ResultMiniCard({ result, onClick }) {
           {isError ? <AlertCircle size={18} /> : <CheckCircle2 size={18} />}
         </div>
         <div className="text-left overflow-hidden">
-          <p className="text-sm font-bold text-ocular-text-main group-hover:text-primary transition-colors truncate">{result.filename}</p>
+          <p className="text-sm font-bold text-slate-800 dark:text-white group-hover:text-primary transition-colors truncate">{result.filename}</p>
           <p className={cn(
             "text-[10px] font-bold truncate",
-            isError ? "text-red-500" : "text-ocular-text-muted"
+            isError ? "text-red-500" : "text-slate-500 dark:text-slate-400"
           )}>
             {isError ? (result.error || 'Error en análisis') : (comparisonSummary.headline || 'Análisis finalizado')}
           </p>

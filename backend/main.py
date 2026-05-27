@@ -184,7 +184,7 @@ app.mount("/images", StaticFiles(directory=str(IMAGES_DIR)), name="images")
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # En prod, especificar dominios
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"], # Dominios de desarrollo
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

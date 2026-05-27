@@ -103,17 +103,17 @@ function suggestionByGrade(grade) {
 function getGradeStyle(grade) {
   switch (grade) {
     case 0: // NO R.D.
-      return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 shadow-emerald-500/5';
+      return 'border-emerald-500/45 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 dark:bg-emerald-500/20 shadow-emerald-500/5';
     case 1: // Leve
-      return 'border-primary/45 bg-primary/10 text-primary-dark shadow-primary/5';
+      return 'border-primary/45 bg-primary/10 text-primary-dark dark:text-sky-400 dark:bg-primary/20 shadow-primary/5';
     case 2: // Moderado
-      return 'border-amber-500/45 bg-amber-500/10 text-amber-700 shadow-amber-500/5';
+      return 'border-amber-500/45 bg-amber-500/10 text-amber-700 dark:text-amber-400 dark:bg-amber-500/20 shadow-amber-500/5';
     case 3: // Severo
-      return 'border-orange-500/45 bg-orange-500/10 text-orange-700 shadow-orange-500/5';
+      return 'border-orange-500/45 bg-orange-500/10 text-orange-700 dark:text-orange-400 dark:bg-orange-500/20 shadow-orange-500/5';
     case 4: // Proliferativo
-      return 'border-rose-500/45 bg-rose-500/10 text-rose-700 shadow-rose-500/5';
+      return 'border-rose-500/45 bg-rose-500/10 text-rose-700 dark:text-rose-400 dark:bg-rose-500/20 shadow-rose-500/5';
     default:
-      return 'border-slate-300/45 bg-slate-100/10 text-slate-700';
+      return 'border-slate-300/45 bg-slate-100/10 text-slate-700 dark:text-slate-300 dark:bg-slate-700/30';
   }
 }
 
@@ -767,7 +767,7 @@ const calculatedConsensusGrade = useMemo(() => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -10 }}
           >
-            <div ref={reportRef} className="bg-slate-200 border border-slate-300/85 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] p-6 sm:p-8 rounded-[2rem] grid grid-cols-1 xl:grid-cols-12 gap-8">
+            <div ref={reportRef} className="bg-slate-200 dark:bg-slate-900/90 border border-slate-300/85 dark:border-white/10 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.15)] p-6 sm:p-8 rounded-[2rem] grid grid-cols-1 xl:grid-cols-12 gap-8">
               {isGeneratingPdf && (
                 <div className="xl:col-span-12 mb-4 pb-4 border-b border-slate-250">
                   <h1 className="text-3xl font-black text-primary uppercase tracking-widest">Ocular AI Report</h1>
@@ -779,14 +779,14 @@ const calculatedConsensusGrade = useMemo(() => {
               {/* PANEL IZQUIERDO */}
               <div className="xl:col-span-4 space-y-6">
                 <div className="space-y-1">
-                  <h2 className="text-3xl font-black text-slate-955">Diagnóstico de Soporte</h2>
+                  <h2 className="text-3xl font-black text-slate-950 dark:text-white">Diagnóstico de Soporte</h2>
                   {showReportId && (
-                    <p className="text-sm text-slate-900 font-semibold uppercase tracking-widest">
+                    <p className="text-sm text-slate-900 dark:text-slate-200 font-semibold uppercase tracking-widest">
                       Nombre del archivo: <span className="text-primary-dark font-bold">{result.filename || result.summary?.filename || 'Sin nombre'}</span>
                     </p>
                   )}
                   <div className="flex flex-wrap items-center gap-2 pt-1.5">
-                    <span className="text-sm font-semibold text-slate-900 uppercase tracking-wider">
+                    <span className="text-sm font-semibold text-slate-900 dark:text-slate-300 uppercase tracking-wider">
                       Fecha: {formatTimestamp(timestamp)}
                     </span>
                   </div>
@@ -814,21 +814,21 @@ const calculatedConsensusGrade = useMemo(() => {
                 {hasComparison ? (
                   <div className="space-y-4">
                     {/* Consenso Comparativo */}
-                    <div className="p-5 bg-white border border-slate-300 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/45 hover:-translate-y-0.5 transition-all duration-300 rounded-3xl">
+                    <div className="p-5 bg-white dark:bg-slate-800/80 border border-slate-300 dark:border-white/10 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/45 hover:-translate-y-0.5 transition-all duration-300 rounded-3xl">
                       <div className="flex items-center gap-4">
                         <div>
                           <span className="text-xs font-semibold text-primary-dark uppercase tracking-widest">Consenso Comparativo</span>
-                          <p className="text-lg font-bold text-slate-900 mt-0.5">{summary.headline || 'Comparación de modelos RD'}</p>
+                          <p className="text-lg font-bold text-slate-900 dark:text-white mt-0.5">{summary.headline || 'Comparación de modelos RD'}</p>
                         </div>
                       </div>
                     </div>
 
                     {/* Lista de Modelos Comparados (Panel Izquierdo) - REPLACED WITH VERTICAL TABLE */}
-                    <div className="p-5 bg-white border border-slate-300 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
+                    <div className="p-5 bg-white dark:bg-slate-800/80 border border-slate-300 dark:border-white/10 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
                       <div className="overflow-x-auto">
                         <table className="w-full text-left border-collapse">
                           <thead>
-                            <tr className="border-b border-slate-200">
+                            <tr className="border-b border-slate-200 dark:border-white/10">
                               <th className="py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Modelo</th>
                               <th className="py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Diagnóstico</th>
                               <th className="py-2 px-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider">Confianza</th>
@@ -836,14 +836,14 @@ const calculatedConsensusGrade = useMemo(() => {
                           </thead>
                           <tbody>
                             {comparisonModels.map((item, idx) => (
-                              <tr key={item.model_id} className={cn("border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors")}>
-                                <td className="py-3 px-3 text-[11px] font-black text-slate-900 uppercase">{item.model_name}</td>
+                              <tr key={item.model_id} className={cn("border-b border-slate-100 dark:border-white/5 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors")}>
+                                <td className="py-3 px-3 text-[11px] font-black text-slate-900 dark:text-white uppercase">{item.model_name}</td>
                                 <td className="py-3 px-3">
                                   <span className={cn('px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border whitespace-nowrap', getGradeStyle(item.predicted_class))}>
                                     {gradeToLabel(item.predicted_class)}
                                   </span>
                                 </td>
-                                <td className="py-3 px-3 text-[11px] font-bold text-primary-dark">{Number(item.confidence_percent).toFixed(1)}%</td>
+                                <td className="py-3 px-3 text-[11px] font-bold text-primary-dark dark:text-sky-400">{Number(item.confidence_percent).toFixed(1)}%</td>
                               </tr>
                             ))}
                           </tbody>
@@ -926,7 +926,7 @@ const calculatedConsensusGrade = useMemo(() => {
                   <div className="flex items-center gap-2 text-primary-dark font-bold text-sm uppercase tracking-wider">
                     <ClipboardList size={16} /> Sugerencia
                   </div>
-                  <p className="text-sm text-slate-950 leading-relaxed font-semibold italic">
+                  <p className="text-sm text-slate-950 dark:text-slate-200 leading-relaxed font-semibold italic">
                     "{summary.recommendation_short || primaryResult.recommendation_short || suggestionByGrade(consensusGrade)}"
                   </p>
                 </div>
@@ -934,19 +934,19 @@ const calculatedConsensusGrade = useMemo(() => {
 
               {/* PANEL DERECHO */}
               <div className="xl:col-span-8">
-                <div className="h-full flex flex-col overflow-hidden bg-slate-100/70 border border-slate-200/80 shadow-2xl rounded-3xl">
+                <div className="h-full flex flex-col overflow-hidden bg-slate-100/70 dark:bg-slate-900/80 border border-slate-200/80 dark:border-white/10 shadow-2xl rounded-3xl">
                   {/* Header Panel Derecho */}
-                  <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/40 bg-white/40">
+                  <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/40 dark:border-white/5 bg-white/40 dark:bg-slate-800/40">
                     <div className="flex items-center gap-3">
                       <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center text-primary-dark shadow-sm shadow-primary/5">
                         <Eye size={18} />
                       </div>
                       <div>
-                        <h3 className="text-base font-bold text-slate-900 uppercase tracking-tight">{rightPanelTitle}</h3>
-                        <p className="text-xs text-slate-600 font-medium">{rightPanelSubtitle}</p>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-tight">{rightPanelTitle}</h3>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{rightPanelSubtitle}</p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-white border border-slate-200 rounded-full text-xs font-semibold text-slate-700 shadow-sm">
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-white/10 rounded-full text-xs font-semibold text-slate-700 dark:text-slate-300 shadow-sm">
                       <Info size={12} className="text-primary-dark" />
                       {hasComparison ? `${comparisonModels.length} MODELOS RD` : (primaryResult.model_used || result.model_used || 'MODELO IA').toUpperCase()}
                     </div>
@@ -956,14 +956,14 @@ const calculatedConsensusGrade = useMemo(() => {
                     <div className="p-5 space-y-6">
                       {/* Tarjeta Retina Analizada */}
                       {!hideImage && imageUrl && (
-                        <div className="p-4 border border-slate-300 bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
+                        <div className="p-4 border border-slate-300 dark:border-white/10 bg-white dark:bg-slate-800/80 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] rounded-3xl hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:border-primary/50 hover:-translate-y-0.5 transition-all duration-300">
                           <div className="space-y-3">
                             <div className="flex flex-col gap-3">
                               <div className="flex items-center justify-between">
-                                <p className="text-sm font-bold text-slate-800 uppercase">Retinografía analizada</p>
+                                <p className="text-sm font-bold text-slate-800 dark:text-white uppercase">Retinografía analizada</p>
                                 <div className="flex items-center gap-2">
                                   <div className="flex items-center gap-1">
-                                    <p className="text-xs font-semibold text-slate-600 uppercase">
+                                    <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 uppercase">
                                       Aplicar Filtro Ben-Graham
                                     </p>
 
@@ -980,7 +980,7 @@ const calculatedConsensusGrade = useMemo(() => {
 
                                   <SwitchToggle active={!usarOriginal} onToggle={handleToggle} />
                                 </div>                              </div>
-                              <p className="text-xs font-light text-slate-900">Haz clic en la imagen para ampliarla.</p>
+                              <p className="text-xs font-light text-slate-900 dark:text-slate-400">Haz clic en la imagen para ampliarla.</p>
                             </div>
                             <div className="relative rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center w-full h-[260px] max-h-[280px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
                               <ZoomableImage
@@ -1001,11 +1001,11 @@ const calculatedConsensusGrade = useMemo(() => {
 
                       {/* CARTA PONDERADO */}
                       {hasComparison && consensusProbabilities && (
-                        <div className="p-6 border bg-white shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:-translate-y-0.5 transition-all duration-300 rounded-3xl space-y-4">
+                        <div className="p-6 border dark:border-white/10 bg-white dark:bg-slate-800/80 shadow-[0_15px_40px_-5px_rgba(15,23,42,0.1)] hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)] hover:-translate-y-0.5 transition-all duration-300 rounded-3xl space-y-4">
                           <div className="flex items-center justify-between gap-3">
                             <div>
-                              <p className="text-xl font-bold text-slate-900 uppercase">Consenso Ponderado</p>
-                              <p className="text-xs font-light text-slate-900">Distribución conjunta por grado</p>
+                              <p className="text-xl font-bold text-slate-900 dark:text-white uppercase">Consenso Ponderado</p>
+                              <p className="text-xs font-light text-slate-900 dark:text-slate-400">Distribución conjunta por grado</p>
                             </div>
                             <div className={cn(
                               'px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider border backdrop-blur-md shadow-[inset_0_1px_1px_rgba(255,255,255,0.45)]',
@@ -1041,16 +1041,16 @@ const calculatedConsensusGrade = useMemo(() => {
                               return (
                                 <div key={`consensus-${idx}`} className="space-y-1">
                                   <div className="flex items-center justify-between text-sm font-medium">
-                                    <span className={isMax ? 'text-slate-950 font-semibold' : 'text-slate-750 font-normal'}>
+                                    <span className={isMax ? 'text-slate-950 dark:text-white font-semibold' : 'text-slate-700 dark:text-white font-normal'}>
                                       {label}
                                     </span>
-                                    <span className={isMax ? 'text-primary-dark font-semibold' : 'text-slate-700 font-normal'}>
+                                    <span className={isMax ? 'text-primary-dark font-semibold' : 'text-slate-700 dark:text-white font-normal'}>
                                       {value.toFixed(1)}%
                                     </span>
                                   </div>
 
                                   {/* Contenedor de la barra */}
-                                  <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200/30">
+                                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden border border-slate-200/30 dark:border-white/5">
                                     <div
                                       className={cn(
                                         // Clases base esenciales y animación fluida de ancho
@@ -1102,8 +1102,8 @@ const calculatedConsensusGrade = useMemo(() => {
               </div>
 
               {/* Footer del Reporte Completo */}
-              <div className="xl:col-span-12 mt-6 pt-4 border-t border-slate-300/80 text-center">
-                <p className="text-[10px] text-slate-700 font-semibold leading-relaxed px-10 tracking-widest uppercase">
+              <div className="xl:col-span-12 mt-6 pt-4 border-t border-slate-300/80 dark:border-white/10 text-center">
+                <p className="text-[10px] text-slate-700 dark:text-slate-400 font-semibold leading-relaxed px-10 tracking-widest uppercase">
                   Los resultados presentados son para apoyo clínico y educativo. No constituyen diagnóstico médico definitivo.
                 </p>
               </div>
