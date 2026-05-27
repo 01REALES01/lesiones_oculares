@@ -715,7 +715,12 @@ async def get_admin_global_stats(
         for key in model_latency_sum
         if model_latency_count.get(key, 0) > 0
     ]
+    max_usage = max(model_usage.values(), default=0)
 
+    most_used_models = [
+        name for name, count in model_usage.items()
+        if count == max_usage
+    ]
     return {
         "total_users": total_users,
         "active_users": active_users,
@@ -730,11 +735,10 @@ async def get_admin_global_stats(
         ],
         "model_usage": model_usage_list,
         "model_latency": model_latency_list,
-        "most_used_model": max(
-            model_usage.items(),
-            key=lambda x: x[1],
-            default=("Sin datos", 0),
-        ),
+        "most_used_model": [
+            ", ".join(most_used_models) if most_used_models else "Sin datos",
+            max_usage,
+        ],
         "fastest_model": min(
             [
                 (
