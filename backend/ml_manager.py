@@ -11,18 +11,11 @@ except ImportError:
     os.environ["TF_USE_LEGACY_KERAS"] = "0"
 
 import tensorflow as tf
-# Apple Silicon GPU (tensorflow-metal) has bugs compiling mixed-precision models under MPSGraph (expected f16 but received f32),
-# causing an immediate Abort trap 6 crash. We disable the GPU to run 100% stably on the CPU.
-try:
-    tf.config.set_visible_devices([], 'GPU')
-except Exception:
-    pass
-
 from PIL import Image
 
-# Mixed precision (Apple Silicon GPU / tensorflow-metal is incompatible with mixed_float16 and throws Abort trap 6, we use float32)
+# Mixed precision (si falla en algún entorno, seguimos sin bloquear el arranque)
 try:
-    tf.keras.mixed_precision.set_global_policy("float32")
+    tf.keras.mixed_precision.set_global_policy("mixed_float16")
 except Exception:
     pass
 

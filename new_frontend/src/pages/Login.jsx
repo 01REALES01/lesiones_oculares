@@ -4,7 +4,6 @@ import { useAuth } from '../context/AuthContext';
 import { ScanEye, LogIn, AlertCircle, Eye, EyeOff, Loader2, X, ArrowLeft } from 'lucide-react';
 import TechEyeScene from '../components/landing/EyeScene';
 import { authService } from '../services/api';
-import { ThemeToggle } from '../context/ThemeToggle';
 
 export default function Login({ onGoLanding }) {
   const [username, setUsername] = useState('');
@@ -98,7 +97,7 @@ export default function Login({ onGoLanding }) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.22),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#eef5fb_50%,_#f8fbff_100%)] dark:bg-[linear-gradient(180deg,_#0f172a_0%,_#020617_100%)]">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.22),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#eef5fb_50%,_#f8fbff_100%)]">
       {/* Same particles as the landing page */}
       <div className="pointer-events-none fixed inset-0 z-[1] isolate" aria-hidden>
         <TechEyeScene />
@@ -116,10 +115,7 @@ export default function Login({ onGoLanding }) {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="backdrop-blur-2xl bg-white/65 dark:bg-slate-900/65 border border-white/50 dark:border-white/10 shadow-[0_24px_80px_-12px_rgba(15,23,42,0.12),0_0_0_1px_rgba(255,255,255,0.6)_inset] dark:shadow-none rounded-[2rem] p-8 md:p-10 relative">
-          <div className="absolute top-6 right-6">
-            <ThemeToggle />
-          </div>
+        <div className="backdrop-blur-2xl bg-white/65 border border-white/50 shadow-[0_24px_80px_-12px_rgba(15,23,42,0.12),0_0_0_1px_rgba(255,255,255,0.6)_inset] rounded-[2rem] p-8 md:p-10">
           {/* Header */}
           <div className="flex flex-col items-center mb-10 text-center">
             <motion.div 
@@ -134,7 +130,7 @@ export default function Login({ onGoLanding }) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="text-3xl font-black text-slate-900 dark:text-white tracking-tight"
+              className="text-3xl font-black text-slate-900 tracking-tight"
             >
               OcularAI
             </motion.h1>
@@ -190,10 +186,10 @@ export default function Login({ onGoLanding }) {
                     setUsername(e.target.value);
                     if (usernameError) setUsernameError(false);
                   }}
-                  className={`w-full px-5 py-3.5 rounded-xl bg-white/70 dark:bg-slate-800/70 border transition-all outline-none text-slate-800 dark:text-white text-sm placeholder:text-slate-400 shadow-sm ${
+                  className={`w-full px-5 py-3.5 rounded-xl bg-white/70 border transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400 shadow-sm ${
                     usernameError
                       ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                      : 'border-slate-200/60 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/10'
+                      : 'border-slate-200/60 focus:border-primary focus:ring-4 focus:ring-primary/10'
                   }`}
                   placeholder="correo@ejemplo.com"
                 />
@@ -215,10 +211,10 @@ export default function Login({ onGoLanding }) {
                     setPassword(e.target.value);
                     if (passwordError) setPasswordError(false);
                   }}
-                  className={`w-full px-5 py-3.5 rounded-xl bg-white/70 dark:bg-slate-800/70 border transition-all outline-none text-slate-800 dark:text-white text-sm placeholder:text-slate-400 shadow-sm pr-12 ${
+                  className={`w-full px-5 py-3.5 rounded-xl bg-white/70 border transition-all outline-none text-slate-800 text-sm placeholder:text-slate-400 shadow-sm pr-12 ${
                     passwordError
                       ? 'border-red-400 focus:border-red-500 focus:ring-4 focus:ring-red-500/10'
-                      : 'border-slate-200/60 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/10'
+                      : 'border-slate-200/60 focus:border-primary focus:ring-4 focus:ring-primary/10'
                   }`}
                   placeholder="••••••••"
                 />
@@ -299,10 +295,10 @@ export default function Login({ onGoLanding }) {
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="w-full max-w-md rounded-[2rem] border border-white/40 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5"
+            className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5"
           >
             <div>
-              <h3 className="text-2xl font-black text-slate-900 dark:text-white">
+              <h3 className="text-2xl font-black text-slate-900">
                 Recuperar contraseña
               </h3>
 
@@ -321,7 +317,7 @@ export default function Login({ onGoLanding }) {
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
                 placeholder="correo@ejemplo.com"
-                className="mt-2 w-full px-5 py-3.5 rounded-xl bg-white dark:bg-slate-800 dark:text-white border border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm"
+                className="mt-2 w-full px-5 py-3.5 rounded-xl bg-white border border-slate-200 focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none text-sm"
               />
             </div>
 
@@ -349,7 +345,7 @@ export default function Login({ onGoLanding }) {
                   setForgotModalOpen(false);
                   setForgotNotice(null);
                 }}
-                className="px-5 py-3 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                className="px-5 py-3 rounded-2xl border border-slate-200 bg-white text-slate-700 font-bold text-sm hover:bg-slate-50 transition-colors"
               >
                 Cancelar
               </button>

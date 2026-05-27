@@ -166,11 +166,11 @@ export default function AdminPanel() {
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div>
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+        <h1 className="text-3xl font-bold text-ocular-text-main flex items-center gap-3">
           <Shield className="text-primary" />
           Panel de Administración
         </h1>
-        <p className="text-slate-500 dark:text-slate-400 mt-1">
+        <p className="text-ocular-text-muted mt-1">
           Gestión de usuarios registrados en OcularAI mediante ROBLE.
         </p>
       </div>
@@ -194,7 +194,7 @@ export default function AdminPanel() {
             className={`rounded-2xl px-4 py-2 text-xs font-black uppercase transition-all ${
             adminTab === 'users'
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/20 hover:text-primary dark:hover:text-primary'
+                : 'bg-white text-slate-500 border border-slate-200 hover:text-primary'
             }`}
         >
             Gestión de usuarios
@@ -206,7 +206,7 @@ export default function AdminPanel() {
             className={`rounded-2xl px-4 py-2 text-xs font-black uppercase transition-all ${
             adminTab === 'metrics'
                 ? 'bg-primary text-white shadow-lg shadow-primary/20'
-                : 'bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/20 hover:text-primary dark:hover:text-primary'
+                : 'bg-white text-slate-500 border border-slate-200 hover:text-primary'
             }`}
         >
             Métricas
@@ -295,7 +295,7 @@ export default function AdminPanel() {
         
       {adminTab === 'users' && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <GlassCard className="xl:col-span-1 p-6 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/60 dark:shadow-[0_10px_35px_-10px_rgba(0,0,0,0.5)] bg-white/80 dark:bg-slate-800/80">
+        <GlassCard className="xl:col-span-1 p-6 border border-slate-200 shadow-md shadow-slate-200/60">
           <div className="flex items-center gap-3 mb-6">
             <div className="w-11 h-11 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
               <UserPlus size={22} />
@@ -310,7 +310,7 @@ export default function AdminPanel() {
 
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <label className="text-xs font-bold text-ocular-text-muted uppercase">
                 Nombre
               </label>
               <input
@@ -319,12 +319,12 @@ export default function AdminPanel() {
                 onChange={handleChange}
                 required
                 placeholder="Nombre completo"
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/20 bg-white/70 dark:bg-slate-900/60 px-4 py-3 text-sm outline-none focus:border-primary dark:focus:border-primary text-slate-800 dark:text-slate-200"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <label className="text-xs font-bold text-ocular-text-muted uppercase">
                 Correo
               </label>
               <input
@@ -334,12 +334,12 @@ export default function AdminPanel() {
                 required
                 type="email"
                 placeholder="usuario@correo.com"
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/20 bg-white/70 dark:bg-slate-900/60 px-4 py-3 text-sm outline-none focus:border-primary dark:focus:border-primary text-slate-800 dark:text-slate-200"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none focus:border-primary"
               />
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <label className="text-xs font-bold text-ocular-text-muted uppercase">
                 Contraseña temporal
               </label>
               <div className="relative mt-1">
@@ -350,7 +350,7 @@ export default function AdminPanel() {
                   required
                   type={showPassword ? "text" : "password"}
                   placeholder="Ej: Prueba123!"
-                  className="w-full rounded-xl border border-slate-200 dark:border-white/20 bg-white/70 dark:bg-slate-900/60 px-4 py-3 pr-12 text-sm outline-none focus:border-primary dark:focus:border-primary text-slate-800 dark:text-slate-200"
+                  className="w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 pr-12 text-sm outline-none focus:border-primary"
                 />
                 <button
                   type="button"
@@ -360,20 +360,20 @@ export default function AdminPanel() {
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
-              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1">
+              <p className="text-[10px] text-ocular-text-muted mt-1">
                 Mínimo 8 caracteres, mayúscula, minúscula, número y símbolo.
               </p>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+              <label className="text-xs font-bold text-ocular-text-muted uppercase">
                 Rol
               </label>
               <select
                 name="role"
                 value={form.role}
                 onChange={handleChange}
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/20 bg-white/70 dark:bg-slate-900/60 px-4 py-3 text-sm outline-none focus:border-primary dark:focus:border-primary text-slate-800 dark:text-slate-200"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white/70 px-4 py-3 text-sm outline-none focus:border-primary"
               >
                 <option value="user">Médico / Usuario</option>
                 <option value="admin">Administrador</option>
@@ -390,15 +390,15 @@ export default function AdminPanel() {
           </form>
         </GlassCard>
 
-        <GlassCard className="xl:col-span-2 p-6 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/60 dark:shadow-[0_10px_35px_-10px_rgba(0,0,0,0.5)] bg-white/80 dark:bg-slate-800/80">
+        <GlassCard className="xl:col-span-2 p-6 border border-slate-200 shadow-md shadow-slate-200/60">
           <div className="flex items-center justify-between gap-3 mb-6">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-sky-100 text-primary flex items-center justify-center">
                 <Users size={22} />
               </div>
               <div>
-                <h2 className="font-black text-xl text-slate-800 dark:text-white">Usuarios registrados</h2>
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">
+                <h2 className="font-black text-xl text-ocular-text-main">Usuarios registrados</h2>
+                <p className="text-xs text-ocular-text-muted font-semibold">
                   Lista tomada desde la base de datos
                 </p>
               </div>
@@ -427,7 +427,7 @@ export default function AdminPanel() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs uppercase text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
+                  <tr className="text-left text-xs uppercase text-ocular-text-muted border-b border-slate-200">
                     <th className="py-3 px-2">Nombre</th>
                     <th className="py-3 px-2">Correo</th>
                     <th className="py-3 px-2">Rol</th>
@@ -437,18 +437,18 @@ export default function AdminPanel() {
                 </thead>
                 <tbody>
                   {users.map((u, idx) => (
-                    <tr key={u._id || u.email || idx} className="border-b border-slate-100 dark:border-white/5">
+                    <tr key={u._id || u.email || idx} className="border-b border-slate-100">
                         <td className="py-3 px-2">
                         <button
                             type="button"
                             onClick={() => openEditUserName(u)}
-                            className="font-bold text-slate-800 dark:text-white hover:text-primary dark:hover:text-primary hover:underline transition-colors text-left"
+                            className="font-bold text-ocular-text-main hover:text-primary hover:underline transition-colors text-left"
                             title="Editar nombre"
                         >
                             {u.nombre || 'Sin nombre'}
                         </button>
                         </td>
-                      <td className="py-3 px-2 text-slate-600 dark:text-slate-300">
+                      <td className="py-3 px-2 text-slate-600">
                         {u.email}
                       </td>
                       <td className="py-3 px-2">
@@ -472,7 +472,7 @@ export default function AdminPanel() {
                         />
                         </button>
                       </td>
-                      <td className="py-3 px-2 text-slate-500 dark:text-slate-400">
+                      <td className="py-3 px-2 text-slate-500">
                         {u.ultimo_login
                         ? new Date(`${u.ultimo_login}Z`).toLocaleString()
                         : '—'}
@@ -489,25 +489,25 @@ export default function AdminPanel() {
         {editModalOpen && (
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
-            <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5">
+            <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5">
             <div>
-                <h3 className="text-2xl font-black text-slate-800 dark:text-white">
+                <h3 className="text-2xl font-black text-ocular-text-main">
                 Editar nombre
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                <p className="text-sm text-ocular-text-muted mt-1">
                 Actualiza el nombre visible del usuario en OcularAI.
                 </p>
             </div>
 
             <div>
-                <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+                <label className="text-xs font-bold text-ocular-text-muted uppercase">
                 Nombre
                 </label>
                 <input
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
                 autoFocus
-                className="mt-1 w-full rounded-xl border border-slate-200 dark:border-white/20 bg-white dark:bg-slate-800 px-4 py-3 text-sm outline-none focus:border-primary dark:focus:border-primary text-slate-800 dark:text-slate-200"
+                className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none focus:border-primary"
                 placeholder="Nombre completo"
                 />
             </div>
@@ -520,7 +520,7 @@ export default function AdminPanel() {
                     setEditingUser(null);
                     setEditName('');
                 }}
-                className="px-5 py-3 rounded-2xl border border-slate-200 dark:border-white/20 bg-white dark:bg-slate-800 text-slate-800 dark:text-white font-bold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                className="px-5 py-3 rounded-2xl border border-slate-200 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors"
                 >
                 Cancelar
                 </button>
@@ -543,16 +543,16 @@ export default function AdminPanel() {
 
 function AdminStatCard({ icon: Icon, label, value, wide = false }) {
   return (
-    <GlassCard className={`p-5 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/60 dark:shadow-[0_10px_35px_-10px_rgba(0,0,0,0.5)] bg-white/80 dark:bg-slate-800/80 ${wide ? 'xl:col-span-2' : ''}`}>
+    <GlassCard className={`p-5 border border-slate-200 shadow-md shadow-slate-200/60 ${wide ? 'xl:col-span-2' : ''}`}>
       <div className="flex items-center gap-4">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center">
           <Icon size={22} />
         </div>
         <div>
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
+          <p className="text-xs font-bold text-ocular-text-muted uppercase">
             {label}
           </p>
-          <p className="text-2xl font-black text-slate-800 dark:text-white">
+          <p className="text-2xl font-black text-ocular-text-main">
             {value ?? '—'}
           </p>
         </div>
@@ -563,18 +563,18 @@ function AdminStatCard({ icon: Icon, label, value, wide = false }) {
 
 function AdminInsightCard({ icon: Icon, title, value, subtitle }) {
   return (
-    <GlassCard className="p-5 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/60 dark:shadow-[0_10px_35px_-10px_rgba(0,0,0,0.5)] bg-white/80 dark:bg-slate-800/80">
+    <GlassCard className="p-5 border border-slate-200 shadow-md shadow-slate-200/60">
       <div className="flex items-start gap-4">
         <div className="w-12 h-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center shrink-0">
           <Icon size={22} />
         </div>
 
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-bold uppercase text-ocular-text-muted">
             {title}
           </p>
 
-          <h3 className="text-lg font-black text-slate-800 dark:text-white truncate">
+          <h3 className="text-lg font-black text-ocular-text-main truncate">
             {value}
           </h3>
 
@@ -591,14 +591,14 @@ function SimpleBarChart({ title, data, suffix = '' }) {
   const maxValue = Math.max(...data.map(item => Number(item.value) || 0), 1);
 
   return (
-    <GlassCard className="p-6 border border-slate-200 dark:border-white/10 shadow-md shadow-slate-200/60 dark:shadow-[0_10px_35px_-10px_rgba(0,0,0,0.5)] bg-white/80 dark:bg-slate-800/80">
-      <h3 className="text-lg font-black text-slate-800 dark:text-white mb-5">
+    <GlassCard className="p-6 border border-slate-200 shadow-md shadow-slate-200/60">
+      <h3 className="text-lg font-black text-ocular-text-main mb-5">
         {title}
       </h3>
 
       <div className="space-y-4">
         {data.length === 0 ? (
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-semibold">
+          <p className="text-sm text-ocular-text-muted font-semibold">
             No hay datos disponibles.
           </p>
         ) : (
@@ -609,7 +609,7 @@ function SimpleBarChart({ title, data, suffix = '' }) {
             return (
               <div key={`${item.name}-${index}`} className="space-y-1.5">
                 <div className="flex items-center justify-between gap-3 text-xs font-bold">
-                  <span className="text-slate-700 dark:text-slate-300 truncate">
+                  <span className="text-slate-700 truncate">
                     {item.name}
                   </span>
 
@@ -618,7 +618,7 @@ function SimpleBarChart({ title, data, suffix = '' }) {
                   </span>
                 </div>
 
-                <div className="h-3 w-full rounded-full bg-slate-100 dark:bg-slate-700/50 overflow-hidden border border-slate-200 dark:border-white/10">
+                <div className="h-3 w-full rounded-full bg-slate-100 overflow-hidden border border-slate-200">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-primary to-sky-400 transition-all duration-700 shadow-sm"
                     style={{ width: `${width}%` }}

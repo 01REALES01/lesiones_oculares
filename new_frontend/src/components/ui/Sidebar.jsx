@@ -2,7 +2,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils';
 import { LogOut, ChevronLeft, ChevronRight, User, House } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { ThemeToggle } from '../../context/ThemeToggle';
 
 export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
   const { logout, user } = useAuth();
@@ -77,10 +76,7 @@ export const Sidebar = ({ isOpen, toggle, links, activeKey, onGoLanding }) => {
       </nav>
 
       {/* Footer / User Area */}
-      <div className="p-3 border-t border-white/10 mt-auto flex flex-col gap-2">
-        <div className={`flex ${isOpen ? 'justify-between' : 'justify-center'} items-center mb-1 px-1`}>
-          <ThemeToggle />
-        </div>
+      <div className="p-3 border-t border-white/10 mt-auto">
         {onGoLanding && (
           <button
             onClick={onGoLanding}

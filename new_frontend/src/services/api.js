@@ -7,7 +7,7 @@ import axios from 'axios';
 function getApiBaseURL() {
   const fromEnv = import.meta.env.VITE_API_BASE;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
-  if (import.meta.env.DEV) return 'http://localhost:8000';
+  if (import.meta.env.DEV) return 'http://127.0.0.1:8000';
   return '/api';
 }
 

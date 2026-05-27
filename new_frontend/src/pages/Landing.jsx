@@ -12,7 +12,6 @@ import {
   Stethoscope,
 } from 'lucide-react';
 import TechEyeScene from '../components/landing/EyeScene';
-import { ThemeToggle } from '../context/ThemeToggle';
 
 const featureCards = [
   {
@@ -62,10 +61,10 @@ function SectionTitle({ eyebrow, title, description }) {
   return (
     <div className="relative max-w-2xl">
       {/* Aura de luz para proteger legibilidad del texto sobre el ojo/partículas */}
-      <div className="pointer-events-none absolute -inset-6 -z-10 bg-white/50 dark:bg-slate-900/60 blur-2xl rounded-full" />
-      <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/80 dark:text-sky-400/90">{eyebrow}</p>
-      <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 dark:text-white md:text-5xl">{title}</h2>
-      <p className="mt-4 text-base leading-7 text-slate-600 dark:text-slate-300 md:text-lg">{description}</p>
+      <div className="pointer-events-none absolute -inset-6 -z-10 bg-white/50 blur-2xl rounded-full" />
+      <p className="text-xs font-black uppercase tracking-[0.3em] text-primary/80">{eyebrow}</p>
+      <h2 className="mt-4 text-3xl font-black tracking-tight text-slate-900 md:text-5xl">{title}</h2>
+      <p className="mt-4 text-base leading-7 text-slate-600 md:text-lg">{description}</p>
     </div>
   );
 }
@@ -107,13 +106,13 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.22),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#eef5fb_50%,_#f8fbff_100%)] dark:bg-[linear-gradient(180deg,_#0f172a_0%,_#020617_100%)] text-slate-900 dark:text-slate-100">
+    <div className="relative min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top,_rgba(96,165,250,0.22),_transparent_45%),linear-gradient(180deg,_#f8fbff_0%,_#eef5fb_50%,_#f8fbff_100%)] text-slate-900">
       {/* Ojo 3D: z-[1] queda encima del fondo, detrás del contenido (z-10) */}
       <div className="pointer-events-none fixed inset-0 z-[1] isolate" aria-hidden>
         <TechEyeScene />
       </div>
 
-      <header className="fixed top-0 left-0 right-0 z-[100] border-b border-white/40 dark:border-white/10 bg-white/55 dark:bg-slate-900/55 backdrop-blur-2xl">
+      <header className="fixed top-0 left-0 right-0 z-[100] border-b border-white/40 bg-white/55 backdrop-blur-2xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 md:px-10">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.35em] text-primary">OcularAI</p>
@@ -134,11 +133,10 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
           </nav>
 
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             <button
               type="button"
               onClick={onEnterDemo}
-              className="btn-premium border border-primary/30 bg-white/80 dark:bg-slate-800/80 px-4 py-2 text-xs text-primary dark:text-sky-300 hover:bg-primary/10"
+              className="btn-premium border border-primary/30 bg-white/80 px-4 py-2 text-xs text-primary hover:bg-primary/10"
             >
               <FlaskConical size={14} />
               Ir a Demo
@@ -164,17 +162,17 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
               className="relative"
             >
               {/* Aura de luz para proteger legibilidad del texto sobre el ojo/partículas */}
-              <div className="pointer-events-none absolute -inset-10 -z-10 bg-white/50 dark:bg-slate-900/50 blur-3xl rounded-full" />
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 dark:bg-slate-800/70 px-4 py-2 text-xs font-black uppercase tracking-[0.28em] text-primary dark:text-sky-300 shadow-sm">
+              <div className="pointer-events-none absolute -inset-10 -z-10 bg-white/50 blur-3xl rounded-full" />
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-white/70 px-4 py-2 text-xs font-black uppercase tracking-[0.28em] text-primary shadow-sm">
                 <Sparkles size={14} />
                 Plataforma Principal
               </div>
 
-              <h1 className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight text-slate-950 dark:text-white md:text-7xl">
+              <h1 className="mt-6 max-w-4xl text-5xl font-black leading-[0.95] tracking-tight text-slate-950 md:text-7xl">
                 Tamizaje inteligente de Retinopatía Diabética asistido por IA.
               </h1>
 
-              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 dark:text-slate-300 md:text-xl">
+              <p className="mt-6 max-w-2xl text-lg leading-8 text-slate-600 md:text-xl">
                 Plataforma web de apoyo clínico y educativo para la clasificación multimodelo de severidad de Retinopatía Diabética a partir de retinografías de fondo de ojo.
               </p>
 
@@ -190,7 +188,7 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                 <a
                   href="#capacidades"
                   onClick={(event) => handleSectionLink(event, 'capacidades')}
-                  className="btn-premium border border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 px-6 py-4 text-base text-slate-700 dark:text-slate-200 shadow-sm hover:border-primary/30 hover:text-primary dark:hover:text-sky-300"
+                  className="btn-premium border border-slate-200 bg-white/80 px-6 py-4 text-base text-slate-700 shadow-sm hover:border-primary/30 hover:text-primary"
                 >
                   Ver capacidades
                 </a>
@@ -203,8 +201,8 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                   ['100%', 'Trazabilidad y auditoría'],
                 ].map(([value, label]) => (
                   <div key={label} className="glass-panel px-5 py-4">
-                    <p className="text-2xl font-black text-slate-900 dark:text-white">{value}</p>
-                    <p className="mt-1 text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+                    <p className="text-2xl font-black text-slate-900">{value}</p>
+                    <p className="mt-1 text-sm font-medium text-slate-500">{label}</p>
                   </div>
                 ))}
               </div>
@@ -223,8 +221,8 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                 <div className="relative grid gap-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-black uppercase tracking-[0.28em] text-primary dark:text-sky-300">Vista previa</p>
-                      <p className="mt-2 text-2xl font-black text-slate-900 dark:text-white">Entrada unificada</p>
+                      <p className="text-xs font-black uppercase tracking-[0.28em] text-primary">Vista previa</p>
+                      <p className="mt-2 text-2xl font-black text-slate-900">Entrada unificada</p>
                     </div>
                     <div className="rounded-3xl bg-primary/10 p-4 text-primary">
                       <Eye size={38} />
@@ -232,13 +230,13 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                   </div>
 
                   <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="rounded-3xl border border-white/70 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 p-5 shadow-sm">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Panel Operativo</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Carga de retinografías, ejecución de inferencias en paralelo y comparación detallada de resultados.</p>
+                    <div className="rounded-3xl border border-white/70 bg-white/70 p-5 shadow-sm">
+                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Panel Operativo</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">Carga de retinografías, ejecución de inferencias en paralelo y comparación detallada de resultados.</p>
                     </div>
-                    <div className="rounded-3xl border border-white/70 dark:border-slate-700 bg-white/70 dark:bg-slate-800/80 p-5 shadow-sm">
-                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500 dark:text-slate-400">Historial Clínico</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-300">Consulta y filtrado rápido por nivel de riesgo, con auditoría completa de cada análisis realizado.</p>
+                    <div className="rounded-3xl border border-white/70 bg-white/70 p-5 shadow-sm">
+                      <p className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">Historial Clínico</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600">Consulta y filtrado rápido por nivel de riesgo, con auditoría completa de cada análisis realizado.</p>
                     </div>
                   </div>
 
@@ -278,8 +276,8 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                     <div className="inline-flex rounded-2xl bg-primary/10 p-3 text-primary">
                       <Icon size={22} />
                     </div>
-                    <h3 className="mt-5 text-xl font-black text-slate-900 dark:text-white">{card.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-slate-600 dark:text-slate-300">{card.description}</p>
+                    <h3 className="mt-5 text-xl font-black text-slate-900">{card.title}</h3>
+                    <p className="mt-3 text-sm leading-7 text-slate-600">{card.description}</p>
                   </motion.div>
                 );
               })}
@@ -310,9 +308,9 @@ export default function Landing({ onEnterApp, onEnterDemo }) {
                         <Icon size={22} />
                       </div>
                       <div>
-                        <p className="text-xs font-black uppercase tracking-[0.25em] text-primary dark:text-sky-300">Fase {step.number}</p>
-                        <h3 className="mt-2 text-xl font-black text-slate-900 dark:text-white">{step.title}</h3>
-                        <p className="mt-2 text-sm leading-7 text-slate-600 dark:text-slate-300">{step.description}</p>
+                        <p className="text-xs font-black uppercase tracking-[0.25em] text-primary">Fase {step.number}</p>
+                        <h3 className="mt-2 text-xl font-black text-slate-900">{step.title}</h3>
+                        <p className="mt-2 text-sm leading-7 text-slate-600">{step.description}</p>
                       </div>
                     </motion.div>
                   );

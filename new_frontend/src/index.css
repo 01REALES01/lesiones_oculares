@@ -5,22 +5,12 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light dark;
   --primary: #00b4ff;
   --primary-dark: #008fd5;
   --bg: #e6ebf1;
   --surface: rgba(255, 255, 255, 0.7);
   --glass-border: 1px solid rgba(255, 255, 255, 0.4);
   --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-  --text-main: #111827;
-}
-
-:root.dark {
-  --bg: #0f172a;
-  --surface: rgba(30, 41, 59, 0.7);
-  --glass-border: 1px solid rgba(255, 255, 255, 0.1);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
-  --text-main: #f8fafc;
 }
 
 @layer base {
@@ -28,25 +18,19 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply m-0 p-0 antialiased overflow-x-hidden min-h-screen font-sans transition-colors duration-300;
+    @apply m-0 p-0 antialiased overflow-x-hidden min-h-screen font-sans;
     background-color: var(--bg);
-    color: var(--text-main);
+    color: #111827;
   }
 
   /* Global Animated Background */
   body::before {
     content: "";
-    @apply fixed top-[-50%] left-[-50%] w-[200%] h-[200%] z-[-2] pointer-events-none transition-all duration-500;
+    @apply fixed top-[-50%] left-[-50%] w-[200%] h-[200%] z-[-2] pointer-events-none;
     background: radial-gradient(circle at 50% 50%, rgba(96, 165, 250, 0.1), transparent 60%),
       radial-gradient(circle at 80% 20%, rgba(147, 197, 253, 0.15), transparent 50%),
       radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08), transparent 50%);
     animation: moveBackground 25s ease-in-out infinite alternate;
-  }
-
-  :root.dark body::before {
-    background: radial-gradient(circle at 50% 50%, rgba(30, 64, 175, 0.15), transparent 60%),
-      radial-gradient(circle at 80% 20%, rgba(29, 78, 216, 0.15), transparent 50%),
-      radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.1), transparent 50%);
   }
 
   /* Noise Texture Overlay */
