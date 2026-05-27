@@ -561,9 +561,7 @@ async def get_admin_global_stats(
     active_users = sum(1 for u in users if u.get("activo_app") is not False)
     inactive_users = sum(1 for u in users if u.get("activo_app") is False)
 
-    confidences = []
-    rd_detected = 0
-    latest_analysis = None
+    labels = ["NO R.D.", "Leve", "Moderado", "Severo", "Proliferativo"]
 
     severity_counts = {
         "NO R.D.": 0,
@@ -573,32 +571,62 @@ async def get_admin_global_stats(
         "Proliferativo": 0,
     }
 
+    confidences = []
+    rd_detected = 0
+    latest_analysis = None
+
     model_usage = {}
     model_latency_sum = {}
     model_latency_count = {}
 
-    labels = ["NO R.D.", "Leve", "Moderado", "Severo", "Proliferativo"]
+    seen_inference_ids = set()
+    valid_analyses = []
 
     for row in analyses:
+        inference_id = row.get("inference_id")
+
+        if not inference_id:
+            continue
+
+        if inference_id in seen_inference_ids:
+            continue
+
+        seen_inference_ids.add(inference_id)
+
         result = row.get("result_json") or {}
 
         if isinstance(result, str):
-            import json
             try:
                 result = json.loads(result)
             except Exception:
                 result = {}
 
+        if not isinstance(result, dict) or not result:
+            continue
+
+        if result.get("success") is False:
+            continue
+
+        valid_analyses.append(row)
+
         confidence = row.get("confidence_percent") or result.get("confidence_percent")
+
         if confidence is not None:
-            confidences.append(float(confidence))
+            try:
+                confidences.append(float(confidence))
+            except Exception:
+                pass
 
         grade = (
             result.get("comparison_summary", {}).get("consensus_grade")
-            or result.get("primary_result", {}).get("predicted_class")
-            or result.get("predicted_class")
-            or row.get("predicted_class")
-            or 0
+            if result.get("comparison_summary", {}).get("consensus_grade") is not None
+            else result.get("primary_result", {}).get("predicted_class")
+            if result.get("primary_result", {}).get("predicted_class") is not None
+            else result.get("predicted_class")
+            if result.get("predicted_class") is not None
+            else row.get("predicted_class")
+            if row.get("predicted_class") is not None
+            else 0
         )
 
         try:
@@ -613,43 +641,80 @@ async def get_admin_global_stats(
             rd_detected += 1
 
         timestamp = row.get("timestamp") or result.get("timestamp")
+
         if timestamp and (latest_analysis is None or timestamp > latest_analysis):
             latest_analysis = timestamp
 
         comparisons = result.get("model_comparisons") or []
 
         if not comparisons:
+            primary = result.get("primary_result", {})
+
             model_name = (
-                result.get("primary_result", {}).get("model_used")
+                primary.get("model_name")
+                or primary.get("model_used")
+                or result.get("model_name")
                 or result.get("model_used")
                 or row.get("model_used")
                 or "Modelo desconocido"
             )
+
             latency = (
-                result.get("primary_result", {}).get("inference_time_ms")
+                primary.get("inference_time_ms")
                 or result.get("inference_time_ms")
                 or row.get("inference_time_ms")
                 or 0
             )
 
-            comparisons = [{
-                "model_name": model_name,
-                "inference_time_ms": latency,
-            }]
+            comparisons = [
+                {
+                    "model_name": model_name,
+                    "inference_time_ms": latency,
+                }
+            ]
 
-        KNOWN_MODELS = {"DenseNet169", "ResNet50", "EfficientNetB0"}
+        for model in comparisons:
+            model_name = (
+                model.get("model_name")
+                or model.get("model_used")
+                or model.get("model_id")
+                or "Modelo desconocido"
+            )
 
-    for model in comparisons:
-            model_name = model.get("model_name") or model.get("model_id") or "Modelo desconocido"
-            if model_name not in KNOWN_MODELS:
-                continue
-            latency = float(model.get("inference_time_ms") or 0)
+            if model_name in ["densenet169", "lesiones_densenet"]:
+                model_name = "DenseNet169"
+            elif model_name in ["resnet", "resnet50", "lesiones_resnet50"]:
+                model_name = "ResNet50"
+            elif model_name in ["efficientnet", "efficientnetb0", "lesiones_efficientnetb0"]:
+                model_name = "EfficientNetB0"
+
+            latency = model.get("inference_time_ms")
 
             model_usage[model_name] = model_usage.get(model_name, 0) + 1
-            model_latency_sum[model_name] = model_latency_sum.get(model_name, 0) + latency
-            model_latency_count[model_name] = model_latency_count.get(model_name, 0) + 1
 
-    total_analyses = len(analyses)
+            if latency is not None:
+                try:
+                    latency_float = float(latency)
+                    model_latency_sum[model_name] = model_latency_sum.get(model_name, 0) + latency_float
+                    model_latency_count[model_name] = model_latency_count.get(model_name, 0) + 1
+                except Exception:
+                    pass
+
+    total_analyses = len(valid_analyses)
+
+    model_usage_list = [
+        {"name": key, "value": value}
+        for key, value in sorted(model_usage.items(), key=lambda item: item[1], reverse=True)
+    ]
+
+    model_latency_list = [
+        {
+            "name": key,
+            "value": round(model_latency_sum[key] / model_latency_count[key], 1),
+        }
+        for key in model_latency_sum
+        if model_latency_count.get(key, 0) > 0
+    ]
 
     return {
         "total_users": total_users,
@@ -663,30 +728,21 @@ async def get_admin_global_stats(
             {"name": key, "value": value}
             for key, value in severity_counts.items()
         ],
-        "model_usage": [
-            {"name": key, "value": value}
-            for key, value in model_usage.items()
-        ],
-        "model_latency": [
-            {
-                "name": key,
-                "value": round(model_latency_sum[key] / model_latency_count[key], 1),
-            }
-            for key in model_latency_sum
-        ],
+        "model_usage": model_usage_list,
+        "model_latency": model_latency_list,
         "most_used_model": max(
             model_usage.items(),
             key=lambda x: x[1],
             default=("Sin datos", 0),
         ),
-
         "fastest_model": min(
             [
                 (
                     key,
-                    round(model_latency_sum[key] / model_latency_count[key], 1)
+                    round(model_latency_sum[key] / model_latency_count[key], 1),
                 )
                 for key in model_latency_sum
+                if model_latency_count.get(key, 0) > 0
             ],
             key=lambda x: x[1],
             default=("Sin datos", 0),
