@@ -12,8 +12,6 @@ services:
       - "8000:8000"
     environment:
       PYTHONPATH: /app
-      # Opcional (agente / Anthropic). Mejor: archivo .env en la raíz y copiar claves.
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     volumes:
       - ./data:/app/data
       # Descomentar para montar pesos del host (si la carpeta local está vacía, oculta modelos embebidos en la imagen)

@@ -159,6 +159,7 @@ export default function AdminSuggestions() {
         : suggestions.filter((item) => (item.estado || 'pendiente') === activeFilter);
 
   return (
+    <>
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -298,7 +299,9 @@ export default function AdminSuggestions() {
           </div>
         )}
       </GlassCard>
-        {deleteModalOpen && (
+        
+    </div>
+    {deleteModalOpen && (
         <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
             <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5 text-center">
             <div className="mx-auto w-16 h-16 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center">
@@ -342,6 +345,6 @@ export default function AdminSuggestions() {
             </div>
         </div>
         )}
-    </div>
+    </>
   );
 }

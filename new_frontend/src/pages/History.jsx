@@ -511,7 +511,7 @@ export default function HistoryPage({ onViewDetail }) {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white/80 text-slate-600 font-bold text-xs uppercase tracking-wider hover:border-ocular-error/45 hover:text-ocular-error hover:bg-red-50/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm shrink-0"
                 >
                   <Trash2 size={14} />
-                  {clearingHistory ? 'Limpiando...' : 'Limpiar historial'}
+                  {clearingHistory ? 'Limpiando...' : 'Limpiar historial'} 
                 </button>
               )}
             </div>

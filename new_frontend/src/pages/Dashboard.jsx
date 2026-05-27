@@ -413,7 +413,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     <p className="text-base font-black text-slate-800 tracking-tight sm:text-lg">
                       {files.length > 0 ? `${files.length} imágenes listas` : 'Arrastre sus retinografías aquí'}
                     </p>
-                    <p className="mt-1 text-xs text-slate-500 font-medium sm:text-sm">Compatible con JPEG, PNG, TIFF o carpetas completas.</p>
+                    <p className="mt-1 text-xs text-slate-500 font-medium sm:text-sm">Compatible con JPEG, PNG o carpetas completas.</p>
                   </div>
 
                   <div className="mt-2 flex flex-wrap items-center justify-center gap-2.5">
@@ -630,12 +630,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                     </>
                   )}
                 </button>
-                <p className="text-center text-[10px] font-bold uppercase tracking-widest text-slate-400">
-                  Tiempo estimado:{' '}
-                  {files.length && selectedModelCount
-                    ? `~${Math.min(90, 8 + files.length * selectedModelCount * 2)} s`
-                    : '—'}
-                </p>
+                
               </div>
             </GlassCard>
 

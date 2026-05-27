@@ -36,6 +36,7 @@ export default function Suggestions() {
   };
 
   return (
+    <>
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
       <div>
         <h1 className="text-3xl font-bold text-ocular-text-main flex items-center gap-3">
@@ -59,7 +60,7 @@ export default function Suggestions() {
       )}
 
     <GlassCard className="p-6 border border-slate-200 shadow-md shadow-slate-200/60 max-w-4xl">
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
         <div>
         <label className="text-xs font-bold text-ocular-text-muted uppercase">
             Tipo de comentario
@@ -102,6 +103,8 @@ export default function Suggestions() {
     </div>
     </GlassCard>
 
+    
+    </div>
     {successModalOpen && (
     <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
         <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-5">
@@ -130,6 +133,6 @@ export default function Suggestions() {
         </div>
     </div>
     )}
-    </div>
+    </>
   );
 }
