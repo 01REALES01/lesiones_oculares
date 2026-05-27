@@ -40,7 +40,7 @@ function getConsensusGradeFromResult(result) {
     ?? null;
 }
 
-export default function HistoryPage({ onViewDetail }) {
+export default function HistoryPage({ onViewDetail, onHistoryCleared }) {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [clearingHistory, setClearingHistory] = useState(false);
@@ -300,16 +300,18 @@ export default function HistoryPage({ onViewDetail }) {
   };
 
   const confirmClearHistory = async () => {
-    setClearingHistory(true);
     setHistoryNotice(null);
+    setClearingHistory(true);
     try {
       await analysisService.clearHistory();
       setHistory([]);
       setPage(0);
-      setHistoryNotice({ type: 'success', message: 'Historial limpiado correctamente.' });
       setClearModalOpen(false);
+      onHistoryCleared?.();
+      setHistoryNotice({ type: 'success', message: 'Historial limpiado correctamente.' });
     } catch (e) {
       console.error('Error clearing history:', e);
+      setClearModalOpen(false);
       const status = e?.response?.status;
       const backendMsg = e?.response?.data?.detail || e?.response?.data?.message;
       const hint = status === 404 || status === 405
@@ -319,7 +321,6 @@ export default function HistoryPage({ onViewDetail }) {
         type: 'error',
         message: `No se pudo limpiar el historial.${backendMsg ? ` ${backendMsg}` : ''}${hint}`,
       });
-      setClearModalOpen(false);
     } finally {
       setClearingHistory(false);
     }
@@ -393,6 +394,18 @@ export default function HistoryPage({ onViewDetail }) {
           </div>
         </motion.div>
       )}
+
+      {clearingHistory && (
+        <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-ocular-error/20">
+          <motion.div
+            className="h-full bg-ocular-error"
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 30, ease: 'linear' }}
+          />
+        </div>
+      )}
+
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-5 duration-500">
 
         {/* Header & Controls */}
@@ -599,8 +612,9 @@ export default function HistoryPage({ onViewDetail }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+              className="fixed inset-0 z-[80] flex items-center justify-center p-4"
             >
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -620,16 +634,23 @@ export default function HistoryPage({ onViewDetail }) {
                   <button
                     type="button"
                     onClick={() => setClearModalOpen(false)}
-                    className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest"
+                    disabled={clearingHistory}
+                    className="px-6 py-4 rounded-2xl border border-white/60 bg-white text-ocular-text-main font-bold text-sm hover:bg-slate-50 transition-colors uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     type="button"
                     onClick={confirmClearHistory}
-                    className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest"
+                    disabled={clearingHistory}
+                    className="px-6 py-4 rounded-2xl bg-ocular-error text-white font-bold text-sm hover:opacity-90 transition-all shadow-lg shadow-ocular-error/20 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Confirmar
+                    {clearingHistory ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 size={16} className="animate-spin" />
+                        Limpiando...
+                      </span>
+                    ) : 'Confirmar'}
                   </button>
                 </div>
               </motion.div>
@@ -641,8 +662,9 @@ export default function HistoryPage({ onViewDetail }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[80] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+              className="fixed inset-0 z-[80] flex items-center justify-center p-4"
             >
+              <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
               <motion.div
                 initial={{ opacity: 0, y: 20, scale: 0.95 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -747,7 +769,7 @@ function HistoryCard({ item, onClick, onDelete, index, clearingHistory = false }
         ? 'Prioridad Media'
         : 'Prioridad Baja';
 
-  const transitionDelay = clearingHistory ? 0 : (index || 0) * 0.05;
+  const transitionDelay = (index || 0) * 0.05;
 
   return (
     <motion.div

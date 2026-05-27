@@ -109,6 +109,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
   };
 
   const confirmClearHistory = async () => {
+    setClearModalOpen(false);
     setClearingHistory(true);
     setHistoryNotice(null);
     try {
@@ -120,10 +121,8 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         avg_confidence: 0.0,
         avg_latency_ms: 0.0,
       });
-      await loadHistory();
-      await loadStats();
+      setResults(null);
       setHistoryNotice({ type: 'success', message: 'Historial limpiado y métricas reiniciadas.' });
-      setClearModalOpen(false);
     } catch (e) {
       console.error('Error clearing history:', e);
       const status = e?.response?.status;
@@ -135,7 +134,8 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         type: 'error',
         message: `No se pudo limpiar el historial.${backendMsg ? ` ${backendMsg}` : ''}${hint}`,
       });
-      setClearModalOpen(false);
+      await loadHistory();
+      await loadStats();
     } finally {
       setClearingHistory(false);
     }
@@ -158,7 +158,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
     const traverse = async (entry) => {
       if (entry.isFile) {
         const file = await new Promise((res) => entry.file(res));
-        if (file.type.startsWith('image/')) extractedFiles.push(file);
+        if (['image/jpeg', 'image/png'].includes(file.type)) extractedFiles.push(file);
       } else if (entry.isDirectory) {
         const reader = entry.createReader();
         const entries = await new Promise((res) => reader.readEntries(res));
@@ -304,6 +304,18 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
           </div>
         </motion.div>
       )}
+
+      {clearingHistory && (
+        <div className="fixed top-0 left-0 right-0 z-[100] h-1 bg-ocular-error/20">
+          <motion.div
+            className="h-full bg-ocular-error"
+            initial={{ width: 0 }}
+            animate={{ width: '100%' }}
+            transition={{ duration: 30, ease: 'linear' }}
+          />
+        </div>
+      )}
+
       <div className="space-y-8 animate-in fade-in duration-500 min-h-0">
         <div className="relative overflow-hidden rounded-3xl border-l-[6px] border border-slate-200 bg-gradient-to-br from-white via-white to-slate-50/40 px-6 py-7 shadow-[0_10px_30px_-10px_rgba(15,23,42,0.05)] sm:px-8 sm:py-8 border-l-primary">
           <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(ellipse_60%_40%_at_10%_0%,rgba(14,165,233,0.05),transparent_50%)]" />
@@ -382,7 +394,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                   <input
                     id="dash-file-input"
                     type="file"
-                    accept="image/*"
+                    accept=".jpeg,.jpg,.png"
                     multiple
                     className="hidden"
                     disabled={interactionLocked}
@@ -780,10 +792,10 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[80] bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4"
+              className="fixed inset-0 z-[80] flex items-center justify-center p-4"
             >
+              <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
               <motion.div
-                initial={{ opacity: 0, y: 14, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 14, scale: 0.98 }}
                 className="w-full max-w-md rounded-3xl border border-white/30 bg-white/90 backdrop-blur-xl shadow-2xl p-6 space-y-5"
@@ -821,14 +833,20 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
         <ModalPortal>
         <AnimatePresence>
           {loading && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[90] bg-slate-950/35 backdrop-blur-sm flex items-center justify-center p-4"
-            >
+            <>
               <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.96 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[89] bg-slate-950/35 backdrop-blur-sm"
+              />
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+              >
+              <motion.div
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: 12, scale: 0.98 }}
                 className="w-full max-w-lg rounded-3xl border border-white/25 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6 sm:p-7 shadow-2xl"
@@ -868,6 +886,7 @@ export default function Dashboard({ onViewDetail, onGoHistory, analysis }) {
                 </button>
               </motion.div>
             </motion.div>
+            </>
           )}
         </AnimatePresence>
         </ModalPortal>

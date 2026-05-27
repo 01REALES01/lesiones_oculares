@@ -106,7 +106,8 @@ export default function Suggestions() {
     
     </div>
     {successModalOpen && (
-    <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
         <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-5">
         <div className="mx-auto w-20 h-20 rounded-full bg-emerald-500/10 flex items-center justify-center">
             <div className="w-14 h-14 rounded-full bg-emerald-500 text-white flex items-center justify-center text-3xl font-black animate-bounce">

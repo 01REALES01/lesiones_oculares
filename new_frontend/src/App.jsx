@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth, AuthProvider } from './context/AuthContext';
 import { Sidebar } from './components/ui/Sidebar';
 import Landing from './pages/Landing';
@@ -47,6 +47,10 @@ function AppContent() {
   const [firstLoginModalOpen, setFirstLoginModalOpen] = useState(false);
   const [sendingResetEmail, setSendingResetEmail] = useState(false);
   const analysisState = useAnalysis();
+
+  const handleHistoryCleared = useCallback(() => {
+    analysisState.setResults(null);
+  }, [analysisState]);
 
   // Reset to dashboard if reloaded while viewing recent analysis detail
   useEffect(() => {
@@ -248,7 +252,8 @@ function AppContent() {
       
       <main className="flex-1 overflow-y-auto relative">
         {firstLoginModalOpen && (
-          <div className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4">
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
             <div className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5 text-center">
               <div>
                 <h3 className="text-2xl font-black text-ocular-text-main">
@@ -285,7 +290,7 @@ function AppContent() {
                 transition={{ duration: 0.4 }}
               >
                 {activeTab === 'history' ? (
-                  <HistoryPage onViewDetail={navigateToDetail} />
+                  <HistoryPage onViewDetail={navigateToDetail} onHistoryCleared={handleHistoryCleared} />
                 ) : activeTab === 'admin' ? (
                   <AdminPanel />
                 ) : activeTab === 'profile' ? (

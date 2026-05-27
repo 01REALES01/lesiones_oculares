@@ -144,16 +144,11 @@ function ZoomableImage({
   maxZoom = 5,
   zoomStep = 0.25,
   showControls = false,
-  enableMagnifier = false,
 }) {
   const [zoomLevel, setZoomLevel] = useState(initialZoom);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [showMagnifier, setShowMagnifier] = useState(false);
-  const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 });
-  const [imgSize, setImgSize] = useState({ width: 0, height: 0 });
-  const magnifierSize = 180;
 
   useEffect(() => {
     setZoomLevel(initialZoom);
@@ -211,21 +206,6 @@ function ZoomableImage({
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseUp}
       onMouseUp={handleMouseUp}
-      onMouseEnter={(e) => {
-        if (!enableMagnifier) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        setImgSize({ width: rect.width, height: rect.height });
-        setShowMagnifier(true);
-      }}
-      onMouseMoveCapture={(e) => {
-        if (!enableMagnifier) return;
-        const rect = e.currentTarget.getBoundingClientRect();
-        setCursorPos({
-          x: e.clientX - rect.left,
-          y: e.clientY - rect.top,
-        });
-      }}
-      onMouseOutCapture={() => setShowMagnifier(false)}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
@@ -248,26 +228,6 @@ function ZoomableImage({
           }}
         />
       </div>
-
-      <div data-html2canvas-ignore="true" className="absolute top-4 right-4 z-10 bg-primary text-white p-2 rounded-full shadow-lg no-print animate-pulse">
-        <Search size={18} />
-      </div>
-
-      {enableMagnifier && showMagnifier && !showControls && (
-        <div
-          className="pointer-events-none absolute z-20 rounded-full border-2 border-white/70 bg-white shadow-2xl"
-          style={{
-            width: `${magnifierSize}px`,
-            height: `${magnifierSize}px`,
-            left: `${cursorPos.x - magnifierSize / 2}px`,
-            top: `${cursorPos.y - magnifierSize / 2}px`,
-            backgroundImage: `url('${src}')`,
-            backgroundRepeat: 'no-repeat',
-            backgroundSize: `${imgSize.width * 2.3}px ${imgSize.height * 2.3}px`,
-            backgroundPosition: `${-cursorPos.x * 2.3 + magnifierSize / 2}px ${-cursorPos.y * 2.3 + magnifierSize / 2}px`,
-          }}
-        />
-      )}
 
       {showControls && (
         <div
@@ -571,11 +531,12 @@ const calculatedConsensusGrade = useMemo(() => {
       <AnimatePresence>
         {popupOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/35 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            <div className="fixed inset-0 bg-slate-900/35 backdrop-blur-md" />
             <div className="absolute inset-0" onClick={closeImagePopup} />
             <motion.div
               className="relative z-10 w-full max-w-[1180px] h-[88vh] rounded-[2rem] overflow-hidden border border-slate-200/70 bg-white/95 shadow-[0_30px_80px_rgba(15,23,42,0.28)]"
@@ -587,7 +548,7 @@ const calculatedConsensusGrade = useMemo(() => {
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200/70 bg-slate-50/70">
                 <div>
-                  <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Visor clínico</p>
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-primary font-semibold">Imagen ampliada</p>
                   <p className="text-sm font-bold text-slate-800 truncate max-w-[75vw]">{popupAlt}</p>
                 </div>
                 <button
@@ -623,11 +584,12 @@ const calculatedConsensusGrade = useMemo(() => {
       <AnimatePresence>
         {pdfModalOpen && (
           <motion.div
-            className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-md" />
             <motion.div
               className="w-full max-w-md rounded-[2rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-7 space-y-5 text-center"
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -681,11 +643,12 @@ const calculatedConsensusGrade = useMemo(() => {
       <AnimatePresence>
         {deleteConfirmOpen && (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
+            <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm" />
             <motion.div
               className="relative z-10 w-full max-w-md rounded-[2.5rem] border border-white/40 bg-white/95 backdrop-blur-2xl shadow-2xl p-8 text-center space-y-6"
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -1003,7 +966,7 @@ const calculatedConsensusGrade = useMemo(() => {
                                   <SwitchToggle active={!usarOriginal} onToggle={handleToggle} />
                                 </div>
                               </div>
-                              <p className="text-xs font-light text-slate-900">Haz clic en la imagen para ampliarla. Usa scroll dentro del visor para ajustar el zoom.</p>
+                              <p className="text-xs font-light text-slate-900">Haz clic en la imagen para ampliarla.</p>
                             </div>
                             <div className="relative rounded-2xl overflow-hidden bg-slate-100 border border-slate-200/40 flex items-center justify-center w-full h-[260px] max-h-[280px] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_25px_50px_-8px_rgba(15,23,42,0.18)]">
                               <ZoomableImage
@@ -1011,7 +974,6 @@ const calculatedConsensusGrade = useMemo(() => {
                                 alt="Retinografia analizada"
                                 className="h-full w-full"
                                 onClick={() => openImagePopup(imageUrl, result.filename || 'Retinografía analizada')}
-                                enableMagnifier
                               />
                               <div className="absolute bottom-4 left-4 rounded-full bg-gradient-to-r from-primary to-primary-dark px-3 py-1 text-[11px] text-white uppercase tracking-[0.12em] shadow-lg">
                                 Clic para ampliar
