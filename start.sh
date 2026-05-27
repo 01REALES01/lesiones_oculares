@@ -23,8 +23,7 @@ if [ ! -f "backend/main.py" ]; then
   git clone "$REPO_URL" .
   git checkout "$BRANCH"
 else
-  echo "[1/6] Repositorio ya presente, asegurando rama $BRANCH..."
-  git checkout "$BRANCH" 2>/dev/null || true
+  echo "[1/6] Repositorio ya presente, saltando checkout para preservar rama actual..."
 fi
 
 # ---------- 2. Crear entorno virtual si no existe ----------
@@ -58,7 +57,7 @@ echo "[4/6] Verificando archivos de modelos..."
 MODELS_DIR="backend/models"
 MISSING=0
 
-for MODEL in "densenet_169_aptos_fine.h5" "mobilenetv3_model_fino.keras" "efficientnet_model.keras"; do
+for MODEL in "densenet_169_aptos_fine.h5" "resnet50_model_fine.h5" "efficienetB0_model_fine.keras"; do
   if [ ! -f "$MODELS_DIR/$MODEL" ]; then
     echo "  [FALTA] $MODEL -> copialo a $MODELS_DIR/"
     MISSING=1

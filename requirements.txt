@@ -9,14 +9,12 @@ uvicorn[standard]>=0.32.0
 numpy>=1.26.0
 opencv-python-headless>=4.10.0
 Pillow>=10.0.0
-scikit-image>=0.22.0
+scikit-image>=0.24.0
 
 # ML / Deep Learning
-tensorflow>=2.15.0
+tensorflow>=2.20.0
 tf_keras>=2.15.0
-keras>=2.15.0
-protobuf>=3.20.3
-tensorboard>=2.15.0
+tensorboard>=2.20.0
 
 # Utilidades
 python-multipart>=0.0.9
@@ -37,8 +35,6 @@ anthropic>=0.51.0
 httpx>=0.28.0
 # Excel export
 openpyxl>=3.1.0
-# PDF export
-fpdf2>=2.7.0
 
 # Pruebas (Sección 10 - Validación)
 pytest>=8.0.0
