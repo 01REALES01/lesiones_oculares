@@ -6,18 +6,15 @@ fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
 
 # Imagen y preprocesamiento
-numpy>=1.26.0,<2.0.0
+numpy>=1.26.0
 opencv-python-headless>=4.10.0
 Pillow>=10.0.0
 scikit-image>=0.24.0
 
 # ML / Deep Learning
-tensorflow-macos==2.15.0
-tensorflow-metal==1.1.0
-keras==2.15.0
-tensorboard==2.15.0
-ml-dtypes==0.2.0
-protobuf==3.20.3
+tensorflow>=2.20.0
+tf_keras>=2.15.0
+tensorboard>=2.20.0
 
 # Utilidades
 python-multipart>=0.0.9
